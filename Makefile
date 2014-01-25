@@ -12,4 +12,4 @@ all:
 	gcc -o simulation simulation.c $(OBJ_FILES) $(CFLAGS) -export-dynamic
 
 clean:
-	rm -f *~ $(OBJ_FILES)
+	rm -f *~ $(OBJ_FILES) simulation
