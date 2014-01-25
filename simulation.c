@@ -1,7 +1,9 @@
 #include "lazygl.h"
 
-int ARENA_WIDTH = 1000;
-int ARENA_HEIGHT = 400;
+const int ARENA_WIDTH = 738;
+const int ARENA_HEIGHT = 388;
+const int START_END = 150;
+const int MINE_BEGIN = 444;
 
 int main (int argc, char **argv) {
   uint8_t **buffer = malloc(sizeof(uint8_t*)*ARENA_HEIGHT);
@@ -15,8 +17,10 @@ int main (int argc, char **argv) {
   glutInit(&argc, argv);
   initGL(buffer, ARENA_WIDTH, ARENA_HEIGHT);
 
-  int toggle = 1;
+  display();
 
+  /*
+  int toggle = 1;
   while (1) {
     display();
     if (toggle) {
@@ -29,7 +33,8 @@ int main (int argc, char **argv) {
       toggle = 1;
     }
     sleep(1);
-  }
+    }*/
+  glutMainLoop();
 
   return 0;
 }
