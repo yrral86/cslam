@@ -1,8 +1,9 @@
 #include "simulation.h"
 
-#include "lazygl.h"
 #include "particle.h"
 
+#include <clutter/clutter.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 const int ARENA_WIDTH = 738;
@@ -13,13 +14,14 @@ const int MAX_PARTICLES = 100;
 const int OBSTACLE_COUNT = 6;
 const int PARTICLE_RADIUS = 3;
 
-static uint8_t *buffer;
+//static uint8_t *buffer;
 static particle *particles;
 static particle *obstacles;
 static int particle_count;
+static ClutterColor *particle_color;
+static ClutterActor *stage;
 
 int main (int argc, char **argv) {
-  buffer = malloc(sizeof(uint8_t)*ARENA_HEIGHT*ARENA_WIDTH);
   particles = malloc(sizeof(particle)*MAX_PARTICLES);
   obstacles = malloc(sizeof(particle)*OBSTACLE_COUNT);
 
@@ -35,17 +37,27 @@ int main (int argc, char **argv) {
 
   particle_count = MAX_PARTICLES;
 
-  glutInit(&argc, argv);
-  initGL(buffer, ARENA_WIDTH, ARENA_HEIGHT);
+  clutter_init(&argc, &argv);
+
+  ClutterColor stage_color = { 255, 255, 255, 255 };
+  particle_color = clutter_color_new(0, 0, 0, 255);
+
+  stage = clutter_stage_new();
+  clutter_actor_set_size(stage, ARENA_WIDTH, ARENA_HEIGHT);
+  clutter_actor_set_background_color(stage, &stage_color);
 
   while (1) {
     simulate();
 
     draw();
 
-    display();
+    clutter_actor_show(stage);
 
-    glutMainLoopEvent();
+    clutter_main();
+
+    //    display();
+
+    //    glutMainLoopEvent();
   }
 
   return 0;
@@ -60,24 +72,22 @@ void simulate() {
 }
 
 void draw() {
-  // clear buffer
-  int x, y;
-  for (y = 0; y < ARENA_HEIGHT; y++)
-    for (x = 0; x < ARENA_WIDTH; x++)
-      set_position(x, y, 255);
+  // clear the stage
+  clutter_actor_destroy_all_children(stage);
 
   // add obstacles
   // add particles
   particle p;
   int i, dx, dy;
+  ClutterActor *this_part;
   for (i = 0; i < particle_count; i++) {
     p = particles[i];
-    
-    for (dx = -1*PARTICLE_RADIUS; dx <= PARTICLE_RADIUS; dx++)
-      for (dy = -1*PARTICLE_RADIUS; dy <= PARTICLE_RADIUS; dy++)
-	set_position(p.x + dx, p.y + dy, 0);
-    set_position(p.x + PARTICLE_RADIUS + 1, p.y, 0);
-    set_position(p.x + PARTICLE_RADIUS + 2, p.y, 0);
+    this_part = clutter_actor_new();
+    clutter_actor_set_background_color(this_part, particle_color);
+    clutter_actor_set_size(this_part, 5, 5);
+    clutter_actor_set_position(this_part, p.x, p.y);
+    clutter_actor_add_child(stage, this_part);
+    clutter_actor_show(this_part);
   }
 }
 
