@@ -5,6 +5,7 @@
 #include <clutter/clutter.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 const int ARENA_WIDTH = 738;
 const int ARENA_HEIGHT = 388;
@@ -12,7 +13,7 @@ const int START_END = 150;
 const int MINE_BEGIN = 444;
 const int MAX_PARTICLES = 100;
 const int OBSTACLE_COUNT = 6;
-const int PARTICLE_RADIUS = 3;
+const int PARTICLE_SIZE = 10;
 
 //static uint8_t *buffer;
 static particle *particles;
@@ -84,8 +85,10 @@ void draw() {
     p = particles[i];
     this_part = clutter_actor_new();
     clutter_actor_set_background_color(this_part, particle_color);
-    clutter_actor_set_size(this_part, 5, 5);
+    clutter_actor_set_size(this_part, PARTICLE_SIZE, PARTICLE_SIZE);
     clutter_actor_set_position(this_part, p.x, p.y);
+    clutter_actor_set_pivot_point(this_part, 0.5, 0.5);
+    clutter_actor_set_rotation_angle(this_part, CLUTTER_Z_AXIS, p.theta);
     clutter_actor_add_child(stage, this_part);
     clutter_actor_show(this_part);
   }
