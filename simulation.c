@@ -18,8 +18,10 @@ const int PARTICLE_SIZE = 10;
 //static uint8_t *buffer;
 static particle *particles;
 static particle *obstacles;
+static particle robot;
 static int particle_count;
 static ClutterColor *particle_color;
+static ClutterColor *robot_color;
 static ClutterActor *stage;
 
 int main (int argc, char **argv) {
@@ -28,13 +30,15 @@ int main (int argc, char **argv) {
 
   // generate MAX_PARTICLES random particles in top half of starting area
   int i;
-  particle p;
   for (i = 0; i < MAX_PARTICLES; i++) {
     particles[i].x = rand_limit(START_END);
     particles[i].y = rand_limit(ARENA_HEIGHT/2);
     particles[i].theta = rand_limit(360);
-    p = particles[i];
   }
+
+  robot.x = rand_limit(START_END);
+  robot.y = rand_limit(ARENA_HEIGHT/2);
+  robot.theta = rand_limit(360);
 
   particle_count = MAX_PARTICLES;
 
@@ -42,12 +46,13 @@ int main (int argc, char **argv) {
 
   ClutterColor stage_color = { 255, 255, 255, 255 };
   particle_color = clutter_color_new(0, 0, 0, 255);
+  robot_color = clutter_color_new(255, 0, 0, 255);
 
   stage = clutter_stage_new();
   clutter_actor_set_size(stage, ARENA_WIDTH, ARENA_HEIGHT);
   clutter_actor_set_background_color(stage, &stage_color);
 
-  while (1) {
+  //  while (1) {
     simulate();
 
     draw();
@@ -59,13 +64,15 @@ int main (int argc, char **argv) {
     //    display();
 
     //    glutMainLoopEvent();
-  }
+    //  }
 
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 void simulate() {
     // scan particles, eliminate "impossible" instances
+  
+
     // poll remaining particles for steering direction
     // move robot in average direction
     // move each particle in average direction with random errors (replicate each particle)
@@ -77,6 +84,8 @@ void draw() {
   clutter_actor_destroy_all_children(stage);
 
   // add obstacles
+  // TODO
+
   // add particles
   particle p;
   int i, dx, dy;
@@ -92,6 +101,16 @@ void draw() {
     clutter_actor_add_child(stage, this_part);
     clutter_actor_show(this_part);
   }
+
+  // add robot
+  this_part = clutter_actor_new();
+  clutter_actor_set_background_color(this_part, robot_color);
+  clutter_actor_set_size(this_part, PARTICLE_SIZE, PARTICLE_SIZE);
+  clutter_actor_set_position(this_part, robot.x, robot.y);
+  clutter_actor_set_pivot_point(this_part, 0.5, 0.5);
+  clutter_actor_set_rotation_angle(this_part, CLUTTER_Z_AXIS, robot.theta);
+  clutter_actor_add_child(stage, this_part);
+  clutter_actor_show(this_part);
 }
 
 int rand_limit(int limit) {
