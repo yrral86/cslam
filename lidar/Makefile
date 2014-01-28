@@ -16,10 +16,10 @@ OBJ     = ${SRC:.c=.o}
 TARGET  = lidar
 
 # Header file
-HEAD    = scipBase.h scip1.h scip2.h scipUtil.h ../share.h
+HEAD    = scipBase.h scip1.h scip2.h scipUtil.h share.h
 
 # API File
-API_SRC = scipBase.c scip1.c scip2.c scipUtil.c ../share.c
+API_SRC = scipBase.c scip1.c scip2.c scipUtil.c share.c
 API_OBJ = ${API_SRC:.c=.o}
 
 CC      = gcc

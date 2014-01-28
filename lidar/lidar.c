@@ -11,9 +11,9 @@
 #include "scip2.h"
 #include "scipUtil.h"
 
-#include "../procIMU/timing.h"
-#include "../share.h"
-#include "./sharedLidar.h"
+#include "timing.h"
+#include "share.h"
+#include "sharedLidar.h"
 
 #define MIN_RANGE 20
 #define MAX_RANGE 5600

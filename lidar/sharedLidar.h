@@ -4,8 +4,10 @@
   @author	Brad Nelson			<nelsobra@onid.orst.edu>
 */
 
+#define LIDAR_1_WIDTH = 681;
+
 struct lidarScan {
-  int data[681];
+  int data[LIDAR_1_WIDTH];
   int timestamp;
 };
 
