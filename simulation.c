@@ -8,6 +8,7 @@ static int particle_count;
 static ClutterColor *particle_color;
 static ClutterColor *robot_color;
 static ClutterActor *stage;
+static int initial;
 
 int main (int argc, char **argv) {
   particles = malloc(sizeof(particle)*MAX_PARTICLES);
@@ -29,7 +30,7 @@ int main (int argc, char **argv) {
 
   clutter_actor_show(stage);
 
-  int loop_id = clutter_threads_add_timeout(100, loop_iteration, NULL);
+  int loop_id = clutter_threads_add_timeout(300, loop_iteration, NULL);
 
   clutter_main();
 
@@ -53,6 +54,8 @@ void initialize_swarm() {
 
   // save first particle
   rescue = particles[0];
+
+  initial = 1;
 }
 
 static gboolean loop_iteration(gpointer data) {
@@ -83,14 +86,19 @@ void simulate() {
   }
   particle_count = selected;
 
-  // poll remaining particles for steering direction
-  double angle_sum = 0.0;
-  for (i = 0; i < particle_count; i++) {
-    angle_sum += fuzzy_get_angle(particles[i]);
-  }
+  int angle;
+  if (initial) {
+    angle = 0;
+  } else {
+    // poll remaining particles for steering direction
+    double angle_sum = 0.0;
+    for (i = 0; i < particle_count; i++) {
+      angle_sum += fuzzy_get_angle(particles[i]);
+    }
 
-  int angle = angle_sum/particle_count;
-  // move robot in average direction
+    angle = angle_sum/particle_count;
+  }
+  // move robot in appropriate direction
   motor_move(angle, &robot);
 
   // if robot has gone out of bounds, reinitialize
@@ -131,9 +139,10 @@ void simulate() {
     particle_count = 1;
   }
 
-  // save best particle
+  // find best particle
   int min_index = 0;
   double min = 1000;
+  double max = 0;
   double sum;
   particle p, clone;
   sensor_scan s, s_n;
@@ -154,12 +163,20 @@ void simulate() {
       min = sum;
       min_index = i;
     }
+
+    if (sum > max)
+      max = sum;
   }
 
-  // save it if we found a good particle (<100)
-  if (min < 10)
+  // save it if we have a "good" lock
+  if (min < 15) {
     rescue = particles[min_index];
-  else {
+    // leave initializtion mode
+    if (initial && min < 5) {
+      initial = 0;
+      printf("locked\n");
+    }
+  } else {
     // otherwise, reset particles
     for (i = 0; i < MAX_PARTICLES; i++) {
       particles[i].x = rand_limit(ARENA_WIDTH);
@@ -169,21 +186,21 @@ void simulate() {
 
     particle_count = MAX_PARTICLES;
     rescue = particles[0];
+    initial = 1;
   }
 
   // add a new particle based on the rescue particle,
   // but moved in the direction of the maximum distance
-  // variation from the sensor scan
+  // variation from the normalized sensor scan
   p = rescue;
-  p.theta = 0;
   sensor_scan p_scan = sensor_distance(p);
 
-  // find direction of variation
+  // find direction of max deviation
   int max_deviation = 0.0;
   int max_index = 0;
   int sign = 1;
   for (i = 0; i < SENSOR_DISTANCES; i++) {
-    int deviation = p_scan.distances[i] - scan.distances[i];
+    int deviation = p_scan.distances[i] - scan_normalized.distances[i];
     if (abs(deviation) > max_deviation) {
       max_deviation = abs(deviation);
       max_index = i;
@@ -205,7 +222,10 @@ void simulate() {
   // fortify particle_count
   if (particle_count < 35) {
     particle old, new;
-    while (particle_count < 40) {
+    int old_particle_count = particle_count;
+    // no more than 5 new particles
+    // too much variation breaks lock
+    while (particle_count < old_particle_count + 5) {
       old = particles[rand_limit(particle_count)];
       new.x = old.x + rand_limit(6) - 3;
       new.y = old.y + rand_limit(6) - 3;

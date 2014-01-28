@@ -47,6 +47,10 @@ sensor_scan sensor_distance(particle p) {
   return s;
 }
 
+double sensor_distance_index_to_degrees(int i) {
+  return i*360/SENSOR_DISTANCES;
+}
+
 double sensor_distance_index_to_radians(int i) {
   return i*2*M_PI/SENSOR_DISTANCES;
 }

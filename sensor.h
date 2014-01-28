@@ -15,5 +15,6 @@ typedef struct sensor_scan {
 int sensor_distance_offset(particle, double);
 sensor_scan sensor_distance(particle);
 double sensor_distance_index_to_radians(int);
+double sensor_distance_index_to_degrees(int);
 
 #endif
