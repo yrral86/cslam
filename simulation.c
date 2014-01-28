@@ -1,14 +1,5 @@
 #include "simulation.h"
 
-const int ARENA_WIDTH = 738;
-const int ARENA_HEIGHT = 388;
-const int START_END = 150;
-const int MINE_BEGIN = 444;
-const int MAX_PARTICLES = 250;
-const int OBSTACLE_COUNT = 6;
-const int PARTICLE_SIZE = 10;
-
-//static uint8_t *buffer;
 static particle *particles;
 static particle *obstacles;
 static particle rescue;
@@ -24,19 +15,7 @@ int main (int argc, char **argv) {
 
   srand(time(NULL));
 
-  // generate MAX_PARTICLES random particles in top half of starting area
-  int i;
-  for (i = 0; i < MAX_PARTICLES; i++) {
-    particles[i].x = rand_limit(START_END);
-    particles[i].y = rand_limit(ARENA_HEIGHT/2);
-    particles[i].theta = rand_limit(360);
-  }
-
-  robot.x = rand_limit(START_END);
-  robot.y = rand_limit(ARENA_HEIGHT/2);
-  robot.theta = rand_limit(360);
-
-  particle_count = MAX_PARTICLES;
+  initialize_swarm();
 
   ClutterInitError e = clutter_init(&argc, &argv);
 
@@ -57,6 +36,25 @@ int main (int argc, char **argv) {
   return EXIT_SUCCESS;
 }
 
+void initialize_swarm() {
+  // generate MAX_PARTICLES random particles in top half of starting area
+  int i;
+  for (i = 0; i < MAX_PARTICLES; i++) {
+    particles[i].x = rand_limit(START_END);
+    particles[i].y = rand_limit(ARENA_HEIGHT/2);
+    particles[i].theta = rand_limit(360);
+  }
+
+  robot.x = rand_limit(START_END);
+  robot.y = rand_limit(ARENA_HEIGHT/2);
+  robot.theta = rand_limit(360);
+
+  particle_count = MAX_PARTICLES;
+
+  // save first particle
+  rescue = particles[0];
+}
+
 static gboolean loop_iteration(gpointer data) {
   simulate();
 
@@ -66,17 +64,21 @@ static gboolean loop_iteration(gpointer data) {
 }
 
 void simulate() {
-  // save first particle
-  rescue = particles[0];
-
   //  printf("x: %g y: %g theta: %g\n", robot.x, robot.y, robot.theta);
 
   // scan sensors, eliminate "impossible" instances
-  sensor_scan scan = sensor_distance(robot);
+  // get normalized and raw sensor values
+  sensor_scan scan_normalized = sensor_distance(robot);
+  particle r_clone = robot;
+  r_clone.theta = 0;
+  sensor_scan scan = sensor_distance(r_clone);
   int selected = 0;
   int i;
   for (i = 0; i < particle_count; i++) {
-    if (!filter_particle(particles[i], scan)) {
+    particle clone = particles[i];
+    clone.theta = 0;
+    if (!(filter_particle(particles[i], scan_normalized) ||
+	  filter_particle(clone, scan))) {
       particles[selected] = particles[i];
       selected++;
     }
@@ -93,10 +95,22 @@ void simulate() {
   // move robot in average direction
   motor_move(angle, &robot);
 
+  // if robot has gone out of bounds, reinitialize
+  if (robot.x < 0 ||
+      robot.x > ARENA_WIDTH ||
+      robot.y < 0 ||
+      robot.y > ARENA_HEIGHT) {
+    initialize_swarm();
+    return;
+  }
+
   // move each particle in average direction with random errors (replicate each particle)
   for (i = 0; i < particle_count; i++) {
     motor_move(angle, (particles + i));
   }
+
+  // move rescue particle
+  motor_move(angle, &rescue);
 
   // eliminate any particles that are out of bounds
   selected = 0;
@@ -113,6 +127,7 @@ void simulate() {
   }
   particle_count = selected;
 
+  /*
   // add a new, random particles
   particle p;
   p.x = rand_limit(ARENA_WIDTH);
@@ -120,15 +135,90 @@ void simulate() {
   p.theta = rand_limit(360);
   particles[particle_count] = p;
   particle_count++;
+  */
+
+  // ensure we have at least one particle
+  if (particle_count == 0) {
+    particles[0] = rescue;
+    particle_count = 1;
+  }
+
+  // save best particle
+  int min_index = 0;
+  double min = 1000;
+  double sum;
+  particle p, clone;
+  sensor_scan s, s_n;
+  int j;
+  for (i = 0; i < particle_count; i++) {
+    sum = 0.0;
+    p = particles[i];
+    clone = p;
+    clone.theta = 0;
+    s_n = sensor_distance(p);
+    s = sensor_distance(clone);
+    for (j = 0; j < SENSOR_DISTANCES; j++) {
+      //      sum += abs(scan.distances[j] - s.distances[j]);
+      sum += abs(scan_normalized.distances[j] - s_n.distances[j]);
+    }
+    sum /= SENSOR_DISTANCES;
+    if (sum < min) {
+      min = sum;
+      min_index = i;
+    }
+  }
+
+  // save it if we found a good particle (<100)
+  if (min < 10)
+    rescue = particles[min_index];
+  else {
+    // otherwise, reset particles
+    for (i = 0; i < MAX_PARTICLES; i++) {
+      particles[i].x = rand_limit(ARENA_WIDTH);
+      particles[i].y = rand_limit(ARENA_HEIGHT);
+      particles[i].theta = rand_limit(360);
+    }
+
+    particle_count = MAX_PARTICLES;
+    rescue = particles[0];
+  }
+
+  // add a new particle based on the rescue particle,
+  // but moved in the direction of the maximum distance
+  // variation from the sensor scan
+  p = rescue;
+  p.theta = 0;
+  sensor_scan p_scan = sensor_distance(p);
+
+  // find direction of variation
+  int max_deviation = 0.0;
+  int max_index = 0;
+  int sign = 1;
+  for (i = 0; i < SENSOR_DISTANCES; i++) {
+    int deviation = p_scan.distances[i] - scan.distances[i];
+    if (abs(deviation) > max_deviation) {
+      max_deviation = abs(deviation);
+      max_index = i;
+      sign = deviation/abs(deviation);
+    }
+  }
+
+  // move particle
+  double theta = sensor_distance_index_to_radians(max_index);
+  double dx = sign*max_deviation*cos(theta);
+  double dy = sign*max_deviation*sin(theta);
+  p.x += dx;
+  p.y += dy;
+
+  // add particle
+  particles[particle_count] = p;
+  particle_count++;
 
   // fortify particle_count
-  if (particle_count < 50) {
+  if (particle_count < 30) {
     particle old, new;
-    while (particle_count < 100) {
-      if (particle_count > 0)
-	old = particles[rand_limit(particle_count)];
-      else
-	old = rescue;
+    while (particle_count < 35) {
+      old = particles[rand_limit(particle_count)];
       new.x = old.x + rand_limit(6) - 3;
       new.y = old.y + rand_limit(6) - 3;
       new.x = old.x + rand_limit(6) - 3;

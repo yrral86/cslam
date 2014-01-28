@@ -2,6 +2,7 @@
 #define __MOTOR_H__
 
 #include "particle.h"
+#include "simulation.h"
 
 #include <math.h>
 
