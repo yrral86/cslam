@@ -12,7 +12,7 @@ int filter_particle(particle p, sensor_scan scan) {
       count++;
 
   // allow some "too long" distances
-  if (count > 3)
+  if (count > 4)
     filter = 1;
   return filter;
 }
