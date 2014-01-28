@@ -255,11 +255,11 @@ void draw() {
   // add obstacles
   // TODO
 
-  // add particles
+  // add first 15 particles
   particle p;
   int i, dx, dy;
   ClutterActor *this_part;
-  for (i = 0; i < particle_count; i++) {
+  for (i = 0; i < particle_count && i < 15; i++) {
     p = particles[i];
     this_part = clutter_actor_new();
     clutter_actor_set_background_color(this_part, particle_color);
