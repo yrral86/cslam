@@ -192,7 +192,7 @@ void simulate() {
   }
 
   // save it if we have a "good" lock
-  if (norm_min < 10) {
+  if (norm_min < 5) {
     rescue = particles[norm_min_index];
     // leave initializtion mode
     if (robot_get_mode() == ROBOT_INITIAL && norm_min < 1) {
