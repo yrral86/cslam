@@ -195,7 +195,7 @@ void simulate() {
   if (norm_min < 5) {
     rescue = particles[norm_min_index];
     // leave initializtion mode
-    if (robot_get_mode() == ROBOT_INITIAL && norm_min < 1) {
+    if (robot_get_mode() == ROBOT_INITIAL && norm_min < 2) {
       // check if we have orientation lock as well
       if (raw_min < 1)
 	robot_set_mode(ROBOT_PO_LOCK);
