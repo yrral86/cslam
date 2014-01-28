@@ -37,18 +37,10 @@ int sensor_distance_offset(particle p, double offset) {
   return a;
 }
 
-int sensor_distance_forward(particle p) {
-  return sensor_distance_offset(p, 0);
-}
-
-int sensor_distance_reverse(particle p) {
-  return sensor_distance_offset(p, M_PI);
-}
-
-int sensor_distance_left(particle p) {
-  return sensor_distance_offset(p, -M_PI/2);
-}
-
-int sensor_distance_right(particle p) {
-  return sensor_distance_offset(p, M_PI/2);
+sensor_scan sensor_distance(particle p) {
+  sensor_scan s;
+  int i;
+  for (i = 0; i < SENSOR_DISTANCES; i++)
+    s.distances[i] = sensor_distance_offset(p, i*2*M_PI/SENSOR_DISTANCES);
+  return s;
 }

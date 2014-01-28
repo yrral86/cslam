@@ -1,29 +1,11 @@
 #include "filter.h"
 
-int filter_particle_forward(particle p, int distance) {
+int filter_particle(particle p, sensor_scan scan) {
   int filter = 0;
-  if (sensor_distance_forward(p) < distance)
-    filter = 1;
-  return filter;
-}
-
-int filter_particle_reverse(particle p, int distance) {
-  int filter = 0;
-  if (sensor_distance_reverse(p) < distance)
-    filter = 1;
-  return filter;
-}
-
-int filter_particle_left(particle p, int distance) {
-  int filter = 0;
-  if (sensor_distance_left(p) < distance)
-    filter = 1;
-  return filter;
-}
-
-int filter_particle_right(particle p, int distance) {
-  int filter = 0;
-  if (sensor_distance_right(p) < distance)
-    filter = 1;
+  sensor_scan particle_sensors = sensor_distance(p);
+  int i;
+  for (i = 0; i < SENSOR_DISTANCES; i++)
+    if (particle_sensors.distances[i] < scan.distances[i])
+      filter = 1;
   return filter;
 }

@@ -22,6 +22,8 @@ int main (int argc, char **argv) {
   particles = malloc(sizeof(particle)*MAX_PARTICLES);
   obstacles = malloc(sizeof(particle)*OBSTACLE_COUNT);
 
+  srand(time(NULL));
+
   // generate MAX_PARTICLES random particles in top half of starting area
   int i;
   for (i = 0; i < MAX_PARTICLES; i++) {
@@ -67,23 +69,14 @@ void simulate() {
   // save first particle
   rescue = particles[0];
 
+  //  printf("x: %g y: %g theta: %g\n", robot.x, robot.y, robot.theta);
+
   // scan sensors, eliminate "impossible" instances
-  int f_distance = sensor_distance_forward(robot);
-  /*  int r_distance = sensor_distance_reverse(robot);
-  int l_distance = sensor_distance_left(robot);
-  int rt_distance = sensor_distance_right(robot);*/
+  sensor_scan scan = sensor_distance(robot);
   int selected = 0;
   int i;
   for (i = 0; i < particle_count; i++) {
-    if (filter_particle_forward(particles[i], f_distance))
-      continue;
-    /*    else if (filter_particle_reverse(particles[i], r_distance))
-      continue;
-    else if (filter_particle_left(particles[i], l_distance))
-      continue;
-    else if (filter_particle_right(particles[i], rt_distance))
-    continue;*/
-    else {
+    if (!filter_particle(particles[i], scan)) {
       particles[selected] = particles[i];
       selected++;
     }
@@ -119,6 +112,14 @@ void simulate() {
     }
   }
   particle_count = selected;
+
+  // add a new, random particles
+  particle p;
+  p.x = rand_limit(ARENA_WIDTH);
+  p.y = rand_limit(ARENA_HEIGHT);
+  p.theta = rand_limit(360);
+  particles[particle_count] = p;
+  particle_count++;
 
   // fortify particle_count
   if (particle_count < 50) {

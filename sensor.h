@@ -5,10 +5,13 @@
 
 #include "particle.h"
 
+#define SENSOR_DISTANCES 4
+
+typedef struct sensor_scan {
+  int distances[SENSOR_DISTANCES];
+} sensor_scan;
+
 int sensor_distance_offset(particle, double);
-int sensor_distance_forward(particle);
-int sensor_distance_reverse(particle);
-int sensor_distance_left(particle);
-int sensor_distance_right(particle);
+sensor_scan sensor_distance(particle);
 
 #endif

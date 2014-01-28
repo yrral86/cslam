@@ -3,17 +3,22 @@
 const int LENGTH = 3;
 const int VELOCITY = 3;
 
-void motor_move(int angle, particle *p) {
+void motor_move(int steering_angle, particle *p) {
 
-  //  printf("steering_angle: %i theta: %g\n", angle, p->theta);
+  //  printf("steering_angle: %i theta: %g\n", steering_angle, p->theta);
 
-  double theta = (p->theta + angle)*M_PI/180;
+  p->theta += VELOCITY*sin(steering_angle*M_PI/180)/LENGTH;
+  if (p->theta > 180)
+    p->theta -= 360;
+  else if (p->theta < -180)
+    p->theta += 360;
+
+  double theta = (p->theta + steering_angle)*M_PI/180;
   double dx = VELOCITY*cos(theta);
-  double dy = -VELOCITY*sin(theta);
+  double dy = VELOCITY*sin(theta);
 
   //  printf("dx: %g dy: %g\n\n\n", dx, dy);
 
   p->x += dx;
   p->y += dy;
-  p->theta += (double)angle/LENGTH;
 }
