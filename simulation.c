@@ -8,15 +8,19 @@ static int particle_count;
 static ClutterColor *particle_color;
 static ClutterColor *robot_color;
 static ClutterActor *stage;
+static int success_count, failure_count;
 
 int main (int argc, char **argv) {
   particles = malloc(sizeof(particle)*MAX_PARTICLES);
   obstacles = malloc(sizeof(particle)*OBSTACLE_COUNT);
 
+  success_count = 0;
+  failure_count = 0;
+
   srand(time(NULL));
 
   initialize_swarm();
-
+  /*
   ClutterInitError e = clutter_init(&argc, &argv);
 
   ClutterColor stage_color = { 255, 255, 255, 255 };
@@ -29,9 +33,15 @@ int main (int argc, char **argv) {
 
   clutter_actor_show(stage);
 
-  int loop_id = clutter_threads_add_timeout(100, loop_iteration, NULL);
+  int loop_id = clutter_threads_add_timeout(20, loop_iteration, NULL);
 
   clutter_main();
+
+  */
+  while (1) {
+    loop_iteration(NULL);
+  }
+
 
   return EXIT_SUCCESS;
 }
@@ -60,7 +70,8 @@ void initialize_swarm() {
 static gboolean loop_iteration(gpointer data) {
   simulate();
 
-  draw();
+  //skip draw for now
+  //  draw();
 
   return TRUE;
 }
@@ -105,6 +116,12 @@ void simulate() {
       robot.x > ARENA_WIDTH ||
       robot.y < 0 ||
       robot.y > ARENA_HEIGHT) {
+    if (robot.x > ARENA_WIDTH)
+      success_count++;
+    else
+      failure_count++;
+    printf("successes: %i failures: %i percent success: %g\n", success_count,
+	   failure_count, (double)success_count/(success_count + failure_count));
     initialize_swarm();
     return;
   }
@@ -178,13 +195,13 @@ void simulate() {
   if (norm_min < 10) {
     rescue = particles[norm_min_index];
     // leave initializtion mode
-    if (robot_get_mode() == ROBOT_INITIAL && norm_min < 2) {
+    if (robot_get_mode() == ROBOT_INITIAL && norm_min < 1) {
       // check if we have orientation lock as well
-      if (raw_min < 2)
+      if (raw_min < 1)
 	robot_set_mode(ROBOT_PO_LOCK);
       else
 	robot_set_mode(ROBOT_P_LOCK);
-    } else if (robot_get_mode() == ROBOT_P_LOCK && raw_min < 2) {
+    } else if (robot_get_mode() == ROBOT_P_LOCK && raw_min < 1) {
       robot_set_mode(ROBOT_PO_LOCK);
     }
   } else {
