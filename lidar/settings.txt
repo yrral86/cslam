@@ -1,0 +1,21 @@
+VERSION 2
+
+PROC_NAME       imu
+PROC_PATH       ./procIMU/imu
+MEM_SIZE        4000
+
+PROC_NAME       mot
+PROC_PATH       ./procMOT/mot
+MEM_SIZE        4000
+
+PROC_NAME       net
+PROC_PATH       ./procNET/net
+MEM_SIZE        4000
+
+PROC_NAME       master
+PROC_PATH       ./procMASTER/master
+MEM_SIZE        4000
+
+PROC_NAME		lidar
+PROC_PATH		./procLIDAR/lidar
+MEM_SIZE		65535

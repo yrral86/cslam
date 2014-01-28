@@ -20,7 +20,7 @@ int main (int argc, char **argv) {
   srand(time(NULL));
 
   initialize_swarm();
-  /*
+
   ClutterInitError e = clutter_init(&argc, &argv);
 
   ClutterColor stage_color = { 255, 255, 255, 255 };
@@ -33,16 +33,16 @@ int main (int argc, char **argv) {
 
   clutter_actor_show(stage);
 
-  int loop_id = clutter_threads_add_timeout(20, loop_iteration, NULL);
+  int loop_id = clutter_threads_add_timeout(200, loop_iteration, NULL);
 
   clutter_main();
 
-  */
+  /*
   while (1) {
     loop_iteration(NULL);
   }
 
-
+  */
   return EXIT_SUCCESS;
 }
 
@@ -70,8 +70,7 @@ void initialize_swarm() {
 static gboolean loop_iteration(gpointer data) {
   simulate();
 
-  //skip draw for now
-  //  draw();
+  draw();
 
   return TRUE;
 }
@@ -192,10 +191,10 @@ void simulate() {
   }
 
   // save it if we have a "good" lock
-  if (norm_min < 5) {
+  if (norm_min < 10) {
     rescue = particles[norm_min_index];
     // leave initializtion mode
-    if (robot_get_mode() == ROBOT_INITIAL && norm_min < 2) {
+    if (robot_get_mode() == ROBOT_INITIAL && norm_min < 1) {
       // check if we have orientation lock as well
       if (raw_min < 1)
 	robot_set_mode(ROBOT_PO_LOCK);
