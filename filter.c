@@ -11,6 +11,7 @@ int filter_particle(particle p, sensor_scan scan) {
     if (particle_sensors.distances[i] < scan.distances[i])
       count++;
 
+  // allow one "too long" distance
   if (count > 1)
     filter = 1;
   return filter;

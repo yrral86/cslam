@@ -64,8 +64,6 @@ static gboolean loop_iteration(gpointer data) {
 }
 
 void simulate() {
-  //  printf("x: %g y: %g theta: %g\n", robot.x, robot.y, robot.theta);
-
   // scan sensors, eliminate "impossible" instances
   // get normalized and raw sensor values
   sensor_scan scan_normalized = sensor_distance(robot);
@@ -104,7 +102,7 @@ void simulate() {
     return;
   }
 
-  // move each particle in average direction with random errors (replicate each particle)
+  // move each particle in average direction
   for (i = 0; i < particle_count; i++) {
     motor_move(angle, (particles + i));
   }
@@ -127,16 +125,6 @@ void simulate() {
   }
   particle_count = selected;
 
-  /*
-  // add a new, random particles
-  particle p;
-  p.x = rand_limit(ARENA_WIDTH);
-  p.y = rand_limit(ARENA_HEIGHT);
-  p.theta = rand_limit(360);
-  particles[particle_count] = p;
-  particle_count++;
-  */
-
   // ensure we have at least one particle
   if (particle_count == 0) {
     particles[0] = rescue;
@@ -158,7 +146,7 @@ void simulate() {
     s_n = sensor_distance(p);
     s = sensor_distance(clone);
     for (j = 0; j < SENSOR_DISTANCES; j++) {
-      //      sum += abs(scan.distances[j] - s.distances[j]);
+      sum += abs(scan.distances[j] - s.distances[j]);
       sum += abs(scan_normalized.distances[j] - s_n.distances[j]);
     }
     sum /= SENSOR_DISTANCES;
@@ -215,9 +203,9 @@ void simulate() {
   particle_count++;
 
   // fortify particle_count
-  if (particle_count < 30) {
+  if (particle_count < 35) {
     particle old, new;
-    while (particle_count < 35) {
+    while (particle_count < 40) {
       old = particles[rand_limit(particle_count)];
       new.x = old.x + rand_limit(6) - 3;
       new.y = old.y + rand_limit(6) - 3;
