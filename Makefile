@@ -3,12 +3,14 @@ OBJS = \
 	filter \
 	fuzzy_controller \
 	motor \
+	robot \
 	sensor
 
 OBJ_FILES = 	\
 		filter.o \
 		fuzzy_controller.o \
 		motor.o \
+		robot.o \
 		sensor.o
 
 all:

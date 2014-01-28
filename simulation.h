@@ -9,6 +9,7 @@
 #include "particle.h"
 #include "filter.h"
 #include "fuzzy_controller.h"
+#include "robot.h"
 
 const static int ARENA_WIDTH = 738;
 const static int ARENA_HEIGHT = 388;

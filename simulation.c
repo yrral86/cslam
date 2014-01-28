@@ -8,7 +8,6 @@ static int particle_count;
 static ClutterColor *particle_color;
 static ClutterColor *robot_color;
 static ClutterActor *stage;
-static int initial;
 
 int main (int argc, char **argv) {
   particles = malloc(sizeof(particle)*MAX_PARTICLES);
@@ -30,7 +29,7 @@ int main (int argc, char **argv) {
 
   clutter_actor_show(stage);
 
-  int loop_id = clutter_threads_add_timeout(300, loop_iteration, NULL);
+  int loop_id = clutter_threads_add_timeout(100, loop_iteration, NULL);
 
   clutter_main();
 
@@ -55,7 +54,7 @@ void initialize_swarm() {
   // save first particle
   rescue = particles[0];
 
-  initial = 1;
+  robot_set_mode(ROBOT_INITIAL);
 }
 
 static gboolean loop_iteration(gpointer data) {
@@ -87,7 +86,7 @@ void simulate() {
   particle_count = selected;
 
   int angle;
-  if (initial) {
+  if (robot_get_mode() == ROBOT_INITIAL) {
     angle = 0;
   } else {
     // poll remaining particles for steering direction
@@ -140,41 +139,53 @@ void simulate() {
   }
 
   // find best particle
-  int min_index = 0;
-  double min = 1000;
-  double max = 0;
-  double sum;
+  int raw_min_index = 0;
+  int norm_min_index = 0;
+  double raw_min = 1000;
+  double norm_min = 1000;
+  double norm_sum;
+  double raw_sum;
   particle p, clone;
   sensor_scan s, s_n;
   int j;
   for (i = 0; i < particle_count; i++) {
-    sum = 0.0;
+    norm_sum = 0.0;
+    raw_sum = 0.0;
     p = particles[i];
     clone = p;
     clone.theta = 0;
     s_n = sensor_distance(p);
     s = sensor_distance(clone);
     for (j = 0; j < SENSOR_DISTANCES; j++) {
-      sum += abs(scan.distances[j] - s.distances[j]);
-      sum += abs(scan_normalized.distances[j] - s_n.distances[j]);
+      raw_sum += abs(scan.distances[j] - s.distances[j]);
+      norm_sum += abs(scan_normalized.distances[j] - s_n.distances[j]);
     }
-    sum /= SENSOR_DISTANCES;
-    if (sum < min) {
-      min = sum;
-      min_index = i;
+    raw_sum /= SENSOR_DISTANCES;
+    norm_sum /= SENSOR_DISTANCES;
+
+    if (raw_sum < raw_min) {
+      raw_min = raw_sum;
+      raw_min_index = i;
     }
 
-    if (sum > max)
-      max = sum;
+    if (norm_sum < norm_min) {
+      norm_min = norm_sum;
+      norm_min_index = i;
+    }
   }
 
   // save it if we have a "good" lock
-  if (min < 15) {
-    rescue = particles[min_index];
+  if (norm_min < 10) {
+    rescue = particles[norm_min_index];
     // leave initializtion mode
-    if (initial && min < 5) {
-      initial = 0;
-      printf("locked\n");
+    if (robot_get_mode() == ROBOT_INITIAL && norm_min < 2) {
+      // check if we have orientation lock as well
+      if (raw_min < 2)
+	robot_set_mode(ROBOT_PO_LOCK);
+      else
+	robot_set_mode(ROBOT_P_LOCK);
+    } else if (robot_get_mode() == ROBOT_P_LOCK && raw_min < 2) {
+      robot_set_mode(ROBOT_PO_LOCK);
     }
   } else {
     // otherwise, reset particles
@@ -186,7 +197,7 @@ void simulate() {
 
     particle_count = MAX_PARTICLES;
     rescue = particles[0];
-    initial = 1;
+    robot_set_mode(ROBOT_INITIAL);
   }
 
   // add a new particle based on the rescue particle,
