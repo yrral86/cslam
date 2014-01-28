@@ -3,7 +3,7 @@
 
 #include <math.h>
 
-#define SENSOR_DISTANCES 8
+#define SENSOR_DISTANCES 16
 
 typedef struct sensor_scan {
   int distances[SENSOR_DISTANCES];
