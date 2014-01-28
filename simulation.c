@@ -108,7 +108,7 @@ void simulate() {
 
     angle = angle_sum/particle_count;
   }
-  // move robot in appropriate direction
+  // move robot
   motor_move(angle, &robot);
 
   // if robot has gone out of bounds, reinitialize
@@ -126,7 +126,7 @@ void simulate() {
     return;
   }
 
-  // move each particle in average direction
+  // move each particle
   for (i = 0; i < particle_count; i++) {
     motor_move(angle, (particles + i));
   }
