@@ -98,7 +98,7 @@ void simulate() {
 
   int angle;
   if (robot_get_mode() == ROBOT_INITIAL) {
-    angle = 0;
+    angle = 15;
   } else {
     // poll remaining particles for steering direction
     double angle_sum = 0.0;
