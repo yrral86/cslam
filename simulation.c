@@ -269,13 +269,13 @@ void simulate() {
 
 void draw() {
   // clear the stage
-  clutter_actor_destroy_all_children(stage);
+  //  clutter_actor_destroy_all_children(stage);
 
   // add obstacles
   // TODO
 
   int i, j, factor;
-  factor = 50;
+  factor = 1;
   for (i = 0; i < ARENA_WIDTH/factor; i++) {
     for (j = 0; j < ARENA_HEIGHT/factor; j++) {
       if (in_bounds(i, j)) {
@@ -288,7 +288,7 @@ void draw() {
 	clutter_actor_add_child(stage, this_part);
 	clutter_actor_show(this_part);*/
       } else
-	printf("(%i, %i) is out of bounds", i*50, j*50);
+	printf("(%i, %i) is out of bounds\n", i*factor, j*factor);
     }
 
 	  /*
@@ -311,7 +311,9 @@ void draw() {
 	  clutter_actor_show(this_part);
 	  */
   }
-  printf("draw done");
+  printf("draw done\n");
+
+  printf("350,350: %i\n", in_bounds(350,350));
 }
 
 int rand_limit(int limit) {
