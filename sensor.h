@@ -3,11 +3,21 @@
 
 #include <math.h>
 
-#define SENSOR_DISTANCES 16
+#include "scip/scipBase.h"
+#include "scip/scipUtil.h"
+
+#define SENSOR_MIN 20
+#define SENSOR_MAX 5600
+#define SENSOR_DISTANCES 8
+#define RAW_SENSOR_DISTANCES 682
 
 typedef struct sensor_scan {
   int distances[SENSOR_DISTANCES];
 } sensor_scan;
+
+typedef struct raw_sensor_scan {
+  int distances[RAW_SENSOR_DISTANCES];
+} raw_sensor_scan;
 
 #include "particle.h"
 #include "simulation.h"
@@ -16,5 +26,7 @@ int sensor_distance_offset(particle, double);
 sensor_scan sensor_distance(particle);
 double sensor_distance_index_to_radians(int);
 double sensor_distance_index_to_degrees(int);
+void sensor_init();
+raw_sensor_scan sensor_read_scan();
 
 #endif

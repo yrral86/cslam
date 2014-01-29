@@ -17,10 +17,12 @@ int main (int argc, char **argv) {
   success_count = 0;
   failure_count = 0;
 
+  sensor_init();
+
   srand(time(NULL));
 
   initialize_swarm();
-
+  /*
   ClutterInitError e = clutter_init(&argc, &argv);
 
   ClutterColor stage_color = { 255, 255, 255, 255 };
@@ -33,16 +35,15 @@ int main (int argc, char **argv) {
 
   clutter_actor_show(stage);
 
-  int loop_id = clutter_threads_add_timeout(200, loop_iteration, NULL);
+  int loop_id = clutter_threads_add_timeout(1000, loop_iteration, NULL);
 
   clutter_main();
+  */
 
-  /*
   while (1) {
     loop_iteration(NULL);
   }
 
-  */
   return EXIT_SUCCESS;
 }
 
@@ -60,7 +61,6 @@ void initialize_swarm() {
   robot.theta = rand_limit(360);
 
   particle_count = MAX_PARTICLES;
-
   // save first particle
   rescue = particles[0];
 
@@ -70,7 +70,11 @@ void initialize_swarm() {
 static gboolean loop_iteration(gpointer data) {
   simulate();
 
-  draw();
+  //  draw();
+
+  raw_sensor_scan s = sensor_read_scan();
+
+  printf("forward: %i\nleft: %i\nright: %i\n\n", s.distances[340], s.distances[0], s.distances[681]);
 
   return TRUE;
 }
