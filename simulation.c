@@ -20,7 +20,7 @@ int main (int argc, char **argv) {
   srand(time(NULL));
 
   initialize_swarm();
-  /*
+
   ClutterInitError e = clutter_init(&argc, &argv);
 
   ClutterColor stage_color = { 255, 255, 255, 255 };
@@ -32,11 +32,10 @@ int main (int argc, char **argv) {
 
   clutter_actor_show(stage);
 
-  int draw_loop_id = clutter_threads_add_timeout(10000, draw_iteration, NULL);
-  //  int process_loop_id = clutter_threads_add_idle(loop_iteration, NULL);
+  int draw_loop_id = clutter_threads_add_timeout(200, draw_iteration, NULL);
+  int process_loop_id = clutter_threads_add_idle(loop_iteration, NULL);
 
   clutter_main();
-*/
 
   draw();
 
@@ -47,8 +46,10 @@ void initialize_swarm() {
   // generate MAX_PARTICLES random particles all over map
   int i;
   for (i = 0; i < MAX_PARTICLES; i++) {
-    particles[i] = particle_init(rand_limit(ARENA_WIDTH), rand_limit(ARENA_HEIGHT),
-				 rand_limit(360));
+    //    particles[i] = particle_init(rand_limit(ARENA_WIDTH), rand_limit(ARENA_HEIGHT),
+    //				 rand_limit(360));
+    particles[i] = particle_init(400 + rand_limit(100), 400 + rand_limit(100),
+				 -120 + rand_limit(60));
   }
 
   particle_count = MAX_PARTICLES;
@@ -144,8 +145,8 @@ void simulate() {
     p = particles[0];
     s = sensor_distance(p);
     for (j = 0; j < SENSOR_DISTANCES; j++) {
-      //      sum += pow(scan.distances[j] - s.distances[j], 2.0);
-      sum += abs(scan.distances[j] - s.distances[j]);
+      sum += pow(scan.distances[j] - s.distances[j], 2.0);
+      //sum += abs(scan.distances[j] - s.distances[j]);
     }
 
     sum = sqrt(sum);
@@ -160,12 +161,12 @@ void simulate() {
       p = particles[i];
       s = sensor_distance(p);
       for (j = 0; j < SENSOR_DISTANCES; j++) {
-	//	sum += pow(scan.distances[j] - s.distances[j], 2.0);
-	sum += abs(scan.distances[j] - s.distances[j]);
+	sum += pow(scan.distances[j] - s.distances[j], 2.0);
+	//	sum += abs(scan.distances[j] - s.distances[j]);
       }
 
       sum = sqrt(sum);
-      sum /= SENSOR_DISTANCES;
+      //      sum /= SENSOR_DISTANCES;
 
       particle_add_sample(particles + i, sum);
 
@@ -179,32 +180,34 @@ void simulate() {
   // save it if we have a decent candidate
   particle best = particles[min_index];
   printf("%g\n", min);
-  if (best.score < 10) {
+  if (best.score < 600) {
     rescue = best;
     printf("x: %g; y: %g; theta: %g\n", rescue.x, rescue.y, rescue.theta);
     // leave initializtion mode if we have a lock
-    if (robot_get_mode() == ROBOT_INITIAL && best.score < 5) {
+    if (robot_get_mode() == ROBOT_INITIAL && best.score < 100) {
       robot_set_mode(ROBOT_LOCK);
     }
 
-    if (best.score > 5) {
+    if (best.score > 150) {
       // add new particles from rescue
+      // within 0.05 meter and 10 degrees
       // unless we have a really good fit already
       for (i = 0; i < 5 && particle_count < MAX_PARTICLES; i++) {
-	particle p = particle_init(rescue.x + rand_limit(ARENA_WIDTH/50) - ARENA_WIDTH/100,
-				   rescue.y + rand_limit(ARENA_HEIGHT/50) - ARENA_WIDTH/100,
-				   rescue.theta + rand_limit(36) - 18);
+	particle p = particle_init(rescue.x + rand_limit(100) - 50,
+				   rescue.y + rand_limit(100) - 50,
+				   rescue.theta + rand_limit(20) - 10);
 	particles[particle_count] = p;
 	particle_count++;
       }
     }
-  } else if (best.score < 20) {
+  } else if (best.score < 1000) {
     // otherwise, save best and reset particles from rescue
     rescue = best;
     for (i = 0; i < MAX_PARTICLES; i++) {
-      particles[i] = particle_init(rescue.x + rand_limit(ARENA_WIDTH/10) - ARENA_WIDTH/20,
-				   rescue.y + rand_limit(ARENA_HEIGHT/10) - ARENA_WIDTH/20,
-				   rescue.theta + rand_limit(36) - 18);
+      // within a half meter meter and 30 degrees
+      particles[i] = particle_init(rescue.x + rand_limit(1000) - 500 ,
+				   rescue.y + rand_limit(1000) - 500,
+				   rescue.theta + rand_limit(60) - 30);
     }
     
     particle_count = MAX_PARTICLES;
@@ -269,51 +272,28 @@ void simulate() {
 
 void draw() {
   // clear the stage
-  //  clutter_actor_destroy_all_children(stage);
+  clutter_actor_destroy_all_children(stage);
 
   // add obstacles
   // TODO
 
-  int i, j, factor;
-  factor = 1;
-  for (i = 0; i < ARENA_WIDTH/factor; i++) {
-    for (j = 0; j < ARENA_HEIGHT/factor; j++) {
-      if (in_bounds(i, j)) {
-	// do a jig 
-/*
-	this_part = clutter_actor_new();
-	clutter_actor_set_background_color(this_part, particle_color);
-	clutter_actor_set_size(this_part, factor, factor);
-	clutter_actor_set_position(this_part, i*factor, j*factor);
-	clutter_actor_add_child(stage, this_part);
-	clutter_actor_show(this_part);*/
-      } else
-	printf("(%i, %i) is out of bounds\n", i*factor, j*factor);
-    }
-
-	  /*
-	  // add first 15 particles
-	  ClutterActor *this_part;
-	  int i;
-	  particle p;
-	  for (i = 0; i < particle_count && i < 15; i++) {
-
-	  p = particles[i];
-	  this_part = clutter_actor_new();
-	  clutter_actor_set_background_color(this_part, particle_color);
-	  clutter_actor_set_size(this_part, PARTICLE_SIZE, PARTICLE_SIZE);
-	  // invert y
-	  clutter_actor_set_position(this_part, p.x, ARENA_HEIGHT - p.y);
-	  clutter_actor_set_pivot_point(this_part, 0.5, 0.5);
-	  // negative theta
-	  clutter_actor_set_rotation_angle(this_part, CLUTTER_Z_AXIS, -p.theta);
-	  clutter_actor_add_child(stage, this_part);
-	  clutter_actor_show(this_part);
-	  */
+  // add first 15 particles
+  ClutterActor *this_part;
+  int i;
+  particle p;
+  for (i = 0; i < particle_count && i < 15; i++) {
+    p = particles[i];
+    this_part = clutter_actor_new();
+    clutter_actor_set_background_color(this_part, particle_color);
+    clutter_actor_set_size(this_part, PARTICLE_SIZE, PARTICLE_SIZE);
+    // invert y
+    clutter_actor_set_position(this_part, p.x, ARENA_HEIGHT - p.y);
+    clutter_actor_set_pivot_point(this_part, 0.5, 0.5);
+    // negative theta
+    clutter_actor_set_rotation_angle(this_part, CLUTTER_Z_AXIS, -p.theta);
+    clutter_actor_add_child(stage, this_part);
+    clutter_actor_show(this_part);
   }
-  printf("draw done\n");
-
-  printf("350,350: %i\n", in_bounds(350,350));
 }
 
 int rand_limit(int limit) {

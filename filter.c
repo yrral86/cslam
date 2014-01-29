@@ -9,8 +9,8 @@ int filter_particle(particle p, sensor_scan scan) {
     // filter out the particle if there is a known obstacle
     // that is more than 0.10 meter closer than the scan detected
 
-    // filter if the difference is more than 0.1 meter
-    if (abs(particle_sensors.distances[i] - scan.distances[i]) > 100)
+    // filter if the difference is more than 0.5 meter
+    if (abs(particle_sensors.distances[i] - scan.distances[i]) > 500)
       count++;
 
   // allow some "too long" distances
