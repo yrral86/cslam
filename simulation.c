@@ -3,10 +3,8 @@
 static particle *particles;
 static particle *obstacles;
 static particle rescue;
-static particle robot;
 static int particle_count;
 static ClutterColor *particle_color;
-static ClutterColor *robot_color;
 static ClutterActor *stage;
 static int success_count, failure_count;
 
@@ -22,12 +20,11 @@ int main (int argc, char **argv) {
   srand(time(NULL));
 
   initialize_swarm();
-
+  /*
   ClutterInitError e = clutter_init(&argc, &argv);
 
   ClutterColor stage_color = { 255, 255, 255, 255 };
   particle_color = clutter_color_new(0, 0, 0, 255);
-  robot_color = clutter_color_new(255, 0, 0, 255);
 
   stage = clutter_stage_new();
   clutter_actor_set_size(stage, ARENA_WIDTH, ARENA_HEIGHT);
@@ -35,10 +32,13 @@ int main (int argc, char **argv) {
 
   clutter_actor_show(stage);
 
-  int draw_loop_id = clutter_threads_add_timeout(200, draw_iteration, NULL);
-  int process_loop_id = clutter_threads_add_idle(loop_iteration, NULL);
+  int draw_loop_id = clutter_threads_add_timeout(10000, draw_iteration, NULL);
+  //  int process_loop_id = clutter_threads_add_idle(loop_iteration, NULL);
 
   clutter_main();
+*/
+
+  draw();
 
   return EXIT_SUCCESS;
 }
@@ -47,18 +47,14 @@ void initialize_swarm() {
   // generate MAX_PARTICLES random particles all over map
   int i;
   for (i = 0; i < MAX_PARTICLES; i++) {
-    particles[i].x = rand_limit(ARENA_WIDTH);
-    particles[i].y = rand_limit(ARENA_HEIGHT);
-    particles[i].theta = rand_limit(360);
+    particles[i] = particle_init(rand_limit(ARENA_WIDTH), rand_limit(ARENA_HEIGHT),
+				 rand_limit(360));
   }
-
-  robot.x = rand_limit(START_END);
-  robot.y = rand_limit(ARENA_HEIGHT/2);
-  robot.theta = rand_limit(360);
 
   particle_count = MAX_PARTICLES;
 
     // save first particle
+  // todo: maintain a queue of top particles
   rescue = particles[0];
 
   robot_set_mode(ROBOT_INITIAL);
@@ -66,7 +62,6 @@ void initialize_swarm() {
 
 static gboolean loop_iteration(gpointer data) {
   simulate();
-
   return TRUE;
 }
 
@@ -77,7 +72,7 @@ static gboolean draw_iteration(gpointer data) {
 
 void simulate() {
   // scan sensors, eliminate "impossible" instances
-  sensor_scan scan = sensor_read(robot);
+  sensor_scan scan = sensor_read();
   int selected = 0;
   int i;
   for (i = 0; i < particle_count; i++) {
@@ -103,36 +98,24 @@ void simulate() {
     angle = angle_sum/particle_count;
   }
   // move robot
-  //  motor_move(angle, &robot);
+  //  motor_move(angle);
 
-  // if robot has gone out of bounds, reinitialize
-  if (robot.x < 0 ||
-      robot.x > ARENA_WIDTH ||
-      robot.y < 0 ||
-      robot.y > ARENA_HEIGHT) {
-    if (robot.x > ARENA_WIDTH)
-      success_count++;
-    else
-      failure_count++;
-    printf("successes: %i failures: %i percent success: %g\n", success_count,
-	   failure_count, (double)success_count/(success_count + failure_count));
-    initialize_swarm();
-    return;
-  }
    */
-  // move duplicates of 1/20 of the particles
+
+  // move duplicates of 1/2 of the particles to allow
+  // synchronization via forward motion
   int orig_count = particle_count;
   for (i = 0; i < orig_count && particle_count < MAX_PARTICLES; i++) {
-    if (rand_limit(20) == 0) {
+    if (rand_limit(2) == 0) {
+      // do not init, we want to inherit score
       particle p = particles[i];
+      // TODO: rename simulate_motor_move
+      // create multiple particles with stochastic variation
       motor_move(angle, &p);
       particles[particle_count] = p;
       particle_count++;
     }
   }
-
-  // move rescue particle
-  //  motor_move(angle, &rescue);
 
   // eliminate any particles that are out of bounds
   selected = 0;
@@ -161,7 +144,8 @@ void simulate() {
     p = particles[0];
     s = sensor_distance(p);
     for (j = 0; j < SENSOR_DISTANCES; j++) {
-      sum += pow(scan.distances[j] - s.distances[j], 2);
+      //      sum += pow(scan.distances[j] - s.distances[j], 2.0);
+      sum += abs(scan.distances[j] - s.distances[j]);
     }
 
     sum = sqrt(sum);
@@ -176,14 +160,16 @@ void simulate() {
       p = particles[i];
       s = sensor_distance(p);
       for (j = 0; j < SENSOR_DISTANCES; j++) {
-	sum += pow(scan.distances[j] - s.distances[j], 2.0);
-	//sum += abs(scan.distances[j] - s.distances[j]);
+	//	sum += pow(scan.distances[j] - s.distances[j], 2.0);
+	sum += abs(scan.distances[j] - s.distances[j]);
       }
 
       sum = sqrt(sum);
       sum /= SENSOR_DISTANCES;
 
-      if (sum < min) {
+      particle_add_sample(particles + i, sum);
+
+      if (particles[i].score < min) {
 	min = sum;
 	min_index = i;
       }
@@ -191,34 +177,34 @@ void simulate() {
   }
 
   // save it if we have a decent candidate
+  particle best = particles[min_index];
   printf("%g\n", min);
-  if (min < 600) {
-    rescue = particles[min_index];
+  if (best.score < 10) {
+    rescue = best;
     printf("x: %g; y: %g; theta: %g\n", rescue.x, rescue.y, rescue.theta);
     // leave initializtion mode if we have a lock
-    if (robot_get_mode() == ROBOT_INITIAL && min < 1000) {
+    if (robot_get_mode() == ROBOT_INITIAL && best.score < 5) {
       robot_set_mode(ROBOT_LOCK);
     }
 
-    if (min > 500) {
+    if (best.score > 5) {
       // add new particles from rescue
       // unless we have a really good fit already
       for (i = 0; i < 5 && particle_count < MAX_PARTICLES; i++) {
-	particle p;
-	p.x = rescue.x + rand_limit(ARENA_WIDTH/50) - ARENA_WIDTH/100;
-	p.y = rescue.y + rand_limit(ARENA_HEIGHT/50) - ARENA_WIDTH/100;
-	p.theta = rescue.theta + rand_limit(36) - 18;
+	particle p = particle_init(rescue.x + rand_limit(ARENA_WIDTH/50) - ARENA_WIDTH/100,
+				   rescue.y + rand_limit(ARENA_HEIGHT/50) - ARENA_WIDTH/100,
+				   rescue.theta + rand_limit(36) - 18);
 	particles[particle_count] = p;
 	particle_count++;
       }
     }
-  } else if (min < 800) {
+  } else if (best.score < 20) {
     // otherwise, save best and reset particles from rescue
-    rescue = particles[min_index];
+    rescue = best;
     for (i = 0; i < MAX_PARTICLES; i++) {
-      particles[i].x = rescue.x + rand_limit(ARENA_WIDTH/4) - ARENA_WIDTH/8;
-      particles[i].y = rescue.y + rand_limit(ARENA_HEIGHT/4) - ARENA_WIDTH/8;
-      particles[i].theta = rescue.theta + rand_limit(36) - 18;
+      particles[i] = particle_init(rescue.x + rand_limit(ARENA_WIDTH/10) - ARENA_WIDTH/20,
+				   rescue.y + rand_limit(ARENA_HEIGHT/10) - ARENA_WIDTH/20,
+				   rescue.theta + rand_limit(36) - 18);
     }
     
     particle_count = MAX_PARTICLES;
@@ -247,8 +233,8 @@ void simulate() {
 
   // move particle
   //    double theta = sensor_distance_index_to_radians(max_index);
-    double theta = sensor_distance_index_to_radians(max_index) - p.theta*M_PI/180;
-  //  double theta = sensor_distance_index_to_radians(max_index) + p.theta*M_PI/180;
+  //    double theta = sensor_distance_index_to_radians(max_index) - p.theta*M_PI/180;
+  double theta = sensor_distance_index_to_radians(max_index) + p.theta*M_PI/180;
   double dx = sign*max_deviation*cos(theta);
   double dy = sign*max_deviation*sin(theta);
   p.x += dx;
@@ -262,14 +248,13 @@ void simulate() {
   if (particle_count < MAX_PARTICLES/2) {
     particle old, new;
     int old_particle_count = particle_count;
-    // no more than 5 new particles
+    // no more than max/10 new particles
     // too much variation breaks lock
     int max_new = MAX_PARTICLES/10;
     if (particle_count < MAX_PARTICLES/10)
       max_new = MAX_PARTICLES - particle_count;
     while (particle_count < old_particle_count + max_new) {
-      //      old = particles[rand_limit(particle_count)];
-      old = rescue;
+      old = particles[rand_limit(particle_count)];
       // +/- 0.5 meter
       new.x = old.x + rand_limit(1000) - 500;
       new.y = old.y + rand_limit(1000) - 500;
@@ -289,36 +274,44 @@ void draw() {
   // add obstacles
   // TODO
 
-  // add first 15 particles
-  particle p;
-  int i, dx, dy;
-  ClutterActor *this_part;
-  for (i = 0; i < particle_count && i < 15; i++) {
-  //  for (i = 0; i < particle_count; i++) {
-    p = particles[i];
-    this_part = clutter_actor_new();
-    clutter_actor_set_background_color(this_part, particle_color);
-    clutter_actor_set_size(this_part, PARTICLE_SIZE, PARTICLE_SIZE);
-    // invert y
-    clutter_actor_set_position(this_part, p.x, ARENA_HEIGHT - p.y);
-    clutter_actor_set_pivot_point(this_part, 0.5, 0.5);
-    // negative theta
-    clutter_actor_set_rotation_angle(this_part, CLUTTER_Z_AXIS, -p.theta);
-    clutter_actor_add_child(stage, this_part);
-    clutter_actor_show(this_part);
-  }
+  int i, j, factor;
+  factor = 50;
+  for (i = 0; i < ARENA_WIDTH/factor; i++) {
+    for (j = 0; j < ARENA_HEIGHT/factor; j++) {
+      if (in_bounds(i, j)) {
+	// do a jig 
+/*
+	this_part = clutter_actor_new();
+	clutter_actor_set_background_color(this_part, particle_color);
+	clutter_actor_set_size(this_part, factor, factor);
+	clutter_actor_set_position(this_part, i*factor, j*factor);
+	clutter_actor_add_child(stage, this_part);
+	clutter_actor_show(this_part);*/
+      } else
+	printf("(%i, %i) is out of bounds", i*50, j*50);
+    }
 
-  /*
-  // add robot
-  this_part = clutter_actor_new();
-  clutter_actor_set_background_color(this_part, robot_color);
-  clutter_actor_set_size(this_part, PARTICLE_SIZE, PARTICLE_SIZE);
-  clutter_actor_set_position(this_part, robot.x, robot.y);
-  clutter_actor_set_pivot_point(this_part, 0.5, 0.5);
-  clutter_actor_set_rotation_angle(this_part, CLUTTER_Z_AXIS, robot.theta);
-  clutter_actor_add_child(stage, this_part);
-  clutter_actor_show(this_part);
-  */
+	  /*
+	  // add first 15 particles
+	  ClutterActor *this_part;
+	  int i;
+	  particle p;
+	  for (i = 0; i < particle_count && i < 15; i++) {
+
+	  p = particles[i];
+	  this_part = clutter_actor_new();
+	  clutter_actor_set_background_color(this_part, particle_color);
+	  clutter_actor_set_size(this_part, PARTICLE_SIZE, PARTICLE_SIZE);
+	  // invert y
+	  clutter_actor_set_position(this_part, p.x, ARENA_HEIGHT - p.y);
+	  clutter_actor_set_pivot_point(this_part, 0.5, 0.5);
+	  // negative theta
+	  clutter_actor_set_rotation_angle(this_part, CLUTTER_Z_AXIS, -p.theta);
+	  clutter_actor_add_child(stage, this_part);
+	  clutter_actor_show(this_part);
+	  */
+  }
+  printf("draw done");
 }
 
 int rand_limit(int limit) {

@@ -8,7 +8,7 @@
 
 #define SENSOR_MIN 20
 #define SENSOR_MAX 5600
-#define SENSOR_DISTANCES 5
+#define SENSOR_DISTANCES 16
 #define RAW_SENSOR_DISTANCES 681
 
 typedef struct sensor_scan {

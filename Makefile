@@ -3,6 +3,7 @@ OBJS = \
 	filter \
 	fuzzy_controller \
 	motor \
+	particle \
 	robot \
 	sensor \
 	scip/scipBase \
@@ -14,6 +15,7 @@ OBJ_FILES = 	\
 		filter.o \
 		fuzzy_controller.o \
 		motor.o \
+		particle.o \
 		robot.o \
 		sensor.o \
 		scip/scipBase.o \
