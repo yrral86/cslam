@@ -4,6 +4,10 @@ static tPort *port;
 static int **buffer;
 static raw_sensor_scan lidar_data;
 
+int in_bounds(int x, int y) {
+  return (x > 0 && x < ARENA_WIDTH && y > 0 && y < ARENA_HEIGHT && y + 2*x > 800);
+}
+
 int sensor_distance_offset(particle p, double offset) {
   int a, b, c;
   double dx, dy, nx, ny;
@@ -16,7 +20,7 @@ int sensor_distance_offset(particle p, double offset) {
   ny = p.y + dy;
 
   // bracket between a and b
-  while (nx > 0 && nx < ARENA_WIDTH && ny > 0 && ny < ARENA_HEIGHT) {
+  while (in_bounds(nx, ny)) {
     a = b;
     b += 10;
     dx = b*cos(t);
@@ -32,7 +36,7 @@ int sensor_distance_offset(particle p, double offset) {
     dy = c*sin(t);
     nx = p.x + dx;
     ny = p.y + dy;
-    if (nx > 0 && nx < ARENA_WIDTH && ny > 0 && ny < ARENA_HEIGHT)
+    if (in_bounds(nx, ny))
       a = c;
     else
       b = c;
@@ -43,20 +47,33 @@ int sensor_distance_offset(particle p, double offset) {
 
 sensor_scan sensor_distance(particle p) {
   sensor_scan s;
-  double normalization_angle = p.theta*M_PI/180;
   int i;
   for (i = 0; i < SENSOR_DISTANCES; i++)
-    s.distances[i] = sensor_distance_offset(p, sensor_distance_index_to_radians(i) -
-					    normalization_angle);
+    s.distances[i] = sensor_distance_offset(p, sensor_distance_index_to_radians(i));
+  return s;
+}
+
+sensor_scan sensor_read() {
+  sensor_scan s;
+  raw_sensor_scan raw = sensor_read_scan();
+
+  double spacing = (double)RAW_SENSOR_DISTANCES/SENSOR_DISTANCES;
+
+  // downsample
+  int i;
+  for (i = 0; i < SENSOR_DISTANCES; i++)
+    s.distances[i] = raw.distances[(int)(i*spacing)];
   return s;
 }
 
 double sensor_distance_index_to_degrees(int i) {
-  return i*360/SENSOR_DISTANCES;
+  // spread over 240 degrees, centered on 0
+  return i*240/SENSOR_DISTANCES - 120;
 }
 
 double sensor_distance_index_to_radians(int i) {
-  return i*2*M_PI/SENSOR_DISTANCES;
+  // 240 degrees = 2/3rds of 2*pi
+  return i*4*M_PI/(3*SENSOR_DISTANCES) - M_PI/3;
 }
 
 void sensor_init () {
@@ -91,10 +108,8 @@ raw_sensor_scan sensor_read_scan() {
   for (i = 0 ; i < step_num ; i++) {
     distance = buffer[0][i];
     if ((distance >= SENSOR_MIN) && (distance <= SENSOR_MAX)) {
-      // Copy the data into the temp data set
+      // Copy the data into the static variable
       lidar_data.distances[i] = distance;
-    } else {
-      printf("out of range: %i\n", distance);
     }
   }
   return lidar_data;

@@ -12,7 +12,8 @@ int filter_particle(particle p, sensor_scan scan) {
       count++;
 
   // allow some "too long" distances
-  if (count > SENSOR_DISTANCES/4)
+  //    if (count > SENSOR_DISTANCES/4)
+  if (count > SENSOR_DISTANCES/4 || !in_bounds(p.x, p.y))
     filter = 1;
   return filter;
 }

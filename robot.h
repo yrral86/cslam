@@ -5,8 +5,7 @@
 
 enum modeEnum {
   ROBOT_INITIAL,
-  ROBOT_P_LOCK,
-  ROBOT_PO_LOCK
+  ROBOT_LOCK
 };
 
 typedef enum modeEnum mode;
