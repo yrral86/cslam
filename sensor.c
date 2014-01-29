@@ -5,7 +5,8 @@ static int **buffer;
 static raw_sensor_scan lidar_data;
 
 int in_bounds(int x, int y) {
-  return (x > 0 && x < ARENA_WIDTH && y > 0 && y < ARENA_HEIGHT && y + 2*x > 800);
+  //  return (x > 0 && x < ARENA_WIDTH && y > 0 && y < ARENA_HEIGHT && y + 2*x > 800);
+  return (x > 0 && x < ARENA_WIDTH && y > 0 && y < ARENA_HEIGHT);
 }
 
 int sensor_distance_offset(particle p, double offset) {
@@ -58,11 +59,16 @@ sensor_scan sensor_read() {
   raw_sensor_scan raw = sensor_read_scan();
 
   double spacing = (double)RAW_SENSOR_DISTANCES/SENSOR_DISTANCES;
+  int offset = (RAW_SENSOR_DISTANCES - (int)spacing*(SENSOR_DISTANCES - 1))/2;
 
-  // downsample
-  int i;
-  for (i = 0; i < SENSOR_DISTANCES; i++)
-    s.distances[i] = raw.distances[(int)(i*spacing)];
+  // downsample from 5 data points
+  int i, j;
+  for (i = 0; i < SENSOR_DISTANCES; i++) {
+    s.distances[i] = 0;
+    int index = (int)(i*spacing) + offset - 2;
+    for (j = 0; j < 5; j++)
+      s.distances[i] += raw.distances[index+j];
+  }
   return s;
 }
 

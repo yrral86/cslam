@@ -1,7 +1,7 @@
 #include "motor.h"
 
-const int LENGTH = 3;
-const int VELOCITY = 3;
+const int LENGTH = 30;
+const int VELOCITY = 30;
 
 void motor_move(int steering_angle, particle *p) {
   p->theta += (VELOCITY*sin(steering_angle*M_PI/180)/LENGTH)*180/M_PI;
