@@ -36,7 +36,10 @@ int main (int argc, char **argv) {
 
     // attenuate map
     for (i = 0; i < ARENA_HEIGHT*ARENA_WIDTH/4; i++)
-      map[i] *= 0.95;
+      if (map[i] > 100)
+	map[i] *= 0.75;
+      else
+	map[i] *= 0.99;
 
     int sleep_time = poll_time - (utime() - last_poll);
     if (sleep_time > 0)
@@ -61,7 +64,7 @@ void record_distance(int i, double distance) {
   x = ARENA_WIDTH/4 + dx;
   y = ARENA_HEIGHT/4 + dy;
   if (in_bounds(x, y)) {
-    map[ARENA_WIDTH/2*y + x] += 100;
+    map[ARENA_WIDTH/2*y + x] = 255;
   }
 }
 
