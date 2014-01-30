@@ -5,8 +5,8 @@ static int **buffer;
 static raw_sensor_scan lidar_data;
 
 int in_bounds(int x, int y) {
-  if (x >= 0 && x <= ARENA_WIDTH && y >= 0 && y <= ARENA_HEIGHT &&
-      !(x >= 300 && x <= 376 && y >= 300 && y <= 402))
+  if (x >= 0 && x <= ARENA_WIDTH && y >= 0 && y <= ARENA_HEIGHT)// &&
+      //    !(x >= 300 && x <= 376 && y >= 300 && y <= 402))
     return 1;
   else return 0;
 }

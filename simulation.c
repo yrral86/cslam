@@ -292,10 +292,3 @@ void draw() {
     clutter_actor_show(this_part);
   }
 }
-
-int rand_limit(int limit) {
-  int r, d = RAND_MAX / limit;
-  limit *= d;
-  do {r = rand();} while (r >= limit);
-  return r/d;
-}

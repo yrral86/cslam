@@ -29,7 +29,8 @@ all:
 	for i in $(OBJS); do \
 		(gcc -c -o $$i.o $$i.c $(CFLAGS)); \
 	done
+	gcc -o record record.c $(OBJ_FILES) $(CFLAGS)
 	gcc -o simulation simulation.c $(OBJ_FILES) $(CFLAGS)
 
 clean:
-	rm -f *~ $(OBJ_FILES) simulation
+	rm -f *~ $(OBJ_FILES) simulation record

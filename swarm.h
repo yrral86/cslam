@@ -29,4 +29,6 @@ void swarm_filter_particles(sensor_scan);
 void swarm_delete_particle(particle);
 particle swarm_get_random_particle();
 
+int rand_limit(int);
+
 #endif
