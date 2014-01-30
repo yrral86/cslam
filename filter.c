@@ -9,13 +9,13 @@ int filter_particle(particle p, sensor_scan scan) {
     // filter out the particle if there is a known obstacle
     // that is more than 0.10 meter closer than the scan detected
 
-    // filter if the difference is more than 0.5 meter
-    if (abs(particle_sensors.distances[i] - scan.distances[i]) > 500)
+    // filter if the difference is more than 0.01 meter
+    if (abs(particle_sensors.distances[i] - scan.distances[i]) > 10)
       count++;
 
   // allow some "too long" distances
   //    if (count > SENSOR_DISTANCES/4)
-  if (count > 8 || !in_bounds(p.x, p.y))
+  if (count > 0 || !in_bounds(p.x, p.y))
     filter = 1;
   //  else {
   //printf("count: %i\n", count);

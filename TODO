@@ -1,0 +1,7 @@
+write tests for swarm heap code
+
+testing in general
+
+calculate location of nearest obstacle in each direction, build map
+
+mapping should probably run in separate thread as often as the sensor can update

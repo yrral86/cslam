@@ -1,15 +1,15 @@
 #include "simulation.h"
 
-static particle *particles;
-static particle *obstacles;
+//static particle *particles;
+static particle *obstacles;/*
 static particle rescue;
-static int particle_count;
+static int particle_count;*/
 static ClutterColor *particle_color;
 static ClutterActor *stage;
 static int success_count, failure_count;
 
 int main (int argc, char **argv) {
-  particles = malloc(sizeof(particle)*MAX_PARTICLES);
+  //  particles = malloc(sizeof(particle)*MAX_PARTICLES);
   obstacles = malloc(sizeof(particle)*OBSTACLE_COUNT);
 
   success_count = 0;
@@ -19,7 +19,9 @@ int main (int argc, char **argv) {
 
   srand(time(NULL));
 
-  initialize_swarm();
+  robot_set_mode(ROBOT_INITIAL);
+
+  swarm_init();
 
   ClutterInitError e = clutter_init(&argc, &argv);
 
@@ -42,25 +44,6 @@ int main (int argc, char **argv) {
   return EXIT_SUCCESS;
 }
 
-void initialize_swarm() {
-  // generate MAX_PARTICLES random particles all over map
-  int i;
-  for (i = 0; i < MAX_PARTICLES; i++) {
-    //    particles[i] = particle_init(rand_limit(ARENA_WIDTH), rand_limit(ARENA_HEIGHT),
-    //				 rand_limit(360));
-    particles[i] = particle_init(400 + rand_limit(100), 400 + rand_limit(100),
-				 -120 + rand_limit(60));
-  }
-
-  particle_count = MAX_PARTICLES;
-
-    // save first particle
-  // todo: maintain a queue of top particles
-  rescue = particles[0];
-
-  robot_set_mode(ROBOT_INITIAL);
-}
-
 static gboolean loop_iteration(gpointer data) {
   simulate();
   return TRUE;
@@ -74,15 +57,8 @@ static gboolean draw_iteration(gpointer data) {
 void simulate() {
   // scan sensors, eliminate "impossible" instances
   sensor_scan scan = sensor_read();
-  int selected = 0;
-  int i;
-  for (i = 0; i < particle_count; i++) {
-    if (!filter_particle(particles[i], scan)) {
-      particles[selected] = particles[i];
-      selected++;
-    }
-  }
-  particle_count = selected;
+
+  swarm_filter_particles(scan);
 
   // working on sensor, disable movement
 
@@ -103,6 +79,8 @@ void simulate() {
 
    */
 
+
+  /*
   // move duplicates of 1/2 of the particles to allow
   // synchronization via forward motion
   int orig_count = particle_count;
@@ -118,29 +96,26 @@ void simulate() {
     }
   }
 
-  // eliminate any particles that are out of bounds
-  selected = 0;
-  for (i = 0; i < particle_count; i++) {
-    if (in_bounds(particles[i].x, particles[i].y)) {
-      particles[selected] = particles[i];
-      selected++;
-    }
-  }
-  particle_count = selected;
+  */
 
-  printf("particle count: %i\n", particle_count);
+  printf("particle count: %i\n", swarm_get_size());
+
+  int size = swarm_get_size();
+  if (size == 0)
+    swarm_reset();
+  else
+    swarm_evaluate(scan);
 
   // ensure we have at least one particle,
   // if we don't, rescue and skip the search
+  /*
   int min_index = 0;
   double min = 1000000;
   double sum;
   particle p;
   sensor_scan s;
   int j;
-  if (particle_count == 0) {
-    particles[0] = rescue;
-    particle_count = 1;
+  if (get_swarm_size() == 0) {
     sum = 0.0;
     p = particles[0];
     s = sensor_distance(p);
@@ -213,7 +188,7 @@ void simulate() {
     particle_count = MAX_PARTICLES;
     robot_set_mode(ROBOT_INITIAL);
   } else
-    initialize_swarm();
+    swarm_reset();
 
   // add a new particle based on the rescue particle,
   // but moved in the direction of the maximum distance
@@ -246,34 +221,45 @@ void simulate() {
   // add particle
   particles[particle_count] = p;
   particle_count++;
+  */
 
-  // fortify particle_count from rescue
-  if (particle_count < MAX_PARTICLES/2) {
+  // fortify particle_count
+  // half from random and half from "swarm top"
+  size = swarm_get_size();
+  if (size < MAX_PARTICLES/2) {
     particle old, new;
-    int old_particle_count = particle_count;
+    particle swarm_top[SWARM_TOP_COUNT];
+    int old_particle_count = size;
     // no more than max/10 new particles
     // too much variation breaks lock
     int max_new = MAX_PARTICLES/10;
-    if (particle_count < MAX_PARTICLES/10)
-      max_new = MAX_PARTICLES - particle_count;
-    while (particle_count < old_particle_count + max_new) {
-      old = particles[rand_limit(particle_count)];
+    swarm_top_particles(swarm_top);
+    if (size < MAX_PARTICLES/10)
+      max_new = MAX_PARTICLES - size;
+    while (swarm_get_size() < old_particle_count + max_new) {
+      if (rand_limit(2) == 0)
+	old = swarm_get_random_particle();
+      else
+	old = swarm_top[rand_limit(SWARM_TOP_COUNT)];
       // +/- 0.5 meter
       new.x = old.x + rand_limit(1000) - 500;
       new.y = old.y + rand_limit(1000) - 500;
       new.x = old.x + rand_limit(1000) - 500;
-      // +/- 30
+      // +/- 30 degree
       new.theta = old.theta + rand_limit(60) - 30;
-      particles[particle_count] = new;
-      particle_count++;
+      // inherit score
+
+      // add particle to swarm
+      swarm_add_particle(new);
     }
   }
 }
 
 void draw() {
   // clear the stage
+  printf("yo2\n");
   clutter_actor_destroy_all_children(stage);
-
+  printf("yo2\n");
   // add obstacles
   // TODO
 
@@ -281,15 +267,26 @@ void draw() {
   ClutterActor *this_part;
   int i;
   particle p;
-  for (i = 0; i < particle_count && i < 15; i++) {
+  printf("yo2\n");
+  int size = swarm_get_size();
+  particle particles[MAX_PARTICLES];
+  printf("yo2\n");
+  swarm_all_particles(particles);
+  printf("yo2\n");
+  for (i = 0; i < size && i < 15; i++) {
+  printf("yo2\n");
     p = particles[i];
+  printf("yo2\n");
     this_part = clutter_actor_new();
+  printf("yo2\n");
     clutter_actor_set_background_color(this_part, particle_color);
     clutter_actor_set_size(this_part, PARTICLE_SIZE, PARTICLE_SIZE);
+  printf("yo2\n");
     // invert y
     clutter_actor_set_position(this_part, p.x, ARENA_HEIGHT - p.y);
     clutter_actor_set_pivot_point(this_part, 0.5, 0.5);
     // negative theta
+  printf("yo2\n");
     clutter_actor_set_rotation_angle(this_part, CLUTTER_Z_AXIS, -p.theta);
     clutter_actor_add_child(stage, this_part);
     clutter_actor_show(this_part);
