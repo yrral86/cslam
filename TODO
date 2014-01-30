@@ -5,3 +5,7 @@ testing in general
 calculate location of nearest obstacle in each direction, build map
 
 mapping should probably run in separate thread as often as the sensor can update
+
+
+build a map for each particle
+each particle should select a decay rate so they handle different movement speeds
