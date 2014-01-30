@@ -3,7 +3,8 @@
 #include "lazygl.h"
 
 const static int poll_time = 100000;
-static uint8_t map[ARENA_HEIGHT*ARENA_WIDTH];
+// 5*5 (map is bigger than arena) / 10 * 10 (mm -> cm)
+static uint8_t map[ARENA_HEIGHT*ARENA_WIDTH/4];
 static double spacing;
 
 int main (int argc, char **argv) {
@@ -19,7 +20,7 @@ int main (int argc, char **argv) {
   uint64_t last_poll;
 
   glutInit(&argc, argv);
-  initGL(map, ARENA_WIDTH, ARENA_HEIGHT);
+  initGL(map, ARENA_WIDTH/2, ARENA_HEIGHT/2);
 
   while(1) {
     scan = sensor_read_raw();
@@ -34,7 +35,7 @@ int main (int argc, char **argv) {
     glutMainLoopEvent();
 
     // attenuate map
-    for (i = 0; i < ARENA_HEIGHT*ARENA_WIDTH; i++)
+    for (i = 0; i < ARENA_HEIGHT*ARENA_WIDTH/4; i++)
       map[i] *= 0.95;
 
     int sleep_time = poll_time - (utime() - last_poll);
@@ -49,17 +50,18 @@ int main (int argc, char **argv) {
 }
 
 void record_distance(int i, double distance) {
-  // forward is now 0 degrees, left +, right -
-  int degrees = 120 - i*spacing;
+  distance /= 10.0;
+  // forward is now 0 degrees, left -, right +
+  int degrees = -120 + i*spacing;
   double theta, dx, dy;
   int x, y;
   theta = degrees*M_PI/180;
   dx = distance*cos(theta);
   dy = distance*sin(theta);
-  x = 300 + dx;
-  y = ARENA_HEIGHT/2 + dy;
+  x = ARENA_WIDTH/4 + dx;
+  y = ARENA_HEIGHT/4 + dy;
   if (in_bounds(x, y)) {
-    map[ARENA_WIDTH*y + x] += 100;
+    map[ARENA_WIDTH/2*y + x] += 100;
   }
 }
 
