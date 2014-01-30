@@ -5,8 +5,6 @@ static int **buffer;
 static raw_sensor_scan lidar_data;
 
 int in_bounds(int x, int y) {
-  //  return (x > 0 && x < ARENA_WIDTH && y > 0 && y < ARENA_HEIGHT && y + 2*x > 800);
-  //  return (x > 0 && x < ARENA_WIDTH && y > 0 && y < ARENA_HEIGHT);
   if (x >= 0 && x <= ARENA_WIDTH && y >= 0 && y <= ARENA_HEIGHT &&
       !(x >= 300 && x <= 376 && y >= 300 && y <= 402))
     return 1;
@@ -60,7 +58,7 @@ sensor_scan sensor_distance(particle p) {
 
 sensor_scan sensor_read() {
   sensor_scan s;
-  raw_sensor_scan raw = sensor_read_scan();
+  raw_sensor_scan raw = sensor_read_raw();
 
   double spacing = (double)RAW_SENSOR_DISTANCES/SENSOR_DISTANCES;
   int offset = (RAW_SENSOR_DISTANCES - (int)spacing*(SENSOR_DISTANCES - 1))/2;
@@ -107,7 +105,7 @@ void sensor_init () {
 }
 
 
-raw_sensor_scan sensor_read_scan() {
+raw_sensor_scan sensor_read_raw() {
   // Initialize parameters for laser scanning
   int start_step = 44;
   int end_step = 725;

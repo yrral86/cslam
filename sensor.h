@@ -29,6 +29,6 @@ sensor_scan sensor_read();
 double sensor_distance_index_to_radians(int);
 double sensor_distance_index_to_degrees(int);
 void sensor_init();
-raw_sensor_scan sensor_read_scan();
+raw_sensor_scan sensor_read_raw();
 
 #endif
