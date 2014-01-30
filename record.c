@@ -1,10 +1,12 @@
 #include "record.h"
 
+#include "lazygl.h"
+
 const static int poll_time = 100000;
 static uint8_t map[ARENA_HEIGHT*ARENA_WIDTH];
 static double spacing;
 
-int main (int argc, char *argv) {
+int main (int argc, char **argv) {
   int i;
   //  map = malloc(sizeof(uint8_t)*ARENA_WIDTH*ARENA_HEIGHT);
 
@@ -16,6 +18,9 @@ int main (int argc, char *argv) {
 
   uint64_t last_poll;
 
+  glutInit(&argc, argv);
+  initGL(map, ARENA_WIDTH, ARENA_HEIGHT);
+
   while(1) {
     scan = sensor_read_raw();
     last_poll = utime();
@@ -24,15 +29,17 @@ int main (int argc, char *argv) {
     for (i = 0; i < RAW_SENSOR_DISTANCES; i++)
       record_distance(i, scan.distances[i]);
 
-    // attenuate map
-    for (i = 0; i < ARENA_HEIGHT*ARENA_WIDTH; i++) {
-      map[i] *= 0.99;
-      printf("%i ", map[i]);
-      if (i % ARENA_WIDTH - 1 == 1) printf("\n");
-    }
-    printf("\n\n");
+    display();
 
-    usleep(poll_time - (utime() - last_poll));
+    glutMainLoopEvent();
+
+    // attenuate map
+    for (i = 0; i < ARENA_HEIGHT*ARENA_WIDTH; i++)
+      map[i] *= 0.95;
+
+    int sleep_time = poll_time - (utime() - last_poll);
+    if (sleep_time > 0)
+      usleep(poll_time - (utime() - last_poll));
   }
 
   // because malloc, eyeroll
@@ -49,10 +56,10 @@ void record_distance(int i, double distance) {
   theta = degrees*M_PI/180;
   dx = distance*cos(theta);
   dy = distance*sin(theta);
-  x = ARENA_WIDTH/2 + dx;
+  x = 300 + dx;
   y = ARENA_HEIGHT/2 + dy;
-  if (in_bounds((int)x, (int)y)) {
-    map[ARENA_WIDTH*y + x] += 1;
+  if (in_bounds(x, y)) {
+    map[ARENA_WIDTH*y + x] += 100;
   }
 }
 

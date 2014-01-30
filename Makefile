@@ -2,6 +2,7 @@ CFLAGS = -lglut -lm -lGLU -lGL -g `pkg-config clutter-1.0 --libs --cflags`
 OBJS = \
 	filter \
 	fuzzy_controller \
+	lazygl \
 	motor \
 	particle \
 	robot \
@@ -15,6 +16,7 @@ OBJS = \
 OBJ_FILES = 	\
 		filter.o \
 		fuzzy_controller.o \
+		lazygl.o \
 		motor.o \
 		particle.o \
 		robot.o \
