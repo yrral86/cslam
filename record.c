@@ -9,7 +9,7 @@ const  static int BUFFER_SIZE = ARENA_HEIGHT*ARENA_WIDTH/4;
 // first 2 buffers are history, so you only have
 // BUFFER_COUNT - 2 to work with
 #define BUFFER_HISTORY 2
-#define BUFFER_COUNT 200
+#define BUFFER_COUNT 100
 static uint8_t* map[BUFFER_COUNT];
 static particle particles[BUFFER_COUNT];
 static double spacing;
@@ -139,10 +139,13 @@ int main (int argc, char **argv) {
     */
 
     // copy new map into historical buffer
+    // and attenuate
     if (iterations % 20)
-      for (i = 0; i < BUFFER_SIZE; i++)
+      for (i = 0; i < BUFFER_SIZE; i++) {
+	map[1][i] *= 0.99;
 	if (map[0][i] > 200)
 	  map[1][i] = 255;
+      }
   }
 
   // because malloc, eyeroll
