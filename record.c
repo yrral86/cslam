@@ -7,9 +7,9 @@ const static int poll_time = 100000;
 // 25*height*width/100
 const  static int BUFFER_SIZE = ARENA_HEIGHT*ARENA_WIDTH/4;
 // first 10 buffers are history, so you only have
-// BUFFER_COUNT - 10 to work with
-#define BUFFER_HISTORY 10
-#define BUFFER_COUNT 50
+// BUFFER_COUNT - 2 to work with
+#define BUFFER_HISTORY 2
+#define BUFFER_COUNT 100
 static uint8_t* map[BUFFER_COUNT];
 static particle particles[BUFFER_COUNT];
 static double spacing;
@@ -29,7 +29,7 @@ int main (int argc, char **argv) {
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], ARENA_WIDTH/2, ARENA_HEIGHT/2, ARENA_WIDTH, ARENA_HEIGHT);
+  initGL(map[0], map[1], ARENA_WIDTH/2, ARENA_HEIGHT/2, ARENA_WIDTH/2, ARENA_HEIGHT/2);
 
   init_map();
 
@@ -88,15 +88,14 @@ int main (int argc, char **argv) {
       // subtract from each historical map
       // this should give us new things to add
       // give more weight to older maps
-      for (j = 0; j < BUFFER_HISTORY; j++)
-	for (k = 0; k < BUFFER_SIZE; k++) {
-	  difference = buffer[k] - map[j][k];
-	  // filter out everything in the map
-	  // that we can't see
-	  // and make sure difference is significant
-	  if (difference >= 200)
-	    sum += pow(j + 1, 2.0);
-	}
+      for (k = 0; k < BUFFER_SIZE; k++) {
+	difference = buffer[k] - map[1][k];
+	// filter out everything in the map
+	// that we can't see
+	// and make sure difference is significant
+	if (difference >= 200)
+	  sum += 1;
+      }
 
       p.score = sum;
 
@@ -126,7 +125,7 @@ int main (int argc, char **argv) {
     glutMainLoopEvent();
 
     iterations++;
-
+    /*
     // shift history buffers every 10 iterations
     // filtering out anything less than 200
     if (iterations % 10 == 0)
@@ -136,6 +135,13 @@ int main (int argc, char **argv) {
 	  if (map[i][j] != 0 && map[i][j] < 200)
 	    map[i][j] = 0;
       }
+    */
+
+    // copy new map into historical buffer
+    if (iterations % 10)
+      for (i = 0; i < BUFFER_SIZE; i++)
+	if (map[0][i] > 200)
+	  map[1][i] = 255;
   }
 
   // because malloc, eyeroll
