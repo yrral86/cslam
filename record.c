@@ -6,10 +6,10 @@ const static int poll_time = 100000;
 // 5*5 (map is 5X bigger in both directions than arena) / 10 * 10 (mm -> cm)
 // 25*height*width/100
 const  static int BUFFER_SIZE = ARENA_HEIGHT*ARENA_WIDTH/4;
-// first 10 buffers are history, so you only have
+// first 2 buffers are history, so you only have
 // BUFFER_COUNT - 2 to work with
 #define BUFFER_HISTORY 2
-#define BUFFER_COUNT 500
+#define BUFFER_COUNT 200
 static uint8_t* map[BUFFER_COUNT];
 static particle particles[BUFFER_COUNT];
 static double spacing;
@@ -139,7 +139,7 @@ int main (int argc, char **argv) {
     */
 
     // copy new map into historical buffer
-    if (iterations % 10)
+    if (iterations % 20)
       for (i = 0; i < BUFFER_SIZE; i++)
 	if (map[0][i] > 200)
 	  map[1][i] = 255;
