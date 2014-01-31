@@ -9,7 +9,7 @@ const  static int BUFFER_SIZE = ARENA_HEIGHT*ARENA_WIDTH/4;
 // first 10 buffers are history, so you only have
 // BUFFER_COUNT - 2 to work with
 #define BUFFER_HISTORY 2
-#define BUFFER_COUNT 100
+#define BUFFER_COUNT 500
 static uint8_t* map[BUFFER_COUNT];
 static particle particles[BUFFER_COUNT];
 static double spacing;
@@ -46,8 +46,8 @@ int main (int argc, char **argv) {
       // 0.05 meters in either direction
       particles[i].x = rand_normal(5);
       particles[i].y = rand_normal(5);
-      // 5 degrees in either direction
-      particles[i].theta = rand_normal(5);
+      // 15 degrees in either direction
+      particles[i].theta = rand_normal(15);
     }
 
     // make sure sensor is ready
@@ -108,12 +108,13 @@ int main (int argc, char **argv) {
 
     // attenuate map
     for (i = 0; i < BUFFER_SIZE; i++)
-	map[0][i] *= 0.9;
+	map[0][i] *= 0.75;
 
     // update localization
-    particles[0].x += particles[min_index].x;
-    particles[0].y += particles[min_index].y;
-    particles[0].theta += particles[min_index].theta;
+    // assuming 10% momentum
+    particles[0].x += 1.1*particles[min_index].x;
+    particles[0].y += 1.1*particles[min_index].y;
+    particles[0].theta += 1.1*particles[min_index].theta;
 
     // copy best into map
     for (i = 0; i < BUFFER_SIZE; i++)
@@ -169,10 +170,6 @@ void init_map() {
     if (sleep_time > 0)
       usleep(sleep_time);
     else printf("sleepless\n");
-  }
-
-  for (i = 0; i < BUFFER_SIZE; i++) {
-    map[0][i] *= 0.95;
   }
 }
 
