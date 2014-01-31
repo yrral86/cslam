@@ -6,18 +6,20 @@ const static int poll_time = 100000;
 // 5*5 (map is 5X bigger in both directions than arena) / 10 * 10 (mm -> cm)
 // 25*height*width/100
 const  static int BUFFER_SIZE = ARENA_HEIGHT*ARENA_WIDTH/4;
-#define BUFFER_COUNT 1000
+// first 10 buffers are history, so you only have
+// BUFFER_COUNT - 10 to work with
+#define BUFFER_HISTORY 10
+#define BUFFER_COUNT 50
 static uint8_t* map[BUFFER_COUNT];
 static particle particles[BUFFER_COUNT];
 static double spacing;
+static uint64_t last_poll;
 
 int main (int argc, char **argv) {
   // allocate buffers
-  int i, j;
+  int i, j, k, iterations;
   for (i = 0; i < BUFFER_COUNT; i++)
     map[i] = malloc(sizeof(uint8_t)*BUFFER_SIZE);
-
-  uint8_t *best_map = map[0];
 
   spacing = 240.0/RAW_SENSOR_DISTANCES;
 
@@ -25,31 +27,38 @@ int main (int argc, char **argv) {
 
   raw_sensor_scan scan;
 
-  uint64_t last_poll;
-
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(best_map, ARENA_WIDTH/2, ARENA_HEIGHT/2, ARENA_WIDTH, ARENA_HEIGHT);
+  initGL(map[0], ARENA_WIDTH/2, ARENA_HEIGHT/2, ARENA_WIDTH, ARENA_HEIGHT);
 
   init_map();
 
+  rand_normal_init();
+
+  iterations = 0;
   while(1) {
-    // reset buffers
-    for (i = 1; i < BUFFER_COUNT; i++)
+    for (i = BUFFER_HISTORY; i < BUFFER_COUNT; i++) {
+      // reset buffers
       bzero(map[i], BUFFER_SIZE*sizeof(uint8_t));
 
-    // generate particles
-    for (i = 1; i < BUFFER_COUNT; i++) {
+      // generate particles
       // generate random position and angle varation
-      // 0.01 meters in either direction
-      particles[i].x = rand_limit(2) - 1;
-      particles[i].y = rand_limit(2) - 1;
+      // 0.05 meters in either direction
+      particles[i].x = rand_normal(5);
+      particles[i].y = rand_normal(5);
       // 5 degrees in either direction
-      particles[i].theta = rand_limit(10) - 5;
+      particles[i].theta = rand_normal(5);
     }
 
-    // sample 5 times (0.5 sec)
-    for (j = 0; j < 5; j++) {
+    // make sure sensor is ready
+    int sleep_time = poll_time - (utime() - last_poll);
+    if (sleep_time > 0)
+      usleep(sleep_time);
+    else printf("sleepless\n");
+
+    // sample 3 times (0.3 sec)
+    int sample_count = 3;
+    for (j = 0; j < sample_count; j++) {
       scan = sensor_read_raw();
       last_poll = utime();
 
@@ -57,34 +66,41 @@ int main (int argc, char **argv) {
       for (i = 0; i < RAW_SENSOR_DISTANCES; i++)
 	record_distance(i, scan.distances[i]);
 
-      int sleep_time = poll_time - (utime() - last_poll);
-      if (sleep_time > 0)
-	usleep(poll_time - (utime() - last_poll));
-      else printf("sleepless\n");
+      if (j + 1 < sample_count) {
+	int sleep_time = poll_time - (utime() - last_poll);
+	if (sleep_time > 0)
+	  usleep(poll_time - (utime() - last_poll));
+	else printf("sleepless\n");
+      }
     }
 
     // evaluate buffers
     uint8_t *buffer;
     particle p;
-    int k, sum, min, min_index;
+    int difference, sum, min, min_index;
     min = 1000000;
     min_index = 1;
-    for (i = 1; i < BUFFER_COUNT; i++) {
+    for (i = BUFFER_HISTORY; i < BUFFER_COUNT; i++) {
       buffer = map[i];
       p = particles[i];
 
       sum = 0;
-      // symmetric difference
-      // adjusted to allow for some attenuation on the current best map
-      for (k = 0; k < BUFFER_SIZE; k++) {
-	if (best_map[k] > 200 && buffer[k] != 255)
-	  sum++;
-	else if (buffer[k] == 255 && best_map[k] <= 200)
-	  sum++;
-      }
+      // subtract from each historical map
+      // this should give us new things to add
+      // give more weight to older maps
+      for (j = 0; j < BUFFER_HISTORY; j++)
+	for (k = 0; k < BUFFER_SIZE; k++) {
+	  difference = buffer[k] - map[j][k];
+	  // filter out everything in the map
+	  // that we can't see
+	  // and make sure difference is significant
+	  if (difference >= 200)
+	    sum += pow(j + 1, 2.0);
+	}
 
       p.score = sum;
 
+      // we choose the minimum new to add
       if (sum < min) {
 	min = sum;
 	min_index = i;
@@ -103,11 +119,23 @@ int main (int argc, char **argv) {
     // copy best into map
     for (i = 0; i < BUFFER_SIZE; i++)
       if (map[min_index][i] == 255)
-	best_map[i] = 255;
+	map[0][i] = 255;
 
     display();
 
     glutMainLoopEvent();
+
+    iterations++;
+
+    // shift history buffers every 10 iterations
+    // filtering out anything less than 200
+    if (iterations % 10 == 0)
+      for (i = BUFFER_HISTORY - 1; i > 0; i--) {
+	memcpy(map[i], map[i - 1], sizeof(uint8_t)*BUFFER_SIZE);
+	for (j = 0; j < BUFFER_SIZE; j++)
+	  if (map[i][j] != 0 && map[i][j] < 200)
+	    map[i][j] = 0;
+      }
   }
 
   // because malloc, eyeroll
@@ -117,7 +145,7 @@ int main (int argc, char **argv) {
 }
 
 void init_map() {
-  int i, j, last_poll;
+  int i, j;
   raw_sensor_scan s;
 
   particles[0].x = 0;
@@ -130,6 +158,11 @@ void init_map() {
 
     for (j = 0; j < RAW_SENSOR_DISTANCES; j++)
       record_distance_init(j, s.distances[j]);
+
+    int sleep_time = poll_time - (utime() - last_poll);
+    if (sleep_time > 0)
+      usleep(sleep_time);
+    else printf("sleepless\n");
   }
 
   for (i = 0; i < BUFFER_SIZE; i++) {
@@ -154,7 +187,8 @@ void record_distance_init(int angle_index, double distance) {
 
   int index = y*(ARENA_WIDTH -1)/2 + x;
   if (index >= 0 && index < BUFFER_SIZE && x < ARENA_WIDTH/2)
-    map[0][index] = 255;
+    for (i = 0; i < BUFFER_HISTORY; i++)
+      map[i][index] = 255;
 }
 
 void record_distance(int angle_index, double distance) {
@@ -166,7 +200,7 @@ void record_distance(int angle_index, double distance) {
   int i, x, y;
   // generate BUFFER_COUNT - 1 buffers with small variations in postion and angle
   // map[0] is the overall map
-  for (i = 1; i < BUFFER_COUNT; i++) {
+  for (i = BUFFER_HISTORY; i < BUFFER_COUNT; i++) {
     theta = (degrees + particles[i].theta + particles[0].theta)*M_PI/180;
     dx = distance*cos(theta) + particles[i].x + particles[0].x;
     dy = distance*sin(theta) + particles[i].y + particles[0].y;

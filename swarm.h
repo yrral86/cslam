@@ -4,6 +4,7 @@
 #include "particle.h"
 #include "simulation.h"
 #include "filter.h"
+#include "random.h"
 
 typedef struct swarm_member {
   particle p;
@@ -28,7 +29,5 @@ particle swarm_pop_particle();
 void swarm_filter_particles(sensor_scan);
 void swarm_delete_particle(particle);
 particle swarm_get_random_particle();
-
-int rand_limit(int);
 
 #endif

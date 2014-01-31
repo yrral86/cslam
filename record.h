@@ -3,6 +3,7 @@
 
 #include <math.h>
 
+#include "random.h"
 #include "sensor.h"
 #include "arena.h"
 

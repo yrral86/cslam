@@ -5,13 +5,15 @@ OBJS = \
 	lazygl \
 	motor \
 	particle \
+	random \
 	robot \
 	sensor \
 	scip/scipBase \
 	scip/scipUtil \
 	scip/scip1 \
 	scip/scip2 \
-	swarm
+	swarm \
+	ziggurat
 
 OBJ_FILES = 	\
 		filter.o \
@@ -19,13 +21,15 @@ OBJ_FILES = 	\
 		lazygl.o \
 		motor.o \
 		particle.o \
+		random.o \
 		robot.o \
 		sensor.o \
 		scip/scipBase.o \
 		scip/scipUtil.o \
 		scip/scip1.o \
 		scip/scip2.o \
-		swarm.o
+		swarm.o \
+		ziggurat.o
 
 all:
 	for i in $(OBJS); do \

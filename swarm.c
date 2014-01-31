@@ -207,10 +207,3 @@ void swarm_delete_particle(particle p) {
 particle swarm_get_random_particle() {
   return queue[rand_limit(swarm_size)].p;
 }
-
-int rand_limit(int limit) {
-  int r, d = RAND_MAX / limit;
-  limit *= d;
-  do {r = rand();} while (r >= limit);
-  return r/d;
-}
