@@ -4,8 +4,7 @@ void particle_add_sample(particle *p, double score) {
   // p->score is average score for p->samples
   // new p->score is average score for p->samples + 1
   // p->score * p->samples + score / (p->samples + 1)
-  // weight new score higher by 25%
-  p->score += (p->score*p->samples + 1.25*score)/(p->samples + 1);
+  p->score += (p->score*p->samples + score)/(p->samples + 1);
   p->samples++;
 }
 

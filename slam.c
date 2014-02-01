@@ -7,26 +7,32 @@ const static int INITIAL_POSITION_VARIANCE = 5;
 const static int INITIAL_ANGLE_VARIANCE = 15;
 // 5*5 (map is 5X bigger in both directions than arena) / 10 * 10 (mm -> cm)
 // 25*height*width/100
+const static int BUFFER_WIDTH = ARENA_WIDTH/2;
+const static int BUFFER_HEIGHT = ARENA_HEIGHT/2;
 const  static int BUFFER_SIZE = ARENA_HEIGHT*ARENA_WIDTH/4;
 // first 2 buffers are history, so you only have
 // BUFFER_COUNT - 2 to work with
 #define BUFFER_HISTORY 2
-#define BUFFER_COUNT 500
+#define BUFFER_COUNT 2000
 static uint8_t* map[BUFFER_COUNT];
 // first particle is reserved for current position
 // (relative to buffer center, 0 degrees = + x)
+// second particle is reserved for initializing the top 10% indice list
 static particle particles[BUFFER_COUNT];
+// keep the indices of the top 10 %
+int top_ten[(BUFFER_COUNT - BUFFER_HISTORY)/10];
+
 static double spacing;
 static uint64_t last_poll;
 static raw_sensor_scan *scans;
 
 int main (int argc, char **argv) {
+  int i, j, k, l, iterations;
   // sample 3 times (0.3 sec)
   int sample_count = 3;
   scans = malloc(sample_count*sizeof(raw_sensor_scan));
 
   // allocate buffers
-  int i, j, k, l, iterations;
   for (i = 0; i < BUFFER_COUNT; i++)
     map[i] = malloc(sizeof(uint8_t)*BUFFER_SIZE);
 
@@ -38,7 +44,7 @@ int main (int argc, char **argv) {
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], map[1], ARENA_WIDTH/2, ARENA_HEIGHT/2, ARENA_WIDTH/2, ARENA_HEIGHT/2);
+  initGL(map[0], map[1], BUFFER_WIDTH, BUFFER_HEIGHT, BUFFER_WIDTH, BUFFER_HEIGHT);
 
   init_map();
 
@@ -48,6 +54,10 @@ int main (int argc, char **argv) {
   particles[0].x = INITIAL_POSITION_VARIANCE;
   particles[0].y = INITIAL_POSITION_VARIANCE;
   particles[0].theta = INITIAL_ANGLE_VARIANCE;
+
+  // initialize terrible score
+  particles[1] = particle_init(0,0,0);
+  particle_add_sample(particles + 1, 100000000000);
 
   iterations = 0;
 
@@ -73,13 +83,6 @@ int main (int argc, char **argv) {
       scans[j] = sensor_read_raw();
       last_poll = utime();
 
-      /*
-      // record each direction
-      for (i = 0; i < RAW_SENSOR_DISTANCES; i++)
-	record_distance(i, scan.distances[i]);
-      */
-      // record 1/20th of directions
-
       if (j + 1 < sample_count) {
 	int sleep_time = poll_time - (utime() - last_poll);
 	if (sleep_time > 0)
@@ -88,85 +91,86 @@ int main (int argc, char **argv) {
       }
     }
 
-    // evaluate buffers
-    // instead of iterating over buffers,
-    // lets filter the candidates in a loop, testing 10 new
+    // filter the candidates in a loop, testing a few new
     // directions each time for each particle and dropping 
-    // any particles that are more than 50% new
+    // any particles that have too much new information
     uint8_t *buffer;
     particle p;
-    /*    int difference, sum, min, min_index;
-    min = 1000000;
-    min_index = 1;
-    for (i = BUFFER_HISTORY; i < BUFFER_COUNT; i++) {
-    */
-    int filtered, min, min_index;
+    int filtered, min_index;
     int count = BUFFER_COUNT - BUFFER_HISTORY;
-    int new_count = 0;
-    while (count > 1) {
-      // evaulate 10 directions for each particle
-      // filter out anything with less than half matching data
-      for (i = 0; i < count; i++) {
-	filtered = 0;
-	buffer = map[BUFFER_HISTORY + i];
-	p = particles[BUFFER_HISTORY + i];
+    int last_top_ten, current_top_ten, other_top_ten, x, y, difference;
+    double distance, degrees, theta, dx, dy;
 
-	for (j = 0; j < 10; j++) {
-	  k = rand_limit(RAW_SENSOR_DISTANCES);
-	  for (l = 0; l < sample_count; l++)
-	    filtered += record_distance(k, scans[l].distances[k]);
+    // evaulate each direction for each particle
+    for (i = BUFFER_HISTORY; i < count + BUFFER_HISTORY; i++) {
+      filtered = 0;
+      buffer = map[i];
+      p = particle_init(particles[i].x, particles[i].y, particles[i].theta);
+
+      for (j = 0; j < RAW_SENSOR_DISTANCES; j++) {
+	for (k = 0; k < sample_count; k++) {
+	  // mm -> cm
+	  distance = scans[k].distances[j]/10.0;
+	  // forward is now 0 degrees, left -, right +
+	  degrees = -120 + j*spacing;
+
+	  theta = (degrees + p.theta + particles[0].theta)*M_PI/180;
+	  dx = distance*cos(theta) + p.x + particles[0].x;
+	  dy = distance*sin(theta) + p.y + particles[0].y;
+	  // use middle of buffer as origin
+	  x = BUFFER_WIDTH/2 + dx;
+	  y = BUFFER_HEIGHT/2 + dy;
+    
+	  if (in_bounds(x, y)) {
+	    l = index_from_x_y(x, y);
+	    difference = map[i][l] - map[1][l];
+	    if (difference > 50)
+	      filtered++;
+	  } else filtered++;
 	}
-
-	particle_add_sample(&p, filtered);
       }
-
-
-      //TODO fix this mess so that it
-      // finds top 10% and throws out the rest
-      min = 10000000;
-      min_index = BUFFER_HISTORY;
-      for (i = 0; i < count; i ++) {
-	p = particles[BUFFER_HISTORY + i];
-	if (p.score < min){
-	  min = p.score;
-	  min_index= BUFFER_HISTORY + i;
-	}
-      }
-
-      count = new_count;
-      printf("count: %i\n", count);
+      particles[i].score = filtered;
     }
 
-    /*
-	sum = 0;
-	// subtract from each historical map
-	// this should give us new things to add
-	// give more weight to older maps
-	for (k = 0; k < BUFFER_SIZE; k++) {
-	  difference = buffer[k] - map[1][k];
-	// filter out everything in the map
-	// that we can't see
-	// and make sure difference is significant
-	if (difference >= 100)
-	  sum += 1;
-      }
+    // find best particle
+    // finds top 10%, ordered best first
+    last_top_ten = count/10 - 1;
 
-      p.score = sum;
+    // initialize top_ten to point to terrible score
+    bzero(top_ten, sizeof(int)*count/10);
+    for (i = 0; i <= last_top_ten; i++)
+      top_ten[i]++;
+    
+    for (i = BUFFER_HISTORY; i < count - BUFFER_HISTORY; i ++) {
+      p = particles[i];
+      current_top_ten = last_top_ten;
 
-      // we choose the minimum new to add
-      if (sum < min) {
-	min = sum;
-	min_index = i;
+      // if we have better than the worst saved, replace it
+      if (p.score < particles[top_ten[current_top_ten]].score)
+	top_ten[current_top_ten] = i;
+
+      // bubble towards front of list
+      while (current_top_ten > 0 && particles[top_ten[current_top_ten - 1]].score < particles[top_ten[current_top_ten]].score) {
+	other_top_ten = top_ten[current_top_ten];
+	top_ten[current_top_ten] = top_ten[current_top_ten - 1];
+	top_ten[current_top_ten - 1] = other_top_ten;
+	current_top_ten--;
       }
     }
-    */
+
+    min_index = top_ten[0];
+
+    // draw best particle
+    for (i = 0; i < RAW_SENSOR_DISTANCES; i++)
+      for (j = 0; j < sample_count; j++)
+	record_distance(min_index, i, scans[j].distances[i]);
 
     // attenuate map
     for (i = 0; i < BUFFER_SIZE; i++)
 	map[0][i] *= 0.85;
 
     // update localization
-    p = particles[BUFFER_HISTORY];
+    p = particles[min_index];
     particles[0].x += p.x;
     particles[0].y += p.y;
     particles[0].theta += p.theta;
@@ -186,16 +190,16 @@ int main (int argc, char **argv) {
 	record_map_position(0, ARENA_WIDTH/4 + p.x + i,
 			    ARENA_HEIGHT/4 + p.y + j, 0);
 
-    // copy best into map
+    // copy best into current map
     for (i = 0; i < BUFFER_SIZE; i++)
-      if (map[BUFFER_HISTORY][i] == 255)
+      if (map[min_index][i] == 255)
 	map[0][i] = 255;
 
     glutMainLoopEvent();
 
     iterations++;
 
-    // copy new map into historical buffer
+    // copy current map into historical map
     // and attenuate
     if (iterations % 20)
       for (i = 0; i < BUFFER_SIZE; i++) {
@@ -245,41 +249,29 @@ void record_distance_init(int angle_index, double distance) {
   dx = distance*cos(theta);
   dy = distance*sin(theta);
   // use middle of buffer as origin
-  x = ARENA_WIDTH/4 + dx;
-  y = ARENA_HEIGHT/4 + dy;
+  x = BUFFER_WIDTH/2 + dx;
+  y = BUFFER_HEIGHT/2 + dy;
 
   for (i = 0; i < BUFFER_HISTORY; i++)
     record_map_position(i, x, y, 255);
 }
 
-int record_distance(int angle_index, double distance) {
-  int difference;
-  int filter = 0;
+// records into current map (map[0])
+void record_distance(int particle_index, int angle_index, double distance) {
   // mm -> cm
   distance /= 10.0;
   // forward is now 0 degrees, left -, right +
   double degrees = -120 + angle_index*spacing;
   double theta, dx, dy;
-  int i, j, x, y;
-  // generate BUFFER_COUNT - 1 buffers with small variations in postion and angle
-  // map[0] is the overall map
-  for (i = BUFFER_HISTORY; i < BUFFER_COUNT; i++) {
-    theta = (degrees + particles[i].theta + particles[0].theta)*M_PI/180;
-    dx = distance*cos(theta) + particles[i].x + particles[0].x;
-    dy = distance*sin(theta) + particles[i].y + particles[0].y;
-    // use middle of buffer as origin
-    x = ARENA_WIDTH/4 + dx;
-    y = ARENA_HEIGHT/4 + dy;
+  int x, y;
+  theta = (degrees + particles[particle_index].theta + particles[0].theta)*M_PI/180;
+  dx = distance*cos(theta) + particles[particle_index].x + particles[0].x;
+  dy = distance*sin(theta) + particles[particle_index].y + particles[0].y;
+  // use middle of buffer as origin
+  x = BUFFER_WIDTH/2 + dx;
+  y = BUFFER_HEIGHT/2 + dy;
 
-    j = index_from_x_y(x, y);
-    difference = map[i][j] - map[1][j];
-    if (difference < 100)
-      record_map_position(i, x, y, 255);
-    else
-      filter = 1;
-  }
-
-  return filter;
+  record_map_position(0, x, y, 255);
 }
 
 uint64_t utime() {
@@ -289,10 +281,16 @@ uint64_t utime() {
 }
 
 void record_map_position(int index, int x, int y, uint8_t value) {
-  if (x > 0 && x < ARENA_WIDTH/2 && y > 0 && y < ARENA_HEIGHT/2)
+  if (in_bounds(x, y))
     map[index][index_from_x_y(x, y)] = value;
 }
 
 int index_from_x_y(int x, int y) {
   return y*(ARENA_WIDTH - 1)/2 + x;
+}
+
+int in_bounds(int x, int y) {
+  if (x > 0 && x < BUFFER_WIDTH && y > 0 && y < BUFFER_HEIGHT)
+    return 1;
+  else return 0;
 }
