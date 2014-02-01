@@ -20,7 +20,7 @@ typedef struct raw_sensor_scan {
 } raw_sensor_scan;
 
 #include "particle.h"
-#include "simulation.h"
+#include "arena.h"
 
 int in_bounds(int, int);
 int sensor_distance_offset(particle, double);
