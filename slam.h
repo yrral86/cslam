@@ -1,5 +1,5 @@
-#ifndef __RECORD_H__
-#define __RECORD_H__
+#ifndef __SLAM_H__
+#define __SLAM_H__
 
 #include <math.h>
 
