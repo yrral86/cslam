@@ -9,8 +9,9 @@
 
 void init_map();
 void record_distance_init(int, double);
-void record_distance(int, double);
+int record_distance(int, double);
 uint64_t utime();
 void record_map_position(int, int, int, uint8_t);
+int index_from_x_y(int, int);
 
 #endif
