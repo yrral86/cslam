@@ -1,11 +1,17 @@
-write tests for swarm heap code
-
 testing in general
 
-calculate location of nearest obstacle in each direction, build map
+sensors should run in threads to maximize scan opportunities
 
-mapping should probably run in separate thread as often as the sensor can update
+initial localization
+
+shrink buffers back down to size, assume one of 2 known starting positions, facing center of arena as initial position for current map buffer
+
+use another particle swarm to find 6 circles (x, y of center and radius) that are as small as possible, but cover the maximum amount of known obstacles from overall map
+
+save a rescue overall map to revert to if overall map becomes noisy
 
 
-build a map for each particle
-each particle should select a decay rate so they handle different movement speeds
+// probably will be scraped since we won't have
+// enough particles to worry about it
+//write tests for swarm heap code
+
