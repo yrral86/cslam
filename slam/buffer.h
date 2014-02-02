@@ -1,0 +1,19 @@
+#ifndef __BUFFER_H__
+#define __BUFFER_H__
+
+#include <stdlib.h>
+#include <stdint.h>
+#include <strings.h>
+
+#include "arena.h"
+
+#define BUFFER_FACTOR 10
+#define BUFFER_WIDTH ARENA_WIDTH/BUFFER_FACTOR
+#define BUFFER_HEIGHT ARENA_HEIGHT/BUFFER_FACTOR
+#define BUFFER_SIZE BUFFER_WIDTH*BUFFER_HEIGHT
+
+uint8_t* buffer_allocate();
+void buffer_attenuate(uint8_t*, double);
+int buffer_index_from_x_y(double, double);
+
+#endif
