@@ -5,30 +5,48 @@ static particle particles[PARTICLE_COUNT+1];
 // keep the indices of the top 10 %
 int top_ten[PARTICLE_COUNT/10];
 static particle current_best;
+static int initialized = 0;
 
 void swarm_init() {
-  int i;
+  int i, x, y, theta;
   // generate particles
   for (i = 0; i < PARTICLE_COUNT; i++) {
-    // generate random position and angle varation
-    particles[i] = particle_init(rand_normal(INITIAL_POSITION_VARIANCE),
-				 rand_normal(INITIAL_POSITION_VARIANCE),
-				 rand_normal(INITIAL_ANGLE_VARIANCE));
+    x = rand_normal(INITIAL_POSITION_VARIANCE);
+    y = rand_normal(INITIAL_POSITION_VARIANCE);
+    if (!initialized) {
+      // generate random position and angle varation around 2 known
+      // starting positions
+      x += START_END/2;
+      theta = rand_normal(180);
+
+      if (rand_limit(2))
+	y += ARENA_HEIGHT/4;
+      else
+	y += 3*ARENA_HEIGHT/4;
+    } else
+      theta = rand_normal(INITIAL_ANGLE_VARIANCE);
+
+    particles[i] = particle_init(x, y, theta);
   }
 
-  // terrible score for initializing top ten index array
-  particles[PARTICLE_COUNT].score = 10000000;
 
-  current_best.x = 0;
-  current_best.y = 0;
-  current_best.theta = 0;
+  if (!initialized) {
+    // terrible score for initializing top ten index array
+    particles[PARTICLE_COUNT].score = 10000000;
+
+    current_best.x = 0;
+    current_best.y = 0;
+    current_best.theta = 0;
+
+    initialized = 1;
+  }
 }
 
 void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   int i, j, k, l;
   particle p;
-  int filtered, min_index;
-  int last_top_ten, current_top_ten, other_top_ten, x, y, difference;
+  int filtered;
+  int last_top_ten, current_top_ten, other_top_ten, difference;
   double distance, degrees, theta, dx, dy;
 
     // evaulate each direction for each particle
@@ -45,12 +63,9 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 	  theta = (degrees + p.theta + current_best.theta)*M_PI/180;
 	  dx = distance*cos(theta) + p.x + current_best.x;
 	  dy = distance*sin(theta) + p.y + current_best.y;
-	  // use middle of arena as origin
-	  x = ARENA_WIDTH/2 + dx;
-	  y = ARENA_HEIGHT/2 + dy;
-    
-	  if (in_arena(x, y)) {
-	    l = buffer_index_from_x_y(x, y);
+
+	  if (in_arena(dx, dy)) {
+	    l = buffer_index_from_x_y(dx, dy);
 	    difference = 255 - map[l];
 	    if (difference > 200)
 	      filtered++;
@@ -85,15 +100,12 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
     }
   }
 
-  min_index = top_ten[0];
-
-  p = particles[min_index];
+  p = particles[top_ten[0]];
 
   // update current best position
-  // with 10% momentum
-  current_best.x += 1.1*p.x;
-  current_best.y += 1.1*p.y;
-  current_best.theta += 1.1*p.theta;    
+  current_best.x += p.x;
+  current_best.y += p.y;
+  current_best.theta += p.theta;
 }
 
 particle swarm_get_best() {
