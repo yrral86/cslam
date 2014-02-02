@@ -12,7 +12,7 @@ const static int BUFFER_HEIGHT = ARENA_HEIGHT/2;
 const  static int BUFFER_SIZE = ARENA_HEIGHT*ARENA_WIDTH/4;
 // 2, one for current, one for history
 #define BUFFER_HISTORY 2
-#define PARTICLE_COUNT 200
+#define PARTICLE_COUNT 400
 static uint8_t* map[BUFFER_HISTORY];
 // first particle is reserved for current position
 // (relative to buffer center, 0 degrees = + x)
@@ -193,7 +193,8 @@ int main (int argc, char **argv) {
     // copy current map into historical map
     // and attenuate
     for (i = 0; i < BUFFER_SIZE; i++) {
-      map[1][i] *= 0.99;
+      if (map[1][i] > 0)
+	map[1][i] -= 1;
       if (map[0][i] > 150)
 	if (map[1][i] < 235)
 	  map[1][i] += 50;
