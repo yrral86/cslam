@@ -1,5 +1,6 @@
-CFLAGS = -lglut -lm -lGLU -lGL -g
+CFLAGS = -lglut -lm -lGLU -lGL -lpthread -g -pthread
 OBJS = \
+	buffer \
 	lazygl \
 	particle \
 	random \
@@ -8,9 +9,11 @@ OBJS = \
 	scip/scipUtil \
 	scip/scip1 \
 	scip/scip2 \
+	swarm \
 	ziggurat
 
 OBJ_FILES = 	\
+		buffer.o \
 		lazygl.o \
 		particle.o \
 		random.o \
@@ -19,6 +22,7 @@ OBJ_FILES = 	\
 		scip/scipUtil.o \
 		scip/scip1.o \
 		scip/scip2.o \
+		swarm.o \
 		ziggurat.o
 
 all:

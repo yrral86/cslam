@@ -2,18 +2,19 @@
 #define __SLAM_H__
 
 #include <math.h>
+#include <pthread.h>
 
+#include "arena.h"
+#include "buffer.h"
+#include "particle.h"
 #include "random.h"
 #include "sensor.h"
-#include "arena.h"
-#include "particle.h"
+#include "swarm.h"
 
-void init_map();
+void init_map(pthread_t);
 void record_distance_init(int, double);
-void record_distance(int, int, double);
-uint64_t utime();
+void record_distance(int, double);
 void record_map_position(int, int, int, uint8_t);
-int index_from_x_y(int, int);
-int in_bounds(int, int);
+int in_arena(int, int);
 
 #endif

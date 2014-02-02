@@ -27,7 +27,7 @@ const static  int MINE_BEGIN = 1250;
 
 
 // home arena
-#define ARENA_WIDTH 1765
+#define ARENA_WIDTH 1760
 #define ARENA_HEIGHT 800
 const static int START_END = 500;
 const static  int MINE_BEGIN = 1250;
