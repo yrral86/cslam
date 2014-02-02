@@ -5,7 +5,7 @@
 #include "sensor.h"
 #include "slam.h"
 
-#define PARTICLE_COUNT 250
+#define PARTICLE_COUNT 200
 #define INITIAL_SCANS 20
 #define INITIAL_POSITION_VARIANCE 100
 #define INITIAL_ANGLE_VARIANCE 30

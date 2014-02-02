@@ -5,7 +5,7 @@ static particle particles[PARTICLE_COUNT+1];
 // keep the indices of the top 10 %
 int top_ten[PARTICLE_COUNT/10];
 static particle current_best;
-static int initialized = 0;
+static int iterations = 0;
 
 void swarm_init() {
   int i, x, y, theta;
@@ -13,7 +13,7 @@ void swarm_init() {
   for (i = 0; i < PARTICLE_COUNT; i++) {
     x = rand_normal(INITIAL_POSITION_VARIANCE);
     y = rand_normal(INITIAL_POSITION_VARIANCE);
-    if (!initialized) {
+    if (iterations == 0) {
       // generate random position and angle varation around 2 known
       // starting positions
       x += START_END/2;
@@ -30,22 +30,20 @@ void swarm_init() {
   }
 
 
-  if (!initialized) {
+  if (iterations == 0) {
     // terrible score for initializing top ten index array
     particles[PARTICLE_COUNT].score = 10000000;
 
     current_best.x = 0;
     current_best.y = 0;
     current_best.theta = 0;
-
-    initialized = 1;
   }
 }
 
 void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   int i, j, k, l;
   particle p;
-  int filtered;
+  int filtered, x_mid;
   int last_top_ten, current_top_ten, other_top_ten, difference;
   double distance, degrees, theta, dx, dy;
 
@@ -53,6 +51,7 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   for (i = 0; i < PARTICLE_COUNT; i++) {
     filtered = 0;
     p = particles[i];
+    x_mid = 0;
 
     for (j = 0; j < RAW_SENSOR_DISTANCES; j++) {
       for (k = 0; k < sample_count; k++) {
@@ -64,13 +63,27 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 	  dx = distance*cos(theta) + p.x + current_best.x;
 	  dy = distance*sin(theta) + p.y + current_best.y;
 
+	  // penalize points in the horizontal center
+	  // to avoid 90 degree off orientations
+	  if (&& abs(dy - ARENA_WIDTH/2) < 10)
+	    x_mid++;
+
+	  // make sure it is in bounds
 	  if (in_arena(dx, dy)) {
 	    l = buffer_index_from_x_y(dx, dy);
 	    difference = 255 - map[l];
 	    if (difference > 200)
 	      filtered++;
 	  } else filtered++;
-	}
+      }
+
+      // if more than half of the pixels in the midline are filled
+      // in, penalize the particle for them
+      // if there really are that many obstacles in the middle, hopefully all particles will be penalized equally
+      // TODO: test the hopefully ^
+
+      if (x_mid > ARENA_HEIGHT/2)
+	filtered += x_mid;
     }
     particles[i].score = filtered;
   }
@@ -106,6 +119,8 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   current_best.x += p.x;
   current_best.y += p.y;
   current_best.theta += p.theta;
+
+  iterations++;
 }
 
 particle swarm_get_best() {
