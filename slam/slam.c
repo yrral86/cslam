@@ -13,7 +13,7 @@ int main (int argc, char **argv) {
   int i, j, iterations;
   pthread_t sensor_thread;
   // sample 3 times (0.3 sec)
-  int sample_count = 3;
+  int sample_count = 1;
 
   // connect to sensor in new thread while we
   // initialize everything else
@@ -27,7 +27,7 @@ int main (int argc, char **argv) {
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], map[1], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/2, ARENA_HEIGHT/2);
+  initGL(map[0], map[1], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/10, ARENA_HEIGHT/10);
 
   rand_normal_init();
 

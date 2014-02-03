@@ -63,9 +63,9 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 	  dx = distance*cos(theta) + p.x + current_best.x;
 	  dy = distance*sin(theta) + p.y + current_best.y;
 
-	  // penalize points in the horizontal center
+	  // penalize points within 100 mm of the horizontal center
 	  // to avoid 90 degree off orientations
-	  if (&& abs(dy - ARENA_WIDTH/2) < 10)
+	  if (abs(dy - ARENA_WIDTH/2) < 100)
 	    x_mid++;
 
 	  // make sure it is in bounds
