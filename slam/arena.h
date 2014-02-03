@@ -33,20 +33,18 @@ const static int START_END = 500;
 const static  int MINE_BEGIN = 1250;
 */
 
-/*
 // bedroom arena
-#define ARENA_WIDTH 3962
+#define ARENA_WIDTH 3960
 #define ARENA_HEIGHT 3400
 const static int START_END = 2000;
 const static  int MINE_BEGIN = 1250;
-*/
 
+/*
 // entire apartment
 #define ARENA_WIDTH 11810
 #define ARENA_HEIGHT 3400
 const static int START_END = 8382;
 const static  int MINE_BEGIN = 1250;
-
-
+*/
 
 #endif

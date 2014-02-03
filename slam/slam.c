@@ -27,7 +27,7 @@ int main (int argc, char **argv) {
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], map[1], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/10, ARENA_HEIGHT/10);
+  initGL(map[0], map[1], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/4, ARENA_HEIGHT/10);
 
   rand_normal_init();
 
@@ -106,14 +106,24 @@ int main (int argc, char **argv) {
 
     // copy current map into historical map
     // and attenuate
+
+    // update historical map
     for (i = 0; i < BUFFER_SIZE; i++) {
-      if (map[1][i] > 0)
-	map[1][i] -= 1;
-      if (map[0][i] > 150)
-	if (map[1][i] < 235)
+      // if the current buffer has a high value
+      if (map[0][i] > 150) {
+	// add to historical buffer,
+	// taking care not to wrap around
+	if (map[1][i] <= 235)
 	  map[1][i] += 50;
 	else
 	  map[1][i] = 255;
+      } else
+	// if the current buffer does not have a high value,
+	// the historical buffer is above zero, and
+	// the index is not protected, attenuate
+	if (map[1][i] > 0)
+	  if (!index_protected(i))
+	    map[1][i] -= 1;
     }
   }
 
