@@ -35,13 +35,13 @@ int main (int argc, char **argv) {
   assert(pthread_join(sensor_thread, NULL) == 0);
 
   for (i = 0; i < ARENA_WIDTH; i++)
-    for (j = 0; j < 5*BUFFER_FACTOR; j += BUFFER_FACTOR) {
+    for (j = 0; j < 10*BUFFER_FACTOR; j += BUFFER_FACTOR) {
       record_map_position(1, i, j, 255);
       record_map_position(1, i, ARENA_HEIGHT - 1 - j, 255);
     }
 
   for (i = 0; i < ARENA_HEIGHT; i++)
-    for (j = 0; j < 5*BUFFER_FACTOR; j+= BUFFER_FACTOR) {
+    for (j = 0; j < 10*BUFFER_FACTOR; j+= BUFFER_FACTOR) {
       record_map_position(1, j, i, 255);
       record_map_position(1, ARENA_WIDTH - 1 - j, i, 255);
     }
@@ -80,8 +80,8 @@ int main (int argc, char **argv) {
     buffer_attenuate(map[0], 0.75);
 
     // draw position
-    for (i = -5; i < 6; i++)
-      for (j = -5; j < 6; j++ ) {
+    for (i = -50; i < 51; i++)
+      for (j = -50; j < 51; j++ ) {
 	record_map_position(0, current_particle.x + i,
 			    current_particle.y + j, 255);
 	record_map_position(1, current_particle.x + i,
@@ -92,12 +92,13 @@ int main (int argc, char **argv) {
     display();
 
     // clear position
-    for (i = -5; i < 6; i++)
-      for (j = -5; j < 6; j++ ) {
+    for (i = -50; i < 51; i++)
+      for (j = -50; j < 51; j++ ) {
 	record_map_position(0, current_particle.x + i,
 			    current_particle.y + j, 0);
-	record_map_position(1, current_particle.x + i,
-			    current_particle.y + j, 0);
+	if (!x_y_protected(current_particle.x + i, current_particle.y + j))
+	  record_map_position(1, current_particle.x + i,
+			      current_particle.y + j, 0);
       }
 
     glutMainLoopEvent();

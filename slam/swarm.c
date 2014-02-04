@@ -9,8 +9,12 @@ static int iterations = 0;
 
 void swarm_init() {
   int i, x, y, theta;
-  // generate particles
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+
+  // one particle that doesn't move
+  particles[0] = particle_init(0.0, 0.0, 0.0);
+
+  // generate random particles
+  for (i = 1; i < PARTICLE_COUNT; i++) {
     x = rand_normal(INITIAL_POSITION_VARIANCE);
     y = rand_normal(INITIAL_POSITION_VARIANCE);
     if (iterations == 0) {

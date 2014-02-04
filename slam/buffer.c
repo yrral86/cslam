@@ -37,12 +37,12 @@ int index_protected(int index) {
 }
 
 // returns 1 if the position is "protected"
-// protected pixels are the 5 buffer pixels around the border
+// protected pixels are the 10 buffer pixels around the border
 // returns 0 if the position is not protected
 int x_y_protected(int x, int y) {
   int protected = 0;
-  if (x < 5*BUFFER_FACTOR || x > ARENA_WIDTH - 5*BUFFER_FACTOR ||
-      y < 5*BUFFER_FACTOR || y > ARENA_HEIGHT - 5*BUFFER_FACTOR)
+  if (x < 19*BUFFER_FACTOR || x > ARENA_WIDTH - 10*BUFFER_FACTOR ||
+      y < 10*BUFFER_FACTOR || y > ARENA_HEIGHT - 10*BUFFER_FACTOR)
     protected = 1;
   return protected;
 }
