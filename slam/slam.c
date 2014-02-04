@@ -2,8 +2,8 @@
 
 #include "lazygl.h"
 
-// 2, one for current, one for history
-#define BUFFER_HISTORY 2
+// 3, one for current, one for history, one for display
+#define BUFFER_HISTORY 3
 static uint8_t* map[BUFFER_HISTORY];
 
 static raw_sensor_scan *scans;
@@ -27,7 +27,7 @@ int main (int argc, char **argv) {
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], map[1], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/8, ARENA_HEIGHT/8);
+  initGL(map[0], map[2], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/8, ARENA_HEIGHT/8);
 
   rand_normal_init();
 
@@ -89,7 +89,7 @@ int main (int argc, char **argv) {
       for (j = -50; j < 51; j++ ) {
 	record_map_position(0, current_particle.x + i*c - j*s,
 			    current_particle.y + i*s + j*c, 255);
-	record_map_position(1, current_particle.x + i*c - j*s,
+	record_map_position(2, current_particle.x + i*c - j*s,
 			    current_particle.y + i*s + j*c, 255);
       }
 
@@ -102,7 +102,7 @@ int main (int argc, char **argv) {
 	record_map_position(0, current_particle.x + i*c - j*s,
 			    current_particle.y + i*s + j*c, 0);
 	if (!x_y_protected(current_particle.x + i*c - j*s, current_particle.y + i*s + j*c))
-	  record_map_position(1, current_particle.x + i*c - j*s,
+	  record_map_position(2, current_particle.x + i*c - j*s,
 			      current_particle.y + i*s + j*c, 0);
       }
 
@@ -114,6 +114,8 @@ int main (int argc, char **argv) {
     // and attenuate
 
     // update historical map
+    // and display map
+    bzero(map[2], BUFFER_SIZE*sizeof(uint8_t));
     for (i = 0; i < BUFFER_SIZE; i++) {
       // j is our current value - a threshold
       j = map[0][i] - 150;
@@ -132,6 +134,10 @@ int main (int argc, char **argv) {
 	if (map[1][i] > 0)
 	  if (!index_protected(i) && index_is_visible(i, current_particle))
 	    map[1][i] -= 1;
+      // only display a pixel if we are paying attention
+      // to it in the particle filter (swarm.c:swarm_filter)
+      if (map[1][i] > 200)
+	map[2][i] = 255;
     }
   }
 
