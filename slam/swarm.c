@@ -29,7 +29,7 @@ void swarm_init() {
   memcpy(particles, top, (PARTICLE_COUNT/100)*sizeof(uint8_t));
 
   // generate random particles based on top 1%
-  for (i = PARTICLE_COUNT/100; i < PARTICLE_COUNT; i++) {
+  for (i = PARTICLE_COUNT/100; i < PARTICLE_COUNT - PARTICLE_COUNT/100; i++) {
     // chose a random top 1% particle
     p = top[rand_limit(PARTICLE_COUNT/100)];
     // add some variation
@@ -38,6 +38,19 @@ void swarm_init() {
     theta = p.theta + rand_normal(INITIAL_ANGLE_VARIANCE);
 
     // save the particle
+    particles[i] = particle_init(x, y, theta);
+  }
+
+  // finish off with 1% random particles
+  for (i = PARTICLE_COUNT - PARTICLE_COUNT/100; i < PARTICLE_COUNT; i++) {
+    // anywhere
+    x = rand_limit(ARENA_WIDTH);
+    y = rand_limit(ARENA_HEIGHT);
+
+    // any angle
+    theta = rand_limit(360) - 180;
+
+    // save it
     particles[i] = particle_init(x, y, theta);
   }
 }

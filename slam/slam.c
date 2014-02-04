@@ -122,7 +122,7 @@ int main (int argc, char **argv) {
 	// the historical buffer is above zero,
 	// the index is not protected, and the index is in the
 	// scanner's visible arc, attenuate
-	if (map[1][i] > 0 && !index_protected(i) && index_is_visible(i, current_particle))
+	if (map[1][i] > 0 && !index_protected(i) && index_is_visible(i, current_particle, scans[0]))
 	  map[1][i] -= 1;
       // only display a pixel if we are paying attention
       // to it in the particle filter (swarm.c:swarm_filter)

@@ -21,6 +21,6 @@ int x_from_from_buffer_index(int);
 int y_from_buffer_index(int);
 int index_protected(int);
 int x_y_protected(int, int);
-int index_is_visible(int, particle);
+int index_is_visible(int, particle, raw_sensor_scan);
 
 #endif

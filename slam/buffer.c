@@ -47,15 +47,17 @@ int x_y_protected(int x, int y) {
   return protected;
 }
 
-int index_is_visible(int index, particle p) {
+int index_is_visible(int index, particle p, raw_sensor_scan s) {
   int visible = 1;
+  int i;
   double dx, dy, angle;
   // find vector, centered at particle
   dx = x_from_buffer_index(index) - p.x;
   dy = y_from_buffer_index(index) - p.y;
   // find angle, convert to degrees, adjust for particle
   angle = atan2(dy, dx)*180/M_PI - p.theta;
-  if (abs(angle) > SENSOR_RANGE/2.0 )
+  i = (angle + 120)/SENSOR_SPACING;
+  if (abs(angle) > SENSOR_RANGE/2.0 || sqrt(dx*dx + dy*dy) > s.distances[i])
     visible = 0;
   return visible;
 }
