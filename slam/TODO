@@ -1,17 +1,6 @@
 testing in general
 
-sensors should run in threads to maximize scan opportunities
-
-initial localization
-
-shrink buffers back down to size, assume one of 2 known starting positions, facing center of arena as initial position for current map buffer
-
 use another particle swarm to find 6 circles (x, y of center and radius) that are as small as possible, but cover the maximum amount of known obstacles from overall map
 
 save a rescue overall map to revert to if overall map becomes noisy
-
-
-// probably will be scraped since we won't have
-// enough particles to worry about it
-//write tests for swarm heap code
 
