@@ -41,7 +41,7 @@ int index_protected(int index) {
 // returns 0 if the position is not protected
 int x_y_protected(int x, int y) {
   int protected = 0;
-  if (x < 19*BUFFER_FACTOR || x > ARENA_WIDTH - 10*BUFFER_FACTOR ||
+  if (x < 10*BUFFER_FACTOR || x > ARENA_WIDTH - 10*BUFFER_FACTOR ||
       y < 10*BUFFER_FACTOR || y > ARENA_HEIGHT - 10*BUFFER_FACTOR)
     protected = 1;
   return protected;
