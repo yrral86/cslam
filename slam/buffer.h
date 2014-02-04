@@ -6,6 +6,8 @@
 #include <strings.h>
 
 #include "arena.h"
+#include "particle.h"
+#include "sensor.h"
 
 #define BUFFER_FACTOR 10
 #define BUFFER_WIDTH (ARENA_WIDTH/BUFFER_FACTOR)
@@ -19,5 +21,6 @@ int x_from_from_buffer_index(int);
 int y_from_buffer_index(int);
 int index_protected(int);
 int x_y_protected(int, int);
+int index_is_visible(int, particle);
 
 #endif

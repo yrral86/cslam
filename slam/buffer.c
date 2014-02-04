@@ -46,3 +46,16 @@ int x_y_protected(int x, int y) {
     protected = 1;
   return protected;
 }
+
+int index_is_visible(int index, particle p) {
+  int visible = 1;
+  double dx, dy, angle;
+  // find vector, centered at particle
+  dx = x_from_buffer_index(index) - p.x;
+  dy = y_from_buffer_index(index) - p.y;
+  // find angle, convert to degrees, adjust for particle
+  angle = atan2(dy, dx)*180/M_PI - p.theta;
+  if (abs(angle) > SENSOR_RANGE/2.0 )
+    visible = 0;
+  return visible;
+}

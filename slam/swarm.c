@@ -85,7 +85,8 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
       // in, penalize the particle for them
       // if there really are that many obstacles in the middle, hopefully all particles will be penalized equally
       // TODO: test the hopefully ^
-
+      // TODO: change to more robust vertical line detection
+      // exact middle only makes sense if width = 2*height  (hint: it doesn't)
       if (x_mid > ARENA_HEIGHT/2)
 	filtered += x_mid;
     }

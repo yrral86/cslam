@@ -128,7 +128,7 @@ int main (int argc, char **argv) {
 	// the historical buffer is above zero, and
 	// the index is not protected, attenuate
 	if (map[1][i] > 0)
-	  if (!index_protected(i))
+	  if (!index_protected(i) && index_is_visible(i, current_particle))
 	    map[1][i] -= 1;
     }
   }
