@@ -115,12 +115,14 @@ int main (int argc, char **argv) {
 
     // update historical map
     for (i = 0; i < BUFFER_SIZE; i++) {
+      // j is our current value - a threshold
+      j = map[0][i] - 150;
       // if the current buffer has a high value
-      if (map[0][i] > 150) {
+      if (j > 0) {
 	// add to historical buffer,
 	// taking care not to wrap around
-	if (map[1][i] <= 235)
-	  map[1][i] += 50;
+	if (map[1][i] + j <= 255)
+	  map[1][i] += j;
 	else
 	  map[1][i] = 255;
       } else
