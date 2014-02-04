@@ -136,20 +136,6 @@ int main (int argc, char **argv) {
   return 0;
 }
 
-void record_distance_init(int angle_index, double distance) {
-    // forward is now 0 degrees, left -, right +
-  double degrees = -120 + angle_index*SENSOR_SPACING;
-  double theta, dx, dy;
-  int i;
-
-  theta = degrees*M_PI/180;
-  dx = distance*cos(theta);
-  dy = distance*sin(theta);
-
-  for (i = 0; i < BUFFER_HISTORY; i++)
-    record_map_position(i, dx, dy, 255);
-}
-
 // records into current map (map[0])
 void record_distance(int angle_index, double distance) {
   // forward is now 0 degrees, left -, right +
@@ -173,3 +159,4 @@ int in_arena(int x, int y) {
     return 1;
   else return 0;
 }
+
