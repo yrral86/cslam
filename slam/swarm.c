@@ -2,60 +2,57 @@
 
 // we will store a terrible score at the end
 static particle particles[PARTICLE_COUNT+1];
-// keep the indices of the top 10 %
-int top_ten[PARTICLE_COUNT/10];
-static particle current_best;
+// keep the top 1 %
+particle top[PARTICLE_COUNT/100];
 static int iterations = 0;
 
 void swarm_init() {
-  int i, x, y, theta;
+  int i, j, x, y, theta;
+  particle p;
 
-  // one particle that doesn't move
-  particles[0] = particle_init(0.0, 0.0, 0.0);
-
-  // generate random particles
-  for (i = 1; i < PARTICLE_COUNT; i++) {
-    x = rand_normal(INITIAL_POSITION_VARIANCE);
-    y = rand_normal(INITIAL_POSITION_VARIANCE);
-    if (iterations == 0) {
-      // generate random position and angle varation around 2 known
-      // starting positions
-      x += START_END/2;
-      theta = rand_normal(180);
-
+  // initialize
+  if (iterations == 0) {
+    for (i = 0; i < PARTICLE_COUNT/100; i++) {
+      x = START_END/2;
       if (rand_limit(2))
-	y += ARENA_HEIGHT/4;
+	y = ARENA_HEIGHT/4;
       else
-	y += 3*ARENA_HEIGHT/4;
-    } else
-      theta = rand_normal(INITIAL_ANGLE_VARIANCE);
-
-    particles[i] = particle_init(x, y, theta);
+	y = 3*ARENA_HEIGHT/4;
+      theta = rand_limit(360) - 180;
+      top[i] = particle_init(x, y, theta);
+    }
+    // terrible score for initializing top 1% array
+    particles[PARTICLE_COUNT].score = 10000000;
   }
 
+  // copy top 1%
+  memcpy(particles, top, (PARTICLE_COUNT/100)*sizeof(uint8_t));
 
-  if (iterations == 0) {
-    // terrible score for initializing top ten index array
-    particles[PARTICLE_COUNT].score = 10000000;
+  // generate random particles based on top 1%
+  for (i = PARTICLE_COUNT/100; i < PARTICLE_COUNT; i++) {
+    // chose a random top 1% particle
+    p = top[rand_limit(PARTICLE_COUNT/100)];
+    // add some variation
+    x = p.x + rand_normal(INITIAL_POSITION_VARIANCE);
+    y = p.y + rand_normal(INITIAL_POSITION_VARIANCE);
+    theta = p.theta + rand_normal(INITIAL_ANGLE_VARIANCE);
 
-    current_best.x = 0;
-    current_best.y = 0;
-    current_best.theta = 0;
+    // save the particle
+    particles[i] = particle_init(x, y, theta);
   }
 }
 
 void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   int i, j, k, l;
-  particle p;
-  int filtered, x_mid;
-  int last_top_ten, current_top_ten, other_top_ten, difference;
-  double distance, degrees, theta, dx, dy;
+  particle p, other_top;
+  int filtered;
+  int last_top, current_top, difference;
+  double distance, degrees, theta, x, y;
 
     // evaulate each direction for each particle
   for (i = 0; i < PARTICLE_COUNT; i++) {
     filtered = 0;
     p = particles[i];
-    x_mid = 0;
 
     for (j = 0; j < RAW_SENSOR_DISTANCES; j++) {
       for (k = 0; k < sample_count; k++) {
@@ -63,71 +60,50 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 	  // forward is now 0 degrees, left -, right +
 	  degrees = -120 + j*SENSOR_SPACING;
 
-	  theta = (degrees + p.theta + current_best.theta)*M_PI/180;
-	  dx = distance*cos(theta) + p.x + current_best.x;
-	  dy = distance*sin(theta) + p.y + current_best.y;
-
-	  // penalize points within 100 mm of the horizontal center
-	  // to avoid 90 degree off orientations
-	  if (abs(dy - ARENA_WIDTH/2) < 100)
-	    x_mid++;
+	  theta = (degrees + p.theta)*M_PI/180;
+	  x = distance*cos(theta) + p.x;
+	  y = distance*sin(theta) + p.y;
 
 	  // make sure it is in bounds
-	  if (in_arena(dx, dy)) {
-	    l = buffer_index_from_x_y(dx, dy);
+	  if (in_arena(x, y)) {
+	    l = buffer_index_from_x_y(x, y);
 	    difference = 255 - map[l];
 	    if (difference > 200)
 	      filtered++;
 	  } else filtered++;
       }
-
-      // if more than half of the pixels in the midline are filled
-      // in, penalize the particle for them
-      // if there really are that many obstacles in the middle, hopefully all particles will be penalized equally
-      // TODO: test the hopefully ^
-      // TODO: change to more robust vertical line detection
-      // exact middle only makes sense if width = 2*height  (hint: it doesn't)
-      if (x_mid > ARENA_HEIGHT/2)
-	filtered += x_mid;
     }
     particles[i].score = filtered;
   }
 
   // find best particle
   // finds top 10%, ordered best first
-  last_top_ten = PARTICLE_COUNT/10 - 1;
+  last_top = PARTICLE_COUNT/100 - 1;
 
-  // initialize top_ten to point to terrible score (particles[PARTICLE_COUNT])
-  for (i = 0; i <= last_top_ten; i++)
-    top_ten[i] = PARTICLE_COUNT;
+  // initialize top to terrible score (particles[PARTICLE_COUNT])
+  for (i = 0; i <= last_top; i++)
+    top[i] = particles[PARTICLE_COUNT];
     
   for (i = 0; i < PARTICLE_COUNT; i++) {
     p = particles[i];
-    current_top_ten = last_top_ten;
+    current_top = last_top;
 
     // if we have better than the worst saved, replace it
-    if (p.score < particles[top_ten[current_top_ten]].score)
-      top_ten[current_top_ten] = i;
+    if (p.score < top[current_top].score)
+      top[current_top] = p;
 
     // bubble towards front of list
-    while (current_top_ten > 0 && p.score < particles[top_ten[current_top_ten - 1]].score) {
-      other_top_ten = top_ten[current_top_ten];
-      top_ten[current_top_ten] = top_ten[current_top_ten - 1];
-      top_ten[current_top_ten - 1] = other_top_ten;
-      current_top_ten--;
+    while (current_top > 0 && p.score < top[current_top - 1].score) {
+      other_top = top[current_top];
+      top[current_top] = top[current_top - 1];
+      top[current_top - 1] = other_top;
+      current_top--;
     }
   }
-
-  p = particles[top_ten[0]];
-
-  // update current best position
-  current_best.x += p.x;
-  current_best.y += p.y;
-  current_best.theta += p.theta;
 
   iterations++;
 }
 
 particle swarm_get_best() {
-  return current_best;
+  return top[0];
 }

@@ -77,9 +77,6 @@ int main (int argc, char **argv) {
       for (j = 0; j < sample_count; j++)
 	record_distance(i, scans[j].distances[i]);
 
-    // attenuate current map
-    buffer_attenuate(map[0], 0.75);
-
     // draw position
     double s, c, t;
     t = current_particle.theta*M_PI/180;
@@ -106,19 +103,12 @@ int main (int argc, char **argv) {
 			      current_particle.y + i*s + j*c, 0);
       }
 
-    glutMainLoopEvent();
-
-    iterations++;
-
-    // copy current map into historical map
-    // and attenuate
-
     // update historical map
     // and display map
     bzero(map[2], BUFFER_SIZE*sizeof(uint8_t));
     for (i = 0; i < BUFFER_SIZE; i++) {
-      // j is our current value - a threshold
-      j = map[0][i] - 150;
+      // j is our current value minus a threshold (200)
+      j = map[0][i] - 200;
       // if the current buffer has a high value
       if (j > 0) {
 	// add to historical buffer,
@@ -129,16 +119,23 @@ int main (int argc, char **argv) {
 	  map[1][i] = 255;
       } else
 	// if the current buffer does not have a high value,
-	// the historical buffer is above zero, and
-	// the index is not protected, attenuate
-	if (map[1][i] > 0)
-	  if (!index_protected(i) && index_is_visible(i, current_particle))
-	    map[1][i] -= 1;
+	// the historical buffer is above zero,
+	// the index is not protected, and the index is in the
+	// scanner's visible arc, attenuate
+	if (map[1][i] > 0 && !index_protected(i) && index_is_visible(i, current_particle))
+	  map[1][i] -= 1;
       // only display a pixel if we are paying attention
       // to it in the particle filter (swarm.c:swarm_filter)
       if (map[1][i] > 200)
 	map[2][i] = 255;
     }
+
+    // attenuate current map
+    buffer_attenuate(map[0], 0.75);
+
+    glutMainLoopEvent();
+
+    iterations++;
   }
 
   return 0;
