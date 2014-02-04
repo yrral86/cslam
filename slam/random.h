@@ -8,6 +8,6 @@
 
 int rand_limit(int);
 double rand_normal(int);
-void rand_norma_init();
+void rand_normal_init();
 
 #endif
