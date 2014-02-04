@@ -22,23 +22,25 @@ int buffer_index_from_x_y(double x, double y) {
 }
 
 int x_from_buffer_index(int index) {
-  index *= BUFFER_FACTOR*BUFFER_FACTOR;
-  return index % ARENA_WIDTH;
+  return (index % BUFFER_WIDTH)*BUFFER_FACTOR;
 }
 
 int y_from_buffer_index(int index) {
-  index *= BUFFER_FACTOR*BUFFER_FACTOR;
-  return index / ARENA_WIDTH;
+  return (index / BUFFER_WIDTH)*BUFFER_FACTOR;
 }
 
-// returns 1 if the index is "protected"
-// protected pixels are the 5 buffer pixels around the border
-// returns 0 if the index is not protected
 int index_protected(int index) {
   int x, y;
-  int protected = 0;
   x = x_from_buffer_index(index);
   y = y_from_buffer_index(index);
+  return x_y_protected(x, y);
+}
+
+// returns 1 if the position is "protected"
+// protected pixels are the 5 buffer pixels around the border
+// returns 0 if the position is not protected
+int x_y_protected(int x, int y) {
+  int protected = 0;
   if (x < 5*BUFFER_FACTOR || x > ARENA_WIDTH - 5*BUFFER_FACTOR ||
       y < 5*BUFFER_FACTOR || y > ARENA_HEIGHT - 5*BUFFER_FACTOR)
     protected = 1;

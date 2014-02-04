@@ -27,7 +27,7 @@ int main (int argc, char **argv) {
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], map[1], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/4, ARENA_HEIGHT/10);
+  initGL(map[0], map[1], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/8, ARENA_HEIGHT/8);
 
   rand_normal_init();
 
@@ -45,7 +45,7 @@ int main (int argc, char **argv) {
       record_map_position(1, j, i, 255);
       record_map_position(1, ARENA_WIDTH - 1 - j, i, 255);
     }
-    
+
   // start a scan
   sensor_thread = sensor_read_raw_n_thread(sample_count);
 
