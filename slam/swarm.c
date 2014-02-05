@@ -90,7 +90,7 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   }
 
   // find best particle
-  // finds top 10%, ordered best first
+  // finds top 1%, ordered best first
   last_top = PARTICLE_COUNT/100 - 1;
 
   // initialize top to terrible score (particles[PARTICLE_COUNT])
