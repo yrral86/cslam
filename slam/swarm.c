@@ -3,7 +3,7 @@
 // we will store a terrible score at the end
 static particle particles[PARTICLE_COUNT+1];
 // keep the top 1 %
-particle top[PARTICLE_COUNT/100];
+static particle top[PARTICLE_COUNT/100];
 static int iterations = 0;
 
 void swarm_init() {
