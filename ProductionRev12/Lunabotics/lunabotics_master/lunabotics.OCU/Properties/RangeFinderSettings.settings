@@ -1,0 +1,24 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="lunabotics.OCU.Properties" GeneratedClassName="RangeFinderSettings">
+  <Profiles />
+  <Settings>
+    <Setting Name="FrontStartAngle" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">135</Value>
+    </Setting>
+    <Setting Name="FrontStepAngle" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">-4.25</Value>
+    </Setting>
+    <Setting Name="RearStartAngle" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">135</Value>
+    </Setting>
+    <Setting Name="RearStepAngle" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">-4.25</Value>
+    </Setting>
+    <Setting Name="FrontDataLength" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">20</Value>
+    </Setting>
+    <Setting Name="RearDataLength" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">20</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

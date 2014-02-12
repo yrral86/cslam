@@ -1,0 +1,86 @@
+﻿<UserControl x:Class="lunabotics.OCU.Views.ControllerSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:lunabotics.OCU.ViewModels"
+             xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+             xmlns:charting="clr-namespace:System.Windows.Controls.DataVisualization.Charting;assembly=System.Windows.Controls.DataVisualization.Toolkit"
+             xmlns:toolkit="clr-namespace:System.Windows.Controls.DataVisualization;assembly=System.Windows.Controls.DataVisualization.Toolkit"
+             mc:Ignorable="d" 
+             DataContext="{Binding Source={x:Static vm:ControllerSettingsViewModel.Instance}}"
+             d:DesignHeight="300" d:DesignWidth="400">
+    <UserControl.Resources>
+    </UserControl.Resources>
+    <Grid>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
+                <TextBlock Text="Player Index:" VerticalAlignment="Center" Margin="3"/>
+                <ComboBox Margin="3" Width="60" HorizontalAlignment="Left" VerticalAlignment="Center" SelectedValue="{Binding SelectedPlayer, Mode=TwoWay}" ItemsSource="{Binding Players}"/>
+            </StackPanel>
+            <Border Grid.Row="1" BorderThickness="1" BorderBrush="{StaticResource ToolWindowControlBorderBrush}" Padding="3">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <charting:Chart Grid.Row="0" BorderThickness="0" Background="Transparent" Title="Speed Sensitivity" 
+                                    Foreground="{DynamicResource ToolWindowForegroundBrush}">
+                    <charting:Chart.PlotAreaStyle>
+                        <Style TargetType="Grid">
+                            <Setter Property="Background" Value="Transparent"/>
+                        </Style>
+                    </charting:Chart.PlotAreaStyle>
+                    <charting:Chart.LegendStyle>
+                        <Style TargetType="{x:Type toolkit:Legend}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Setter Property="Height" Value="0"/>
+                            <Setter Property="Width" Value="0"/>
+                        </Style>
+                    </charting:Chart.LegendStyle>
+                    <charting:Chart.TitleStyle>
+                        <Style TargetType="{x:Type toolkit:Title}">
+                            <Setter Property="FontSize" Value="12"/>
+                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                        </Style>
+                    </charting:Chart.TitleStyle>
+                    <charting:AreaSeries DependentValuePath="Y" IndependentValuePath="X" ItemsSource="{Binding SpeedGraphData}">
+                        <charting:AreaSeries.DataPointStyle>
+                            <Style TargetType="{x:Type charting:AreaDataPoint}">
+                                <Setter Property="Height" Value="0"/>
+                                <Setter Property="Width" Value="0"/>
+                                <Setter Property="Background" Value="#1E90FF"/>
+                            </Style>
+                        </charting:AreaSeries.DataPointStyle>
+                        <charting:AreaSeries.DependentRangeAxis>
+                            <charting:LinearAxis Orientation="Y" Title="Speed" FontSize="10" ShowGridLines="True" Minimum="0" Maximum="1"/>
+                        </charting:AreaSeries.DependentRangeAxis>
+                        <charting:AreaSeries.IndependentAxis>
+                            <charting:LinearAxis Orientation="X" FontSize="10" ShowGridLines="True" Minimum="0" Maximum="1"/>
+                        </charting:AreaSeries.IndependentAxis>
+                    </charting:AreaSeries>
+                </charting:Chart>
+                <Grid Grid.Row="1" Margin="3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding SpeedSensitivity, Mode=OneWay}" VerticalAlignment="Center" FontWeight="DemiBold" Foreground="{DynamicResource ToolWindowForegroundBrush}"/>
+                    <Slider Grid.Column="1" Value="{Binding SpeedSensitivity, Mode=TwoWay}" Minimum="1" Maximum="10" TickFrequency="10" SmallChange="1" LargeChange="1" HorizontalAlignment="Stretch"/>
+                </Grid>
+            </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Unloaded">
+            <i:InvokeCommandAction Command="{Binding SaveCommand}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
+</UserControl>
