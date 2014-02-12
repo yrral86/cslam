@@ -1,7 +1,7 @@
 LIB_URG = liburg_c.a
 
 CC = gcc
-CFLAGS = -g -O2 $(INCLUDES) -I../include -fPIC
+CFLAGS = -g -O2 $(INCLUDES) -fPIC
 
 all : $(LIB_URG)
 
