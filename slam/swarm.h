@@ -1,11 +1,13 @@
 #ifndef __SWARM_H__
 #define __SWARM_H__
 
+#include <string.h>
+
 #include "particle.h"
 #include "sensor.h"
 #include "slam.h"
 
-#define PARTICLE_COUNT 2500
+#define PARTICLE_COUNT 500
 //#define INITIAL_SCANS 0
 #define INITIAL_POSITION_VARIANCE 200
 #define INITIAL_ANGLE_VARIANCE 30

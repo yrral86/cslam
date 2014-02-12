@@ -27,7 +27,7 @@ int main (int argc, char **argv) {
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], map[2], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/8, ARENA_HEIGHT/8);
+  initGL(map[0], map[2], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/20, ARENA_HEIGHT/20);
 
   rand_normal_init();
 
@@ -36,13 +36,13 @@ int main (int argc, char **argv) {
 
   // draw initial border
   for (i = 0; i < ARENA_WIDTH; i++)
-    for (j = 0; j < 10*BUFFER_FACTOR; j += BUFFER_FACTOR) {
+    for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j += BUFFER_FACTOR) {
       record_map_position(1, i, j, 255);
       record_map_position(1, i, ARENA_HEIGHT - 1 - j, 255);
     }
 
   for (i = 0; i < ARENA_HEIGHT; i++)
-    for (j = 0; j < 10*BUFFER_FACTOR; j+= BUFFER_FACTOR) {
+    for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j+= BUFFER_FACTOR) {
       record_map_position(1, j, i, 255);
       record_map_position(1, ARENA_WIDTH - 1 - j, i, 255);
     }
