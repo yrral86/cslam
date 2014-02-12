@@ -1,0 +1,44 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/urg_detect_os.h
+
+../include/urg_ring_buffer.h
+
+../include/urg_tcpclient.h
+urg_ring_buffer.h
+../include/urg_ring_buffer.h
+urg_detect_os.h
+../include/urg_detect_os.h
+sys/types.h
+-
+sys/socket.h
+-
+netinet/in.h
+-
+arpa/inet.h
+-
+
+/home/cer/Documents/software/ros/urgwidget-wrapper/urgwidget_driver/urgwidget_wrapper/src/urg_tcpclient.c
+urg_detect_os.h
+/home/cer/Documents/software/ros/urgwidget-wrapper/urgwidget_driver/urgwidget_wrapper/src/urg_detect_os.h
+string.h
+-
+windows.h
+-
+unistd.h
+-
+fcntl.h
+-
+errno.h
+-
+urg_tcpclient.h
+/home/cer/Documents/software/ros/urgwidget-wrapper/urgwidget_driver/urgwidget_wrapper/src/urg_tcpclient.h
+stdio.h
+-
+

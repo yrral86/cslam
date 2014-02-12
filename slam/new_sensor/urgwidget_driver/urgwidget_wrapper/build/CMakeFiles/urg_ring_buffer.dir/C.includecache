@@ -1,0 +1,14 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/urg_ring_buffer.h
+
+/home/cer/Documents/software/ros/urgwidget-wrapper/urgwidget_driver/urgwidget_wrapper/src/urg_ring_buffer.c
+urg_ring_buffer.h
+/home/cer/Documents/software/ros/urgwidget-wrapper/urgwidget_driver/urgwidget_wrapper/src/urg_ring_buffer.h
+

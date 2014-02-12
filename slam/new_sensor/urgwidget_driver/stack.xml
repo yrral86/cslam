@@ -1,0 +1,9 @@
+<stack>
+  <description brief="urgwidget_driver">urgwidget_driver</description>
+  <author>Maintained by Chad Rockey</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/urgwidget_driver</url>
+  <depend stack="ros" />
+
+</stack>
