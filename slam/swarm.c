@@ -81,9 +81,11 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 	  if (in_arena(x, y)) {
 	    l = buffer_index_from_x_y(x, y);
 	    difference = 255 - map[l];
+	    // punish the particle if the data doesn't agree
+	    // with the historical map
 	    if (difference > 200)
 	      filtered++;
-	  } else filtered++;
+	  } else filtered += 2;
       }
     }
     particles[i].score = filtered;
