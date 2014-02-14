@@ -1,9 +1,10 @@
 #include "sensor.h"
 
-const static int poll_time = 25000;
+const static int eth_poll_time = 25000;
+const static int usb_poll_time = 100000;
 
-static urg_t connection;
-//static tPort *port;
+static urg_t eth_connection;
+static urg_t usb_connection;
 static long *buffer;
 static raw_sensor_scan lidar_data;
 static raw_sensor_scan n_scans[MAX_SCANS];
@@ -16,58 +17,35 @@ pthread_t sensor_init_thread () {
 }
 
 void* sensor_init(void *null_pointer) {
-  //  port = scipConnect("/dev/ttyACM0");
   urg_connection_type_t type = URG_ETHERNET;
   char *device = "192.168.0.10";
-  if (urg_open(&connection, type, device, 10940) < 0) {
+  if (urg_open(&eth_connection, type, device, 10940) < 0) {
     printf("Could not connect to the sensor\n");
     exit(-1);
   }
 
-  //  max_data_size = urg_max_data_size(&connection);
+  //  max_data_size = urg_max_data_size(&eth_connection);
   buffer = malloc(sizeof(int)*RAW_SENSOR_DISTANCES);
 
   // start measurement
   // (connection, type, scan times (0 is keep going), skip)
-  urg_start_measurement(&connection, type, 0, 0);
+  urg_start_measurement(&eth_connection, type, 0, 0);
 
-  /*  if (port == NULL) {
-    perror("Could not connect to the sensor ");
-    exit(EXIT_FAILURE);
-  }
-
-  // use SCIP2.0
-  switchToScip2(port);
-  if(scip2SetComSpeed(port,115200)!=0){
-    fprintf(stderr,"Could not change speed\n");
-    exit(EXIT_FAILURE);
-  }
-  */
-
-  last_poll = utime() - poll_time;
+  last_poll = utime() - eth_poll_time;
 }
 
 
 raw_sensor_scan sensor_read_raw() {
   // Initialize parameters for laser scanning
-  /*  int start_step = 44;
-  int end_step = 725;
-  int step_cluster = 1;
-  int scan_interval = 0;
-  int scan_num = 1;*/
   int step_num;
   long timestamp;
 
-  int sleep_time = poll_time - (utime() - last_poll);
+  int sleep_time = eth_poll_time - (utime() - last_poll);
   if (sleep_time > 0)
     usleep(sleep_time);
   else printf("sleepless\n");
 
-  /*  buffer = scip2MeasureScan(port, start_step, end_step, step_cluster,
-			    scan_interval, scan_num, ENC_3BYTE, &step_num);
-  */
-
-  step_num = urg_get_distance(&connection, buffer, &timestamp);
+  step_num = urg_get_distance(&eth_connection, buffer, &timestamp);
   
   last_poll = utime();
 
