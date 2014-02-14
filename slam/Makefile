@@ -5,10 +5,6 @@ OBJS = \
 	particle \
 	random \
 	sensor \
-	scip/scipBase \
-	scip/scipUtil \
-	scip/scip1 \
-	scip/scip2 \
 	swarm \
 	ziggurat
 
@@ -18,10 +14,6 @@ OBJ_FILES = 	\
 		particle.o \
 		random.o \
 		sensor.o \
-		scip/scipBase.o \
-		scip/scipUtil.o \
-		scip/scip1.o \
-		scip/scip2.o \
 		swarm.o \
 		ziggurat.o
 
