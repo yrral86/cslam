@@ -4,9 +4,9 @@ const static int poll_time_eth = 25000;
 const static int poll_time_usb = 100000;
 
 static urg_t connection_eth;
-static urg_t connection_usb;
+static tPort *connection_usb;
 static long *buffer_eth;
-static long *buffer_usb;
+static long **buffer_usb;
 static raw_sensor_scan lidar_data;
 static raw_sensor_scan n_scans[MAX_SCANS];
 static int last_poll_usb, last_poll_eth, n, eth, usb;
@@ -23,7 +23,6 @@ void* sensor_init(void *null_pointer) {
   urg_connection_type_t type_eth = URG_ETHERNET;
   char *device_eth = "192.168.0.10";
 
-  urg_connection_type_t type_usb = URG_SERIAL;
   char *device_usb = "/dev/ttyACM0";
 
   eth = 0;
@@ -33,7 +32,7 @@ void* sensor_init(void *null_pointer) {
     printf("Could not connect to the ethernet sensor\n");
   } else eth = 1;
 
-  if (urg_open(&connection_usb, type_usb, device_usb, 19200) < 0) {
+  if ((connection_usb = scipConnect(device_usb)) == NULL) {
     printf("Could not connect to the usb sensor\n");
   } else usb = 1;
 
@@ -46,9 +45,10 @@ void* sensor_init(void *null_pointer) {
   }
 
   if (usb) {
-    max_data_size = urg_max_data_size(&connection_usb);
+    //    max_data_size = urg_max_data_size(&connection_usb);
     buffer_usb = malloc(sizeof(int)*RAW_SENSOR_DISTANCES_USB);
-    urg_start_measurement(&connection_usb, type_usb, 0, 0);
+    //    urg_start_measurement(&connection_usb, type_usb, 0, 0);
+    scip2SetComSpeed(connection_usb,115200);
     last_poll_usb = utime() - poll_time_usb;
   }
 }
@@ -56,6 +56,11 @@ void* sensor_init(void *null_pointer) {
 
 raw_sensor_scan sensor_read_raw() {
   // Initialize parameters for laser scanning
+  int start_step = 44;
+  int end_step = 725;
+  int step_cluster = 1;
+  int scan_interval = 0;
+  int scan_num = 1;
   int step_num;
   long timestamp;
 
@@ -64,10 +69,16 @@ raw_sensor_scan sensor_read_raw() {
     usleep(sleep_time);
   else printf("sleepless\n");
 
-  if (usb)
-    step_num = urg_get_distance(&connection_usb, buffer_usb, &timestamp);
-  
-  last_poll_usb = utime();
+  if (eth) {
+    step_num = urg_get_distance(&connection_eth, buffer_eth, &timestamp);
+    last_poll_eth = utime();
+  }
+
+  if (usb) {
+    scip2MeasureScan(connection_usb, start_step, end_step, step_cluster,
+		     scan_interval, scan_num, ENC_3BYTE, &step_num);
+    last_poll_usb = utime();
+  }
 
   int i, distance;
   for (i = 0 ; i < step_num ; i++) {
