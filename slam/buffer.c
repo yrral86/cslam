@@ -56,8 +56,8 @@ int index_is_visible(int index, particle p, raw_sensor_scan s) {
   dy = y_from_buffer_index(index) - p.y;
   // find angle, convert to degrees, adjust for particle
   angle = atan2(dy, dx)*180/M_PI - p.theta;
-  i = (angle + 120)/SENSOR_SPACING;
-  if (abs(angle) > SENSOR_RANGE/2.0 || sqrt(dx*dx + dy*dy) > s.distances[i])
+  i = (angle + 120)/SENSOR_SPACING_USB;
+  if (abs(angle) > SENSOR_RANGE_USB/2.0 || sqrt(dx*dx + dy*dy) > s.distances[i])
     visible = 0;
   return visible;
 }

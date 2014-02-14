@@ -67,11 +67,15 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
     filtered = 0;
     p = particles[i];
 
-    for (j = 0; j < RAW_SENSOR_DISTANCES; j++) {
+    // TODO: this will be _ETH since
+    // that will be our localization sensor,
+    // just working on new usb driver for the moment
+    for (j = 0; j < RAW_SENSOR_DISTANCES_USB; j++) {
       for (k = 0; k < sample_count; k++) {
 	  distance = scans[k].distances[j];
 	  // forward is now 0 degrees, left -, right +
-	  degrees = -120 + j*SENSOR_SPACING;
+	  // TODO: same as above (_ETH)
+	  degrees = -120 + j*SENSOR_SPACING_USB;
 
 	  theta = (degrees + p.theta)*M_PI/180;
 	  x = distance*cos(theta) + p.x;
