@@ -20,7 +20,7 @@
         </RoboteqOutputSettings>
       </OutputSettings>
       <InputSettings>
-        <TelemetryString>?V_?A_?AI</TelemetryString>
+        <TelemetryString>?V_?A_?AI_?CB</TelemetryString>
         <Interval>100</Interval>
         <TelemetryMappings>
           <TelemetryMapping>
@@ -58,6 +58,19 @@
               </TelemetryIndexMapping>
             </IndexMappings>
           </TelemetryMapping>
+          <TelemetryMapping>
+            <TypeLabel>CB</TypeLabel>
+            <IndexMappings>
+              <TelemetryIndexMapping>
+                <Index>0</Index>
+                <Telemetry>RoboteQ_1_HallCountCh1</Telemetry>
+              </TelemetryIndexMapping>
+              <TelemetryIndexMapping>
+                <Index>1</Index>
+                <Telemetry>RoboteQ_1_HallCountCh2</Telemetry>
+              </TelemetryIndexMapping>
+            </IndexMappings>
+          </TelemetryMapping>
         </TelemetryMappings>
       </InputSettings>
     </RoboteqConfiguration>
@@ -78,7 +91,7 @@
         </RoboteqOutputSettings>
       </OutputSettings>
       <InputSettings>
-        <TelemetryString>?V_?A</TelemetryString>
+        <TelemetryString>?V_?A_?CB</TelemetryString>
         <Interval>100</Interval>
         <TelemetryMappings>
           <TelemetryMapping>
@@ -100,6 +113,19 @@
               <TelemetryIndexMapping>
                 <Index>1</Index>
                 <Telemetry>RoboteQ_2_MotorAmpsCh2</Telemetry>
+              </TelemetryIndexMapping>
+            </IndexMappings>
+          </TelemetryMapping>
+          <TelemetryMapping>
+            <TypeLabel>CB</TypeLabel>
+            <IndexMappings>
+              <TelemetryIndexMapping>
+                <Index>0</Index>
+                <Telemetry>RoboteQ_2_HallCountCh1</Telemetry>
+              </TelemetryIndexMapping>
+              <TelemetryIndexMapping>
+                <Index>1</Index>
+                <Telemetry>RoboteQ_2_HallCountCh2</Telemetry>
               </TelemetryIndexMapping>
             </IndexMappings>
           </TelemetryMapping>
