@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 #include "urg_driver/urg_sensor.h"
-#include "scip/scip2.h"
+#include "scip/scipUtil.h"
 
 #define SENSOR_MIN 20
 #define SENSOR_MAX_ETH 60000
