@@ -57,21 +57,46 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Autonomy\Algorithms\Deposition.cs" />
-    <Compile Include="Autonomy\Algorithms\PotentialFieldTraversal.cs" />
-    <Compile Include="Autonomy\AutonomyHandler.cs" />
-    <Compile Include="Autonomy\MiningAlgorithm.cs" />
-    <Compile Include="Autonomy\Field.cs" />
-    <Compile Include="Autonomy\Algorithms\LowRiskLocalization.cs" />
-    <Compile Include="Autonomy\MappingAlgorithm.cs" />
-    <Compile Include="Autonomy\MonteCarloLocalization.cs" />
-    <Compile Include="Autonomy\MovingObject.cs" />
-    <Compile Include="Autonomy\Particle.cs" />
-    <Compile Include="Autonomy\RangeFinderModel.cs" />
-    <Compile Include="Autonomy\Robot.cs" />
-    <Compile Include="Autonomy\Tracker.cs" />
+    <Compile Include="Autonomy\Algorithms\Deposition.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Autonomy\Algorithms\LowRiskLocalization.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Autonomy\Algorithms\MiningAlgorithm.cs" />
+    <Compile Include="Autonomy\Algorithms\PotentialFieldAlgorithm.cs" />
+    <Compile Include="Autonomy\AutonomyHandler.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Autonomy\Field.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Autonomy\MappingAlgorithm.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Autonomy\MiningAlgorithm.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Autonomy\MonteCarloLocalization.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Autonomy\MovingObject.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Autonomy\Particle.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Autonomy\Position.cs" />
+    <Compile Include="Autonomy\RangeFinderModel.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Autonomy\Robot.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Autonomy\Tracker.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Controllers\IController.cs" />
-    <Compile Include="Controllers\PhidgetServo.cs" />
     <Compile Include="Controllers\RoboteQ.cs" />
     <Compile Include="Controllers\RoboteQUpdateQueue.cs" />
     <Compile Include="Models\BucketController.cs" />
@@ -97,7 +122,12 @@
       <Name>lunabotics.Configuration</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="Autonomy\.DS_Store" />
+    <None Include="Autonomy\Algorithms\.DS_Store" />
+    <None Include="ClassDiagram1.cd" />
+    <None Include="ClassDiagram2.cd" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

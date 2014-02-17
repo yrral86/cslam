@@ -22,7 +22,7 @@ namespace lunabotics.RCU
         static bool useAutonomy = true;
         static bool useRangeFinders = true;
         static bool useRoboteQs = true;
-        static bool useServoController = true;
+        //static bool useServoController = true;
         static bool useWebcams = true;
         static AutonomyHandler autonomy;
         
@@ -32,7 +32,7 @@ namespace lunabotics.RCU
         static Mode mode;
         static RangeFinder frontRangeFinder;
         static RangeFinder rearRangeFinder;
-        static PhidgetServo servo;
+        //static PhidgetServo servo;
         static Stopwatch stopwatch;
         static TelemetryFeedback feedback;
         static Webcam bucketCam, frontCam, rearCam;
@@ -67,9 +67,11 @@ namespace lunabotics.RCU
                     case "--noWebcam":
                         useWebcams = false;
                         break;
+                        /*
                     case "--noServoController":
                         useServoController = false;
                         break;
+                         */
                     default:
                         break;
                 }
@@ -156,14 +158,14 @@ namespace lunabotics.RCU
                     Thread.Sleep(200);
                     
                 }
-
+                /*
                 // Create servo controller
                 if (useServoController)
                 {
                     servo = new PhidgetServo(configuration.PhidgetConfiguration);
                     servo.Activate();
                 }
-
+                */
                 if (useAutonomy)
                 {
                     // Start autonomy logic
@@ -241,9 +243,10 @@ namespace lunabotics.RCU
 
             foreach (Controllers.RoboteQ r in roboteqs)
                 r.Deactivate();
-
+            /*
             if (servo != null)
                 servo.Deactivate();
+             */
             if (telemetryHandler != null)
                 telemetryHandler.Deactivate();
             if (frontRangeFinder != null)
@@ -435,10 +438,10 @@ namespace lunabotics.RCU
 
                     foreach (Controllers.RoboteQ roboteq in roboteqs)
                         roboteq.SetValues(deviceStates);
-
+                    /*
                     if (servo != null)
                         servo.SetValues(deviceStates);
-
+                    */
                     if (frontCam != null)
                         if (robotState.ContainsKey(Comms.CommandEncoding.CommandFields.FrontCameraState))
                             frontCam.UpdateState(Comms.States.VideoState.DecodeVideoState(robotState[CommandFields.FrontCameraState]));
