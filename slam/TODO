@@ -1,6 +1,6 @@
 testing in general
 
-use another particle swarm to find 6 circles (x, y of center and radius) that are as small as possible, but cover the maximum amount of known obstacles from overall map
-
 save a rescue overall map to revert to if overall map becomes noisy
 
+convert sensor reading to x,y with robot as origin, use k means with k = 6 to cover obstacles
+find mean and std dev of obstacle clusters, use as landmarks for fastslam
