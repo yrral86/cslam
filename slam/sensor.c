@@ -21,9 +21,11 @@ void* sensor_init(void *null_pointer) {
   int max_data_size;
 
   urg_connection_type_t type_eth = URG_ETHERNET;
+  urg_measurement_type_t m_type_eth = URG_MULTIECHO;
   char *device_eth = "192.168.0.10";
 
   urg_connection_type_t type_usb = URG_SERIAL;
+  urg_measurement_type_t m_type_usb = URG_DISTANCE;
   char *device_usb = "/dev/ttyACM0";
 
   eth = 0;
@@ -41,14 +43,14 @@ void* sensor_init(void *null_pointer) {
   if (eth) {
     max_data_size = urg_max_data_size(&connection_eth);
     buffer_eth = malloc(sizeof(int)*max_data_size);
-    urg_start_measurement(&connection_eth, type_eth, 0, 0);
+    urg_start_measurement(&connection_eth, m_type_eth, 0, 0);
     last_poll_eth = utime() - poll_time_eth;
   }
 
   if (usb) {
     max_data_size = urg_max_data_size(&connection_usb);
     buffer_usb = malloc(sizeof(int)*RAW_SENSOR_DISTANCES_USB);
-    urg_start_measurement(&connection_usb, type_usb, 0, 0);
+    urg_start_measurement(&connection_usb, m_type_usb, 0, 0);
     last_poll_usb = utime() - poll_time_usb;
   }
 }
