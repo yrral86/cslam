@@ -1,6 +1,7 @@
 CFLAGS = -lglut -lm -lGLU -lGL -lpthread -g -pthread
 OBJS = \
 	buffer \
+	landmark \
 	lazygl \
 	particle \
 	random \
@@ -14,6 +15,7 @@ OBJS = \
 
 OBJ_FILES = 	\
 		buffer.o \
+		landmark.o \
 		lazygl.o \
 		particle.o \
 		random.o \

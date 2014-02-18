@@ -33,7 +33,6 @@ void* sensor_init(void *null_pointer) {
   } else eth = 1;
 
   connection_usb = scipConnect(device_usb);
-  printf("%i\n", connection_usb);
   if (connection_usb == NULL) {
     printf("Could not connect to the usb sensor\n");
   } else usb = 1;

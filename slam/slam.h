@@ -6,6 +6,7 @@
 
 #include "arena.h"
 #include "buffer.h"
+#include "landmark.h"
 #include "particle.h"
 #include "random.h"
 #include "sensor.h"
