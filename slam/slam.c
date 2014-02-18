@@ -15,8 +15,6 @@ int main (int argc, char **argv) {
   // sample 3 times (0.3 sec)
   int sample_count = 1;
 
-  landmark_tree_node *head = landmark_tree_head(NULL);
-
   // connect to sensor in new thread while we
   // initialize everything else
   sensor_thread = sensor_init_thread();

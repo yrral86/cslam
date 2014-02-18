@@ -1,7 +1,7 @@
 #include "landmark.h"
 #include "buffer.h"
 
-landmark_tree_node* landmark_tree_head(landmark_tree_node *parent) {
+landmark_tree_node* landmark_tree_copy(landmark_tree_node *parent) {
   landmark_tree_node *head;
   if (parent == NULL) {
     head = landmark_build_subtree(0, BUFFER_WIDTH*BUFFER_HEIGHT);
@@ -64,17 +64,39 @@ landmark_tree_node* landmark_build_subtree(int min, int max) {
 void landmark_set_seen(landmark_tree_node *node, int index) {
   if (node->left == NULL && node->right == NULL && node->index == index)
     node->landmark.seen++;
-  else if (index <= node->index)
+  else if (index <= node->index) {
+    if (node->left->references > 1) {
+      landmark_tree_node *old_left = node->left;
+      node->left = landmark_tree_copy(old_left);
+      landmark_tree_node_dereference(old_left);
+    }
     landmark_set_seen(node->left, index);
-  else
+  } else {
+    if (node->right->references > 1) {
+      landmark_tree_node *old_right = node->right;
+      node->right = landmark_tree_copy(old_right);
+      landmark_tree_node_dereference(old_right);
+    }
     landmark_set_seen(node->right, index);
+  }
 }
 
 void landmark_set_unseen(landmark_tree_node *node, int index) {
   if (node->left == NULL && node->right == NULL && node->index == index)
     node->landmark.unseen++;
-  else if (index <= node->index)
+  else if (index <= node->index) {
+    if (node->left->references > 1) {
+      landmark_tree_node *old_left = node->left;
+      node->left = landmark_tree_copy(old_left);
+      landmark_tree_node_dereference(old_left);
+    }
     landmark_set_unseen(node->left, index);
-  else
+  } else {
+    if (node->right->references > 1) {
+      landmark_tree_node *old_right = node->right;
+      node->right = landmark_tree_copy(old_right);
+      landmark_tree_node_dereference(old_right);
+    }
     landmark_set_unseen(node->right, index);
+  }
 }

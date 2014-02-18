@@ -18,7 +18,7 @@ typedef struct landmark_tree_node {
   landmark landmark;
 } landmark_tree_node;
 
-landmark_tree_node* landmark_tree_head(landmark_tree_node*);
+landmark_tree_node* landmark_tree_copy(landmark_tree_node*);
 void landmark_tree_node_copy_left(landmark_tree_node*, landmark_tree_node*);
 void landmark_tree_node_copy_right(landmark_tree_node*, landmark_tree_node*);
 void landmark_tree_node_delete(landmark_tree_node*);
