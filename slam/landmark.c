@@ -4,10 +4,11 @@
 landmark_tree_node* landmark_tree_copy(landmark_tree_node *parent) {
   landmark_tree_node *head;
   if (parent == NULL) {
-    head = landmark_build_subtree(0, BUFFER_WIDTH*BUFFER_HEIGHT);
+    head = landmark_build_subtree(0, BUFFER_SIZE);
   } else {
     head = malloc(sizeof(landmark_tree_node));
     head->references = 1;
+    head->index = parent->index;
     landmark_tree_node_copy_left(parent, head);
     landmark_tree_node_copy_right(parent, head);
   }
@@ -119,7 +120,7 @@ void landmark_write_map_subtree(landmark_tree_node *node, uint8_t *buffer) {
 
 double landmark_seen_probability(landmark_tree_node *node, int index) {
   landmark_tree_node* leaf = landmark_tree_find_leaf(node, index);
-  double p = 0.0;
+  double p = 0.001;
   double sum = leaf->landmark.seen + leaf->landmark.unseen;
   if (sum > 0)
     p = leaf->landmark.seen/sum;

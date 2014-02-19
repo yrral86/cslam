@@ -1,20 +1,29 @@
 #include "particle.h"
 
-void particle_add_sample(particle *p, double score) {
-  // p->score is average score for p->samples
-  // new p->score is average score for p->samples + 1
-  // p->score * p->samples + score / (p->samples + 1)
-  p->score += (p->score*p->samples + score)/(p->samples + 1);
-  p->samples++;
+particle particle_sample_motion(particle parent, double dx, double dy, double dtheta) {
+  particle p;
+  p.p = parent.p;
+  p.x = parent.x + dx + rand_normal(parent.x_var);
+  p.y = parent.y + dy + rand_normal(parent.y_var);
+  p.theta = parent.theta + dtheta + rand_normal(parent.theta_var);
+  p.x_var = parent.x_var;
+  p.y_var = parent.y_var;
+  p.theta_var = parent.theta_var;
+  p.map = landmark_tree_copy(parent.map);
+
+  return p;
 }
 
-particle particle_init(int x, int y, int theta) {
+particle particle_init(double x, double y, double theta) {
   particle p;
+  p.p = 1.0;
   p.x = x;
   p.y = y;
   p.theta = theta;
-  p.samples = 0;
-  p.score = 0;
-
+  // initial variance from swarm.h
+  p.x_var = INITIAL_POSITION_VARIANCE;
+  p.y_var = INITIAL_POSITION_VARIANCE;
+  p.theta_var = INITIAL_ANGLE_VARIANCE;
+  p.map = landmark_tree_copy(NULL);
   return p;
 }

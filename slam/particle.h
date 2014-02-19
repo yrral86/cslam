@@ -4,15 +4,19 @@
 #include "landmark.h"
 
 typedef struct particle {
+  double p;
   double x;
   double y;
   double theta;
-  int samples;
-  double score;
+  double x_var;
+  double y_var;
+  double theta_var;
   landmark_tree_node *map;
 } particle;
 
-void particle_add_sample(particle*, double);
-particle particle_init(int, int, int);
+#include "swarm.h"
+
+particle particle_sample_motion(particle, double, double, double);
+particle particle_init(double, double, double);
 
 #endif
