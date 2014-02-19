@@ -126,6 +126,10 @@ double landmark_seen_probability(landmark_tree_node *node, int index) {
   return p;
 }
 
+double landmark_unseen_probability(landmark_tree_node *node, int index) {
+  return 1 - landmark_seen_probability(node, index);
+}
+
 landmark_tree_node* landmark_tree_find_leaf(landmark_tree_node *node, int index) {
   if (node->left == NULL && node->right == NULL && node->index == index)
     return node;

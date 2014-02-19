@@ -31,6 +31,7 @@ void landmark_set_unseen(landmark_tree_node*, int);
 void landmark_write_map(landmark_tree_node*, uint8_t*);
 void landmark_write_map_subtree(landmark_tree_node*, uint8_t*);
 double landmark_seen_probability(landmark_tree_node*, int);
+double landmark_unseen_probability(landmark_tree_node*, int);
 landmark_tree_node* landmark_tree_find_leaf(landmark_tree_node*, int);
 
 #endif
