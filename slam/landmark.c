@@ -100,3 +100,37 @@ void landmark_set_unseen(landmark_tree_node *node, int index) {
     landmark_set_unseen(node->right, index);
   }
 }
+
+// writes a byte buffer given the head of a landmark tree
+void landmark_write_map(landmark_tree_node *head, uint8_t *buffer) {
+  bzero(buffer, BUFFER_SIZE);
+  landmark_write_map_subtree(head, buffer);
+}
+
+// writes a subtree to the given byte buffer
+void landmark_write_map_subtree(landmark_tree_node *node, uint8_t *buffer) {
+  if (node->left == NULL && node->right == NULL)
+    buffer[node->index] = 255*landmark_seen_probability(node, node->index);
+  else {
+    landmark_write_map_subtree(node->left, buffer);
+    landmark_write_map_subtree(node->right, buffer);
+  }
+}
+
+double landmark_seen_probability(landmark_tree_node *node, int index) {
+  landmark_tree_node* leaf = landmark_tree_find_leaf(node, index);
+  double p = 0.0;
+  double sum = leaf->landmark.seen + leaf->landmark.unseen;
+  if (sum > 0)
+    p = leaf->landmark.seen/sum;
+  return p;
+}
+
+landmark_tree_node* landmark_tree_find_leaf(landmark_tree_node *node, int index) {
+  if (node->left == NULL && node->right == NULL && node->index == index)
+    return node;
+  else if (index <= node->index)
+    return landmark_tree_find_leaf(node->left, index);
+  else
+    return landmark_tree_find_leaf(node->right, index);
+}
