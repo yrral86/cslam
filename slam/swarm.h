@@ -1,6 +1,8 @@
 #ifndef __SWARM_H__
 #define __SWARM_H__
 
+#include <string.h>
+
 #include "particle.h"
 #include "sensor.h"
 #include "slam.h"

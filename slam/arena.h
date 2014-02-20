@@ -46,4 +46,12 @@ const static  int MINE_BEGIN = 1250;
 const static int START_END = 2000;
 const static  int MINE_BEGIN = 1250;
 */
+
+/*
+// ESB 903
+#define ARENA_WIDTH 13710
+#define ARENA_HEIGHT 8530
+const static int START_END = 4880;
+const static  int MINE_BEGIN = 1250;
+*/
 #endif

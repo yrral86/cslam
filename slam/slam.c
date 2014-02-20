@@ -36,13 +36,13 @@ int main (int argc, char **argv) {
 
   // draw initial border
   for (i = 0; i < ARENA_WIDTH; i++)
-    for (j = 0; j < 10*BUFFER_FACTOR; j += BUFFER_FACTOR) {
+    for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j += BUFFER_FACTOR) {
       record_map_position(1, i, j, 255);
       record_map_position(1, i, ARENA_HEIGHT - 1 - j, 255);
     }
 
   for (i = 0; i < ARENA_HEIGHT; i++)
-    for (j = 0; j < 10*BUFFER_FACTOR; j+= BUFFER_FACTOR) {
+    for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j+= BUFFER_FACTOR) {
       record_map_position(1, j, i, 255);
       record_map_position(1, ARENA_WIDTH - 1 - j, i, 255);
     }
@@ -73,7 +73,8 @@ int main (int argc, char **argv) {
     current_particle = swarm_get_best();
 
     // draw map from best particle
-    for (i = 0; i < RAW_SENSOR_DISTANCES; i++)
+    // TODO: should be _ETH
+    for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++)
       for (j = 0; j < sample_count; j++)
 	record_distance(i, scans[j].distances[i]);
 
@@ -144,7 +145,8 @@ int main (int argc, char **argv) {
 // records into current map (map[0])
 void record_distance(int angle_index, double distance) {
   // forward is now 0 degrees, left -, right +
-  double degrees = -120 + angle_index*SENSOR_SPACING;
+  // TODO: _ETH
+  double degrees = -120 + angle_index*SENSOR_SPACING_USB;
   double theta, dx, dy;
   int x, y;
   theta = (degrees + current_particle.theta)*M_PI/180;

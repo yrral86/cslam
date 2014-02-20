@@ -1,6 +1,7 @@
 #ifndef __BUFFER_H__
 #define __BUFFER_H__
 
+#include <math.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <strings.h>
@@ -9,7 +10,8 @@
 #include "particle.h"
 #include "sensor.h"
 
-#define BUFFER_FACTOR 10
+#define BUFFER_FACTOR 20
+#define BORDER_WIDTH 10
 #define BUFFER_WIDTH (ARENA_WIDTH/BUFFER_FACTOR)
 #define BUFFER_HEIGHT (ARENA_HEIGHT/BUFFER_FACTOR)
 #define BUFFER_SIZE (BUFFER_WIDTH*BUFFER_HEIGHT)
