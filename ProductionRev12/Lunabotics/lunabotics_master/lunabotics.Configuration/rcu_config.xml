@@ -74,6 +74,7 @@
         </TelemetryMappings>
       </InputSettings>
     </RoboteqConfiguration>
+    <!--
     <RoboteqConfiguration>
       <COM_Port>COM4</COM_Port>
       <Timeout>250</Timeout>
@@ -257,6 +258,7 @@
         </TelemetryMappings>
       </InputSettings>
     </RoboteqConfiguration>
+    -->
   </RoboteqConfigurations>
   <FrontCameraConfiguration>
     <DeviceName>@device:pnp:\\?\usb#vid_046d&amp;pid_0829&amp;mi_00#7&amp;842c165&amp;0&amp;0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global</DeviceName>
@@ -311,4 +313,13 @@
     <EndStep>512</EndStep>
     <ClusterCount>13</ClusterCount>
   </RearRangeFinder>
+  <AutonomyConfiguration>
+    <ArenaWidth>3.88</ArenaWidth>
+    <ArenaLength>7.38</ArenaLength>
+    <RoverLength>.97</RoverLength>
+    <RoverWidth>.72</RoverWidth>
+    <SafetyLength>.5</SafetyLength>
+    <Interval>100</Interval>
+    
+  </AutonomyConfiguration>
 </RCUConfiguration>

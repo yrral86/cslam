@@ -22,6 +22,7 @@ namespace lunabotics.RCU.Autonomy
         protected double rotationalVelocity;
         private double translationalVelocitySigma;
         private double rotationalVelocitySigma;
+
         #endregion
 
         #region Constructor
@@ -33,14 +34,10 @@ namespace lunabotics.RCU.Autonomy
         #endregion
 
         #region Methods
-        public void Move(double elapsedTime)
+        public void MoveForward(double steps)
         {
-            double v = translationalVelocity + MathHelper.NextGaussianDouble(MathHelper.random, 0.0, translationalVelocitySigma);
-            double omega = rotationalVelocity + MathHelper.NextGaussianDouble(MathHelper.random, 0.0, rotationalVelocitySigma);
-            // Kinematic model (non-slip)
-            x += v * Math.Cos(MathHelper.DegreeToRadian(angle)) * elapsedTime;
-            y += v * Math.Sin(MathHelper.DegreeToRadian(angle)) * elapsedTime;
-            angle += omega * elapsedTime;
+            this.translationalVelocity = 1000;
+            this.rotationalVelocity = 0;
         }
 
         public void Set(double x, double y, double angle)

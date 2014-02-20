@@ -39,36 +39,36 @@ namespace lunabotics.RCU.Autonomy
         #endregion
 
         #region Methods
-        public double[] ReadSensors(bool useFront)
-        {
-            if (useFront)
-            {
-                // Combine arrays
-                double[] measurements = new double[configuration.NumberOfFrontRFSignals + configuration.NumberOfRearRFSignals];
-                // Copy front measurements
-                for (int i = 0; i < configuration.NumberOfFrontRFSignals - 1; i++)
-                    measurements[i] = telemetryFeedback.FrontRangeFinderData[i * (511 / (configuration.NumberOfFrontRFSignals - 1))];
-                // Copy rear measurements
-                for (int i = 0; i < configuration.NumberOfRearRFSignals - 1; i++)
-                    measurements[i + configuration.NumberOfFrontRFSignals] = telemetryFeedback.RearRangeFinderData[i * (511 / (configuration.NumberOfRearRFSignals - 1))];
-                return measurements;
-            }
-            else
-            {
-                // Combine arrays
-                double[] measurements = new double[configuration.NumberOfRearRFSignals];
-                // Copy rear measurements
-                for (int i = 0; i < configuration.NumberOfRearRFSignals - 1; i++)
-                    measurements[i] = telemetryFeedback.RearRangeFinderData[i * (511 / (configuration.NumberOfRearRFSignals - 1))];
-                return measurements;
-            }
-        }
-        public void SetState(Tracker tracker)
-        {
-            this.x = tracker.X;
-            this.y = tracker.Y;
-            this.angle = tracker.Angle;
-        }
+        //public double[] ReadSensors(bool useFront)
+        //{
+        //    if (useFront)
+        //    {
+        //        // Combine arrays
+        //        double[] measurements = new double[configuration.NumberOfFrontRFSignals + configuration.NumberOfRearRFSignals];
+        //        // Copy front measurements
+        //        for (int i = 0; i < configuration.NumberOfFrontRFSignals - 1; i++)
+        //            measurements[i] = telemetryFeedback.FrontRangeFinderData[i * (511 / (configuration.NumberOfFrontRFSignals - 1))];
+        //        // Copy rear measurements
+        //        for (int i = 0; i < configuration.NumberOfRearRFSignals - 1; i++)
+        //            measurements[i + configuration.NumberOfFrontRFSignals] = telemetryFeedback.RearRangeFinderData[i * (511 / (configuration.NumberOfRearRFSignals - 1))];
+        //        return measurements;
+        //    }
+        //    else
+        //    {
+        //        // Combine arrays
+        //        double[] measurements = new double[configuration.NumberOfRearRFSignals];
+        //        // Copy rear measurements
+        //        for (int i = 0; i < configuration.NumberOfRearRFSignals - 1; i++)
+        //            measurements[i] = telemetryFeedback.RearRangeFinderData[i * (511 / (configuration.NumberOfRearRFSignals - 1))];
+        //        return measurements;
+        //    }
+        //}
+        //public void SetState(Tracker tracker)
+        //{
+        //    this.x = tracker.X;
+        //    this.y = tracker.Y;
+        //    this.angle = tracker.Angle;
+        //}
         #endregion
 
         #region Propterties
