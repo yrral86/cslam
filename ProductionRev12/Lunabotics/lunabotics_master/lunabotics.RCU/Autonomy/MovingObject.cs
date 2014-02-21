@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Utility;
+using lunabotics.Comms.CommandEncoding;
+using lunabotics.Configuration;
+using lunabotics.RCU.Telemetry;
 
 namespace lunabotics.RCU.Autonomy
 {
@@ -34,11 +37,82 @@ namespace lunabotics.RCU.Autonomy
         #endregion
 
         #region Methods
-        public void MoveForward(double steps)
+        public Dictionary<CommandFields, short> MoveForward(double steps)
         {
-            this.translationalVelocity = 1000;
-            this.rotationalVelocity = 0;
+             
+            Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
+
+            while (
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps)
+            {
+                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1));
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 500;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+                return outputState;
+            }
+            //Break
+            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+            return outputState;
         }
+
+        public Dictionary<CommandFields, short> MoveReverse(double steps)
+        {
+
+            Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
+
+            while (
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps)
+            {
+                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1));
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = -500;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+                return outputState;
+            }
+            //Break
+            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+            return outputState;
+        }
+
+        public Dictionary<CommandFields, short> tankTurnRight(double steps)
+        {
+
+            Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
+
+            while (
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps)
+            {
+                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1));
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = -500;
+                return outputState;
+            }
+            //Break
+            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+            return outputState;
+        }
+
+        public Dictionary<CommandFields, short> tankTurnLeft(double steps)
+        {
+
+            Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
+
+            while (
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps)
+            {
+                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1));
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 90;
+                return outputState;
+            }
+            //Break
+            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+            return outputState;
+        }
+
 
         public void Set(double x, double y, double angle)
         {

@@ -249,9 +249,8 @@ namespace lunabotics.RCU.Autonomy
                     //}
 
                     // Update output state
-                    //robot.MoveForward(1800);
-                    outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 500;
-                    outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+                    outputState = robot.MoveForward(1850);
+                    
                     outputState = MergeStates(outputState, staticOutput);
                     OnAutonomyUpdated(new AutonomyArgs(outputState));
 
