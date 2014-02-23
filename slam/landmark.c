@@ -4,7 +4,7 @@
 landmark_tree_node* landmark_tree_copy(landmark_tree_node *parent) {
   landmark_tree_node *head;
   if (parent == NULL) {
-    head = landmark_build_subtree(0, BUFFER_SIZE);
+    head = landmark_build_subtree(0, BUFFER_SIZE - 1);
   } else {
     head = malloc(sizeof(landmark_tree_node));
     head->references = 1;
@@ -140,7 +140,7 @@ void landmark_write_map(landmark_tree_node *head, uint8_t *buffer) {
 void landmark_write_map_subtree(landmark_tree_node *node, uint8_t *buffer) {
   assert(node != NULL);
   if (node->left == NULL && node->right == NULL) {
-    assert(node->index > 0);
+    assert(node->index >= 0);
     assert(node->index < BUFFER_SIZE);
     buffer[node->index] = 255*landmark_seen_probability(node, node->index);
   } else {
