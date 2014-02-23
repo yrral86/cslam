@@ -7,9 +7,9 @@
 #include "sensor.h"
 #include "slam.h"
 
-#define PARTICLE_COUNT 10
+#define PARTICLE_COUNT 100
 //#define INITIAL_SCANS 0
-#define INITIAL_POSITION_VARIANCE 200
+#define INITIAL_POSITION_VARIANCE 15
 #define INITIAL_ANGLE_VARIANCE 30
 
 void swarm_init();

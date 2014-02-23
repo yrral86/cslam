@@ -5,7 +5,7 @@ static particle previous_particles[PARTICLE_COUNT];
 static int iterations = 0;
 
 void swarm_init() {
-  int i, j, x, y, theta;
+  int i, j, k, x, y, theta;
   particle p;
 
   // initialize first round of particles
@@ -18,6 +18,22 @@ void swarm_init() {
 	y = 3*ARENA_HEIGHT/4;
       theta = rand_limit(360) - 180;
       particles[i] = particle_init(x, y, theta);
+
+      // draw initial border
+      for (k = 0; k < ARENA_WIDTH; k++)
+	for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j += BUFFER_FACTOR) {
+	  landmark_set_seen(particles[i].map, buffer_index_from_x_y(k, j));
+	  landmark_set_seen(particles[i].map,
+			    buffer_index_from_x_y(k, ARENA_HEIGHT - 1 - j));
+	}
+
+      for (k = 0; k < ARENA_HEIGHT; k++)
+	for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j+= BUFFER_FACTOR) {
+	  landmark_set_seen(particles[i].map, buffer_index_from_x_y(j, k));
+	  landmark_set_seen(particles[i].map,
+			    buffer_index_from_x_y(ARENA_WIDTH - 1 - j, k));
+	}
+
     }
   }
 
@@ -61,7 +77,7 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 	  if (in_arena(x, y)) {
 	    l = buffer_index_from_x_y(x, y);
 	    posterior *= landmark_seen_probability(p.map, l);
-	  } else posterior *= 0.1;
+	  } else posterior *= 0.5;
       }
     }
     particles[i].p *= posterior;
@@ -77,25 +93,27 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   i = 0;
   do {
     swap = 0;
-    for (j = 0; j < PARTICLE_COUNT - i; j++)
+    for (j = 0; j < PARTICLE_COUNT - i - 1; j++)
       // if the left particle is smaller probability, bubble it right
-      if (particles[i].p < particles[j].p) {
-	p = particles[i];
-	particles[i] = particles[j];
+      if (particles[j].p < particles[j + 1].p) {
+	p = particles[j];
+	particles[j + 1] = particles[j];
 	particles[j] = p;
 	swap = 1;
       }
     i++;
   } while (swap);
 
-  // resample with replacement
+
+  // save old particles before we resample
   memcpy(previous_particles, particles, sizeof(particle)*PARTICLE_COUNT);
+  // resample with replacement
   for (i = 0; i < PARTICLE_COUNT; i++) {
     double p = rand()/(double)RAND_MAX;
     total = 0.0;
     j = 0;
-    while (total < p)
-      total += previous_particles[j++].p;
+    while (j++ && total < p)
+      total += previous_particles[j - 1].p;
     particles[i] = previous_particles[j - 1];
     landmark_tree_node_reference(particles[i].map);
   }

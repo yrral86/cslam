@@ -27,25 +27,12 @@ int main (int argc, char **argv) {
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], map[2], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/8, ARENA_HEIGHT/8);
+  initGL(map[0], map[2], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/4, ARENA_HEIGHT/4);
 
   rand_normal_init();
 
   // wait for sensor
   assert(pthread_join(sensor_thread, NULL) == 0);
-
-  // draw initial border
-  for (i = 0; i < ARENA_WIDTH; i++)
-    for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j += BUFFER_FACTOR) {
-      record_map_position(1, i, j, 255);
-      record_map_position(1, i, ARENA_HEIGHT - 1 - j, 255);
-    }
-
-  for (i = 0; i < ARENA_HEIGHT; i++)
-    for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j+= BUFFER_FACTOR) {
-      record_map_position(1, j, i, 255);
-      record_map_position(1, ARENA_WIDTH - 1 - j, i, 255);
-    }
 
   // start a scan
   sensor_thread = sensor_read_raw_n_thread(sample_count);
@@ -72,11 +59,9 @@ int main (int argc, char **argv) {
     // update localization
     current_particle = swarm_get_best();
 
-    // draw map from best particle
-    // TODO: should be _ETH
-    for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++)
-      for (j = 0; j < sample_count; j++)
-	record_distance(i, scans[j].distances[i]);
+
+    // copy best map to buffer
+    landmark_write_map(current_particle.map, map[0]);
 
     // draw position
     double s, c, t;
