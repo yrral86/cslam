@@ -19,7 +19,7 @@ namespace lunabotics.RCU.Autonomy
         public enum State
         {
             Manual,
-            LowRiskLocalization,
+            //LowRiskLocalization,
             TraverseToMining,
             TraverseToDeposition,
             Mining,
@@ -47,8 +47,8 @@ namespace lunabotics.RCU.Autonomy
         private AutonomyConfiguration configuration;
         private Deposition depositionAlgorithm;
         private Dictionary<CommandFields, short> staticOutput;
-        private LowRiskLocalization lowRiskLocalizationAlgorithm;
-        private MonteCarloLocalization localization;
+        //private LowRiskLocalization lowRiskLocalizationAlgorithm;
+        //private MonteCarloLocalization localization;
         private Robot robot;
         private State state;
         private Stopwatch stopwatch;
@@ -63,7 +63,7 @@ namespace lunabotics.RCU.Autonomy
             this.configuration = configuration;
 
             // Create localization logic
-            localization = new MonteCarloLocalization(configuration);
+            //localization = new MonteCarloLocalization(configuration);
 
             // Create robot
             robot = new Robot(configuration);
@@ -79,8 +79,8 @@ namespace lunabotics.RCU.Autonomy
             timer.Elapsed += timer_Elapsed;
 
             // Create algorithms
-            depositionAlgorithm = new Deposition(configuration);
-            lowRiskLocalizationAlgorithm = new LowRiskLocalization(configuration);
+            //depositionAlgorithm = new Deposition(configuration);
+            //lowRiskLocalizationAlgorithm = new LowRiskLocalization(configuration);
             
             // Create static state
             staticOutput = new Dictionary<CommandFields, short>();
@@ -100,8 +100,6 @@ namespace lunabotics.RCU.Autonomy
             // Set flag
             active = true;
 
-            // Initialize MCL
-            localization.Initialize(robot);
         }
 
         public void Deactivate()
@@ -143,7 +141,7 @@ namespace lunabotics.RCU.Autonomy
             // Reset stopwatch
             stopwatch.Restart();
             // Set state
-            state = State.Deposition;
+            state = State.TraverseToMining;
             // Set flag
             started = true;
             // Set zone
@@ -179,78 +177,80 @@ namespace lunabotics.RCU.Autonomy
 
                     // Process state
                     //Console.WriteLine(stopwatch.Elapsed);
-                    switch (state)
-                    {
-                        case State.Manual:
-                            // Should not be here, but just in case
-                            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
-                            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
-                            outputState[Comms.CommandEncoding.CommandFields.BucketPivot] = 0;
-                            outputState[Comms.CommandEncoding.CommandFields.BucketPitch] = 0;
-                            outputState[Comms.CommandEncoding.CommandFields.LeftBucketActuator] = 0;
-                            outputState[Comms.CommandEncoding.CommandFields.RightBucketActuator] = 0;
-                            outputState[Comms.CommandEncoding.CommandFields.RangeFinderServo] = 90;
-                            break;
-                        case State.TemporaryTesting:
-                            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 1000;
-                            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
-                            outputState[Comms.CommandEncoding.CommandFields.BucketPivot] = 0;
-                            outputState[Comms.CommandEncoding.CommandFields.BucketPitch] = 0;
-                            outputState[Comms.CommandEncoding.CommandFields.LeftBucketActuator] = 0;
-                            outputState[Comms.CommandEncoding.CommandFields.RightBucketActuator] = 0;
-                            outputState[Comms.CommandEncoding.CommandFields.RangeFinderServo] = 90;
-                            break;
-                        case State.LowRiskLocalization:
-                            // Perform Monte Carlo localization
-                            localization.Update(configuration.Interval / 1000.0d, robot, expectedZone, true);
-                            robot.SetState(localization.Tracker);
-                            // Calculate new output state
-                            outputState = lowRiskLocalizationAlgorithm.Update(robot, localization, stopwatch);
+                    //switch (state)
+                    //{
+                    //    case State.Manual:
+                    //        // Should not be here, but just in case
+                    //        outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+                    //        outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+                    //        outputState[Comms.CommandEncoding.CommandFields.BucketPivot] = 0;
+                    //        outputState[Comms.CommandEncoding.CommandFields.BucketPitch] = 0;
+                    //        outputState[Comms.CommandEncoding.CommandFields.LeftBucketActuator] = 0;
+                    //        outputState[Comms.CommandEncoding.CommandFields.RightBucketActuator] = 0;
+                    //        outputState[Comms.CommandEncoding.CommandFields.RangeFinderServo] = 90;
+                    //        break;
+                    //    case State.TemporaryTesting:
+                    //        outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 1000;
+                    //        outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+                    //        outputState[Comms.CommandEncoding.CommandFields.BucketPivot] = 0;
+                    //        outputState[Comms.CommandEncoding.CommandFields.BucketPitch] = 0;
+                    //        outputState[Comms.CommandEncoding.CommandFields.LeftBucketActuator] = 0;
+                    //        outputState[Comms.CommandEncoding.CommandFields.RightBucketActuator] = 0;
+                    //        outputState[Comms.CommandEncoding.CommandFields.RangeFinderServo] = 90;
+                    //        break;
+                    //    //case State.LowRiskLocalization:
+                    //    //     Perform Monte Carlo localization
+                    //    //    localization.Update(configuration.Interval / 1000.0d, robot, expectedZone, true);
+                    //    //    robot.SetState(localization.Tracker);
+                    //    //     Calculate new output state
+                    //    //    outputState = lowRiskLocalizationAlgorithm.Update(robot, localization, stopwatch);
                             
-                            // If done, move on to the next step
-                            if (lowRiskLocalizationAlgorithm.State == LowRiskLocalization.AlgorithmState.Done)
-                            {
-                                // Move to the next state
-                                if (robot.Regolith < configuration.MinRegolithPerRun)
-                                {
-                                    state = State.TraverseToMining;
-                                }
-                                else
-                                {
-                                    state = State.TraverseToDeposition;
-                                }
-                            }
+                    //    //     If done, move on to the next step
+                    //    //    if (lowRiskLocalizationAlgorithm.State == LowRiskLocalization.AlgorithmState.Done)
+                    //    //    {
+                    //    //         Move to the next state
+                    //    //        if (robot.Regolith < configuration.MinRegolithPerRun)
+                    //    //        {
+                    //    //            state = State.TraverseToMining;
+                    //    //        }
+                    //    //        else
+                    //    //        {
+                    //    //            state = State.TraverseToDeposition;
+                    //    //        }
+                    //    //    }
 
-                            break;
-                        case State.TraverseToMining:
-                            // Perform Monte Carlo localization
-                            localization.Update(configuration.Interval / 1000.0d, robot, expectedZone, true);
-                            robot.SetState(localization.Tracker);
-                            // Calculate new output state
+                    //        break;
+                    //    case State.TraverseToMining:
+                    //        // Perform Monte Carlo localization
+                    //        localization.Update(configuration.Interval / 1000.0d, robot, expectedZone, true);
+                    //        robot.SetState(localization.Tracker);
+                    //        // Calculate new output state
 
 
-                            break;
-                        case State.TraverseToDeposition:
-                            break;
-                        case State.Mining:
-                            break;
-                        case State.Deposition:
-                            // Continue localization
-                            //localization.Update(configuration.Interval / 1000.0d, robot, expectedZone, true);
-                            //robot.SetState(localization.Tracker);
-                            // Perform deposition algorithm
-                            outputState = depositionAlgorithm.Update(robot, stopwatch);
-                            // Check converged
-                            if (depositionAlgorithm.State == Deposition.AlgorithmState.Done)
-                            {
+                    //        break;
+                    //    case State.TraverseToDeposition:
+                    //        break;
+                    //    case State.Mining:
+                    //        break;
+                    //    case State.Deposition:
+                    //        // Continue localization
+                    //        //localization.Update(configuration.Interval / 1000.0d, robot, expectedZone, true);
+                    //        //robot.SetState(localization.Tracker);
+                    //        // Perform deposition algorithm
+                    //        outputState = depositionAlgorithm.Update(robot, stopwatch);
+                    //        // Check converged
+                    //        if (depositionAlgorithm.State == Deposition.AlgorithmState.Done)
+                    //        {
 
-                            }
-                            break;
-                        default:
-                            break;
-                    }
+                    //        }
+                    //        break;
+                    //    default:
+                    //        break;
+                    //}
 
                     // Update output state
+                    outputState = robot.MoveForward(1850);
+                    
                     outputState = MergeStates(outputState, staticOutput);
                     OnAutonomyUpdated(new AutonomyArgs(outputState));
 
@@ -258,9 +258,9 @@ namespace lunabotics.RCU.Autonomy
                     robot.SetVelocities(
                         Kinematics.GetTranslationalVelocity(outputState[CommandFields.TranslationalVelocity]),
                         Kinematics.GetRotationalVelocity(outputState[CommandFields.RotationalVelocity]));
+                    
 
-                    // Update telemetry
-                    UpdateTelemetry(localization);
+
                 }
                 catch (TimeoutException ex)
                 {
@@ -281,23 +281,23 @@ namespace lunabotics.RCU.Autonomy
 
         }
 
-        private void UpdateTelemetry(MonteCarloLocalization localization)
-        {
-            // Update telemetry
-            Dictionary<Configuration.Telemetry, int> dictionary = new Dictionary<Configuration.Telemetry, int>();
-            //dictionary[Configuration.Telemetry.LocalizationX] = (int)(localization.Tracker.X * 10.0d); // Convert for double to int -> Like RoboteQ
-            //dictionary[Configuration.Telemetry.LocalizationY] = (int)(localization.Tracker.Y * 10.0d); // Convert for double to int -> Like RoboteQ
-            //dictionary[Configuration.Telemetry.LocalizationPsi] = (int)(localization.Tracker.Angle * 10.0d); // Convert for double to int -> Like RoboteQ
-            //dictionary[Configuration.Telemetry.LocalizationConfidence] = (int)(100.0 * localization.Confidence); // 0 = No confidence, 100 = Complete convergence/good confidence
-            //dictionary[Configuration.Telemetry.LocalizationState] = (int)state;
-            dictionary[Configuration.Telemetry.LocalizationX] = 10;
-            dictionary[Configuration.Telemetry.LocalizationY] = 10;
-            dictionary[Configuration.Telemetry.LocalizationPsi] = 90;
-            dictionary[Configuration.Telemetry.LocalizationConfidence] = 100;
-            dictionary[Configuration.Telemetry.LocalizationState] = (int)state;
+        //private void UpdateTelemetry(MonteCarloLocalization localization)
+        //{
+        //    // Update telemetry
+        //    Dictionary<Configuration.Telemetry, int> dictionary = new Dictionary<Configuration.Telemetry, int>();
+        //    //dictionary[Configuration.Telemetry.LocalizationX] = (int)(localization.Tracker.X * 10.0d); // Convert for double to int -> Like RoboteQ
+        //    //dictionary[Configuration.Telemetry.LocalizationY] = (int)(localization.Tracker.Y * 10.0d); // Convert for double to int -> Like RoboteQ
+        //    //dictionary[Configuration.Telemetry.LocalizationPsi] = (int)(localization.Tracker.Angle * 10.0d); // Convert for double to int -> Like RoboteQ
+        //    //dictionary[Configuration.Telemetry.LocalizationConfidence] = (int)(100.0 * localization.Confidence); // 0 = No confidence, 100 = Complete convergence/good confidence
+        //    //dictionary[Configuration.Telemetry.LocalizationState] = (int)state;
+        //    dictionary[Configuration.Telemetry.LocalizationX] = 10;
+        //    dictionary[Configuration.Telemetry.LocalizationY] = 10;
+        //    dictionary[Configuration.Telemetry.LocalizationPsi] = 90;
+        //    dictionary[Configuration.Telemetry.LocalizationConfidence] = 100;
+        //    dictionary[Configuration.Telemetry.LocalizationState] = (int)state;
 
-            OnTelemetryUpdated(new TelemetryEventArgs((int)configuration.Interval, dictionary));
-        }
+        //    OnTelemetryUpdated(new TelemetryEventArgs((int)configuration.Interval, dictionary));
+        //}
 
         #endregion
 

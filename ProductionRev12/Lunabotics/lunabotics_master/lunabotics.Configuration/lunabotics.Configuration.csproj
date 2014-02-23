@@ -59,6 +59,11 @@
     <Compile Include="TelemetryConfiguration.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="rcu_config.xml.old">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <Content Include="rcu_config.xml">
       <SubType>Designer</SubType>
     </Content>

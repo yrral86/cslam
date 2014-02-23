@@ -9,18 +9,14 @@ namespace lunabotics.Configuration
     public class AutonomyConfiguration
     {
         #region Fields
-        public double BlastPercent;
-        public double BlastRadius;
-        public double ConvergenceAllowance;
+        public double ArenaWidth;
+        public double ArenaLength;
         public double Interval;
-        public double LocalizationTurnDuration;
-        public double MinRegolithPerRun;
-        public double RandomReInitPercent;
-        public double DesiredLocalizationConfidence;
-        public double WallMargin;
-        public int NumberOfFrontRFSignals;
-        public int NumberOfRearRFSignals;
-        public int NumberOfParticles;
+        public double RoverLength;
+        public double RoverWidth;
+        public double SafetyLength;
+        public double MaximumRuntime;
+        public int MaximumRegolith;
         #endregion
         }
 }

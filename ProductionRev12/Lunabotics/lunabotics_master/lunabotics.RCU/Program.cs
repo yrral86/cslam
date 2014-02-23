@@ -18,12 +18,11 @@ namespace lunabotics.RCU
 {
     class Program
     {
-        static bool autonomous = false;
+        static bool autonomous = true;
         static bool useAutonomy = true;
-        static bool useRangeFinders = true;
+        static bool useRangeFinders = false;
         static bool useRoboteQs = true;
-        //static bool useServoController = true;
-        static bool useWebcams = true;
+        static bool useWebcams = false;
         static AutonomyHandler autonomy;
         
         static RCUConfiguration configuration;
@@ -34,7 +33,10 @@ namespace lunabotics.RCU
         static RangeFinder rearRangeFinder;
         //static PhidgetServo servo;
         static Stopwatch stopwatch;
+
+        //Need to communicate telemetry without OCU
         static TelemetryFeedback feedback;
+
         static Webcam bucketCam, frontCam, rearCam;
         static Comms.UDP_Receiver receiver;
 
@@ -67,11 +69,6 @@ namespace lunabotics.RCU
                     case "--noWebcam":
                         useWebcams = false;
                         break;
-                        /*
-                    case "--noServoController":
-                        useServoController = false;
-                        break;
-                         */
                     default:
                         break;
                 }
@@ -106,7 +103,7 @@ namespace lunabotics.RCU
                 if (configuration == null)
                     throw new Exception("None or invalid configuration specified");
 
-                mode = Mode.Manual;
+                mode = Mode.Autonomous;
                 feedback = new TelemetryFeedback();
                 stopwatch = new Stopwatch();
 
@@ -158,20 +155,14 @@ namespace lunabotics.RCU
                     Thread.Sleep(200);
                     
                 }
-                /*
-                // Create servo controller
-                if (useServoController)
-                {
-                    servo = new PhidgetServo(configuration.PhidgetConfiguration);
-                    servo.Activate();
-                }
-                */
+              
                 if (useAutonomy)
                 {
                     // Start autonomy logic
                     autonomy = new AutonomyHandler(configuration.AutonomyConfiguration, ref telemetryHandler);
-                    autonomy.AutonomyUpdated += autonomy_AutonomyUpdated;
+                    autonomy.AutonomyUpdated += autonomy_AutonomyUpdated;    //No idea
                     autonomy.Activate();
+                    autonomy.Start(); //Added
                     telemetryHandler.AddProvider(autonomy);
                 }
 
@@ -181,6 +172,13 @@ namespace lunabotics.RCU
                 receiver.Activate();
 
                 telemetryHandler.TelemetryFeedbackProcessed += telemetryHandler_TelemetryFeedbackProcessed;
+
+                ///// Test Code
+                //Dictionary<CommandFields, short> state = new Dictionary<CommandFields, short>();
+                //state[CommandFields.RotationalVelocity] = 0;
+                //state[CommandFields.TranslationalVelocity] = 1000;
+                //stateQueue.Enqueue(state);
+
 
                 //packet handler
                 stateProcessor = new Thread(new ThreadStart(StateProcessorDoWork));
@@ -228,7 +226,7 @@ namespace lunabotics.RCU
                     autonomy.Start();
 
                 // Queue commands from autonomy
-                stateQueue.Enqueue(e.UpdatedState);
+                stateQueue.Enqueue(e.UpdatedState); //No idea
             }
         }
 
@@ -243,10 +241,7 @@ namespace lunabotics.RCU
 
             foreach (Controllers.RoboteQ r in roboteqs)
                 r.Deactivate();
-            /*
-            if (servo != null)
-                servo.Deactivate();
-             */
+      
             if (telemetryHandler != null)
                 telemetryHandler.Deactivate();
             if (frontRangeFinder != null)
@@ -425,7 +420,7 @@ namespace lunabotics.RCU
                     // Get servo command
                     if (robotState.ContainsKey(CommandFields.RangeFinderServo))
                         deviceStates[Devices.RangeFinderServo] = robotState[CommandFields.RangeFinderServo];
-                    
+
                     //TEMPORARY KLUDGE:
                     if (robotState.ContainsKey(CommandFields.BucketPitch))
                         deviceStates[Devices.Actuators] = robotState[Comms.CommandEncoding.CommandFields.BucketPitch];
@@ -438,17 +433,14 @@ namespace lunabotics.RCU
 
                     foreach (Controllers.RoboteQ roboteq in roboteqs)
                         roboteq.SetValues(deviceStates);
-                    /*
-                    if (servo != null)
-                        servo.SetValues(deviceStates);
-                    */
-                    if (frontCam != null)
-                        if (robotState.ContainsKey(Comms.CommandEncoding.CommandFields.FrontCameraState))
-                            frontCam.UpdateState(Comms.States.VideoState.DecodeVideoState(robotState[CommandFields.FrontCameraState]));
+                    
+                    //if (frontCam != null)
+                    //    if (robotState.ContainsKey(Comms.CommandEncoding.CommandFields.FrontCameraState))
+                    //        frontCam.UpdateState(Comms.States.VideoState.DecodeVideoState(robotState[CommandFields.FrontCameraState]));
 
-                    if (bucketCam != null)
-                        if (robotState.ContainsKey(Comms.CommandEncoding.CommandFields.BucketCameraState))
-                            bucketCam.UpdateState(Comms.States.VideoState.DecodeVideoState(robotState[CommandFields.BucketCameraState]));
+                    //if (bucketCam != null)
+                    //    if (robotState.ContainsKey(Comms.CommandEncoding.CommandFields.BucketCameraState))
+                    //        bucketCam.UpdateState(Comms.States.VideoState.DecodeVideoState(robotState[CommandFields.BucketCameraState]));
                 }
                 catch (OperationCanceledException ex)
                 {

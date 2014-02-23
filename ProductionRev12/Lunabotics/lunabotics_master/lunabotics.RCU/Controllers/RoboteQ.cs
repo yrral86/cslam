@@ -74,6 +74,9 @@ namespace lunabotics.RCU.Controllers
             serial_port.DiscardOutBuffer();
             ////send initialization commands
             serial_port.Write("^ECHOF 1\r"); //disable echo
+            //Reset The Hall Counters
+            serial_port.Write("!CB 1 0");
+            serial_port.Write("!CB 2 0");
             //start worker thread
             try
             {

@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Utility;
+using lunabotics.Comms.CommandEncoding;
+using lunabotics.Configuration;
+using lunabotics.RCU.Telemetry;
 
 namespace lunabotics.RCU.Autonomy
 {
@@ -22,6 +25,7 @@ namespace lunabotics.RCU.Autonomy
         protected double rotationalVelocity;
         private double translationalVelocitySigma;
         private double rotationalVelocitySigma;
+
         #endregion
 
         #region Constructor
@@ -33,15 +37,82 @@ namespace lunabotics.RCU.Autonomy
         #endregion
 
         #region Methods
-        public void Move(double elapsedTime)
+        public Dictionary<CommandFields, short> MoveForward(double steps)
         {
-            double v = translationalVelocity + MathHelper.NextGaussianDouble(MathHelper.random, 0.0, translationalVelocitySigma);
-            double omega = rotationalVelocity + MathHelper.NextGaussianDouble(MathHelper.random, 0.0, rotationalVelocitySigma);
-            // Kinematic model (non-slip)
-            x += v * Math.Cos(MathHelper.DegreeToRadian(angle)) * elapsedTime;
-            y += v * Math.Sin(MathHelper.DegreeToRadian(angle)) * elapsedTime;
-            angle += omega * elapsedTime;
+             
+            Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
+
+            while (
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps)
+            {
+                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1));
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 500;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+                return outputState;
+            }
+            //Break
+            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+            return outputState;
         }
+
+        public Dictionary<CommandFields, short> MoveReverse(double steps)
+        {
+
+            Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
+
+            while (
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps)
+            {
+                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1));
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = -500;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+                return outputState;
+            }
+            //Break
+            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+            return outputState;
+        }
+
+        public Dictionary<CommandFields, short> tankTurnRight(double steps)
+        {
+
+            Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
+
+            while (
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps)
+            {
+                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1));
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = -500;
+                return outputState;
+            }
+            //Break
+            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+            return outputState;
+        }
+
+        public Dictionary<CommandFields, short> tankTurnLeft(double steps)
+        {
+
+            Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
+
+            while (
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps)
+            {
+                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1));
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 90;
+                return outputState;
+            }
+            //Break
+            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+            return outputState;
+        }
+
 
         public void Set(double x, double y, double angle)
         {

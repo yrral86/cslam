@@ -60,9 +60,6 @@
     <Compile Include="Autonomy\Algorithms\Deposition.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Autonomy\Algorithms\LowRiskLocalization.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Autonomy\Algorithms\MiningAlgorithm.cs" />
     <Compile Include="Autonomy\Algorithms\PotentialFieldAlgorithm.cs" />
     <Compile Include="Autonomy\AutonomyHandler.cs">
@@ -77,23 +74,11 @@
     <Compile Include="Autonomy\MiningAlgorithm.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Autonomy\MonteCarloLocalization.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Autonomy\MovingObject.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Autonomy\Particle.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Autonomy\Position.cs" />
     <Compile Include="Autonomy\RangeFinderModel.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Autonomy\Robot.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Autonomy\Tracker.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Controllers\IController.cs" />
@@ -125,6 +110,9 @@
   <ItemGroup>
     <None Include="Autonomy\.DS_Store" />
     <None Include="Autonomy\Algorithms\.DS_Store" />
+    <Compile Include="Autonomy\MovingObject.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <None Include="ClassDiagram1.cd" />
     <None Include="ClassDiagram2.cd" />
   </ItemGroup>
