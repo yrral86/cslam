@@ -27,8 +27,16 @@ void landmark_tree_node_copy_right(landmark_tree_node *from, landmark_tree_node 
 
 void landmark_tree_node_delete(landmark_tree_node *node) {
   assert(node->references == 0);
-  landmark_tree_node_dereference(node->left);
-  landmark_tree_node_dereference(node->right);
+  if (node->left != NULL && node->right != NULL) {
+    landmark_tree_node_dereference(node->left);
+    landmark_tree_node_dereference(node->right);
+  } else {
+    assert(node->left == NULL);
+    assert(node->right == NULL);
+    // TODO: if we switch to landmark pointer
+    // to save memory on interior nodes
+    // free it here
+  }
   free(node);
 }
 
