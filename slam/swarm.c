@@ -104,7 +104,6 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
     i++;
   } while (swap);
 
-
   // save old particles before we resample
   memcpy(previous_particles, particles, sizeof(particle)*PARTICLE_COUNT);
   // resample with replacement
@@ -119,7 +118,7 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   }
 
   // dereference previous particle maps
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  for (i = 0; i < PARTICLE_COUNT; i++) {    
     landmark_tree_node_dereference(previous_particles[i].map);
   }
 
