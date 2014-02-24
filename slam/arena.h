@@ -60,6 +60,6 @@ const static  int MINE_BEGIN = 1250;
 // ESB 757
 #define ARENA_WIDTH 8000
 #define ARENA_HEIGHT 4000
-const static int START_END = 7500;
+const static int START_END = 4000;
 const static int MINE_BEGIN = 7500;
 #endif

@@ -90,8 +90,14 @@ landmark_tree_node* landmark_build_subtree(int min, int max) {
 
 void landmark_set_seen(landmark_tree_node *node, int index) {
   assert(node != NULL);
+  landmark_tree_node* leaf = landmark_tree_find_leaf(node, index);
+  landmark_set_seen_value(node, index, leaf->landmark.seen + 1);
+}
+
+void landmark_set_seen_value(landmark_tree_node *node, int index, int value) {
+  assert(node != NULL);
   if (node->left == NULL && node->right == NULL && node->index == index)
-    node->landmark.seen++;
+    node->landmark.seen = value;
   else if (index <= node->index) {
     assert(node->left != NULL);
     // copy on write
@@ -100,7 +106,7 @@ void landmark_set_seen(landmark_tree_node *node, int index) {
       node->left = landmark_tree_copy(old_left);
       landmark_tree_node_dereference(old_left);
     }
-    landmark_set_seen(node->left, index);
+    landmark_set_seen_value(node->left, index, value);
   } else {
     assert(node->right != NULL);
     // copy on write
@@ -109,14 +115,20 @@ void landmark_set_seen(landmark_tree_node *node, int index) {
       node->right = landmark_tree_copy(old_right);
       landmark_tree_node_dereference(old_right);
     }
-    landmark_set_seen(node->right, index);
+    landmark_set_seen_value(node->right, index, value);
   }
 }
 
 void landmark_set_unseen(landmark_tree_node *node, int index) {
   assert(node != NULL);
+  landmark_tree_node* leaf = landmark_tree_find_leaf(node, index);
+  landmark_set_unseen_value(node, index, leaf->landmark.unseen + 1);
+}
+
+void landmark_set_unseen_value(landmark_tree_node *node, int index, int value) {
+  assert(node != NULL);
   if (node->left == NULL && node->right == NULL && node->index == index)
-    node->landmark.unseen++;
+    node->landmark.unseen = value;
   else if (index <= node->index) {
     // copy on write
     if (node->left->references > 1) {
@@ -125,7 +137,7 @@ void landmark_set_unseen(landmark_tree_node *node, int index) {
       node->left = landmark_tree_copy(old_left);
       landmark_tree_node_dereference(old_left);
     }
-    landmark_set_unseen(node->left, index);
+    landmark_set_unseen_value(node->left, index, value);
   } else {
     assert(node->right != NULL);
     // copy on write
@@ -134,7 +146,7 @@ void landmark_set_unseen(landmark_tree_node *node, int index) {
       node->right = landmark_tree_copy(old_right);
       landmark_tree_node_dereference(old_right);
     }
-    landmark_set_unseen(node->right, index);
+    landmark_set_unseen_value(node->right, index, value);
   }
 }
 

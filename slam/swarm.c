@@ -6,7 +6,7 @@ static particle best_particle;
 static int iterations = 0;
 
 void swarm_init() {
-  int i, j, k, l, x, y, theta;
+  int i, j, k, x, y, theta;
   particle p;
 
   // initialize first round of particles
@@ -23,20 +23,16 @@ void swarm_init() {
       // draw initial border
       for (k = 0; k < ARENA_WIDTH; k++)
 	for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j += BUFFER_FACTOR) {
-	  for (l = 0; l < 100; l++) {
-	    landmark_set_seen(particles[i].map, buffer_index_from_x_y(k, j));
-	    landmark_set_seen(particles[i].map,
-			      buffer_index_from_x_y(k, ARENA_HEIGHT - 1 - j));
-	  }
+	  landmark_set_seen_value(particles[i].map, buffer_index_from_x_y(k, j), 10000);
+	  landmark_set_seen_value(particles[i].map,
+				  buffer_index_from_x_y(k, ARENA_HEIGHT - 1 - j), 10000);
 	}
 
       for (k = 0; k < ARENA_HEIGHT; k++)
 	for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j+= BUFFER_FACTOR) {
-	  for (l = 0; l < 100; l++) {
-	    landmark_set_seen(particles[i].map, buffer_index_from_x_y(j, k));
-	    landmark_set_seen(particles[i].map,
-			      buffer_index_from_x_y(ARENA_WIDTH - 1 - j, k));
-	  }
+	  landmark_set_seen_value(particles[i].map, buffer_index_from_x_y(j, k), 10000);
+	  landmark_set_seen_value(particles[i].map,
+				  buffer_index_from_x_y(ARENA_WIDTH - 1 - j, k), 10000);
 	}
 
     }
