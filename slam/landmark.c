@@ -9,8 +9,16 @@ landmark_tree_node* landmark_tree_copy(landmark_tree_node *parent) {
     head = malloc(sizeof(landmark_tree_node));
     head->references = 1;
     head->index = parent->index;
-    landmark_tree_node_copy_left(parent, head);
-    landmark_tree_node_copy_right(parent, head);
+    if (parent->left != NULL && parent->right != NULL) {
+      landmark_tree_node_copy_left(parent, head);
+      landmark_tree_node_copy_right(parent, head);
+    } else {
+      assert(parent->left == NULL);
+      assert(parent->right == NULL);
+      head->landmark = parent->landmark;
+      head->left = NULL;
+      head->right = NULL;
+    }
   }
   return head;
 }

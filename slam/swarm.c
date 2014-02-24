@@ -49,7 +49,7 @@ void swarm_init() {
 }
 
 void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
-  int i, j, k, l;
+  int i, j, k, l, m;
   int swap;
   double posterior, distance, degrees, theta, x, y, total;
 
@@ -67,16 +67,31 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 	  // forward is now 0 degrees, left -, right +
 	  // TODO: same as above (_ETH)
 	  degrees = -120 + j*SENSOR_SPACING_USB;
-
 	  theta = (degrees + particles[i].theta)*M_PI/180;
+
+	  // check and record unseen
+	  for (l = 10; l < distance; l += 10) {
+	    x = l*cos(theta) + particles[i].x;
+	    y = l*sin(theta) + particles[i].y;
+
+	    // make sure it is in bounds
+	    if (in_arena(x, y)) {
+	      m = buffer_index_from_x_y(x, y);
+	      posterior *= landmark_unseen_probability(particles[i].map, m);
+	      landmark_set_unseen(particles[i].map, m);
+	    } else posterior *= 0.5;
+	  }
+
+	  // check and record seen
 	  x = distance*cos(theta) + particles[i].x;
 	  y = distance*sin(theta) + particles[i].y;
 
 	  // make sure it is in bounds
 	  if (in_arena(x, y)) {
-	    l = buffer_index_from_x_y(x, y);
-	    posterior *= landmark_seen_probability(particles[i].map, l);
-	  }// else posterior *= 0.5;
+	    m = buffer_index_from_x_y(x, y);
+	    posterior *= landmark_seen_probability(particles[i].map, m);
+	    landmark_set_seen(particles[i].map, m);
+	  } else posterior *= 0.5;
       }
     }
     particles[i].p *= posterior;

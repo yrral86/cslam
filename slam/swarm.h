@@ -8,7 +8,6 @@
 #include "slam.h"
 
 #define PARTICLE_COUNT 25
-//#define INITIAL_SCANS 0
 #define INITIAL_POSITION_VARIANCE 15
 #define INITIAL_ANGLE_VARIANCE 30
 
