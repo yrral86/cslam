@@ -27,7 +27,7 @@ int main (int argc, char **argv) {
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], map[2], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/4, ARENA_HEIGHT/4);
+  initGL(map[0], map[2], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/5, ARENA_HEIGHT/5);
 
   rand_normal_init();
 

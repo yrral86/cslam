@@ -86,6 +86,12 @@ raw_sensor_scan sensor_read_raw() {
       // Copy the data into the static variable
       lidar_data.distances[i] = distance;
   }
+
+  // free usb_buffer, it is malloc'd every time we call scip2MeasureScan
+  for (i = 0; i < scan_num; i++)
+    free(buffer_usb[i]);
+  free(buffer_usb);
+
   return lidar_data;
 }
 

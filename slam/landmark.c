@@ -132,7 +132,7 @@ void landmark_set_unseen(landmark_tree_node *node, int index) {
 
 // writes a byte buffer given the head of a landmark tree
 void landmark_write_map(landmark_tree_node *head, uint8_t *buffer) {
-  bzero(buffer, BUFFER_SIZE);
+  bzero(buffer, BUFFER_SIZE*sizeof(uint8_t));
   landmark_write_map_subtree(head, buffer);
 }
 
@@ -154,6 +154,7 @@ void landmark_write_map_subtree(landmark_tree_node *node, uint8_t *buffer) {
 double landmark_seen_probability(landmark_tree_node *node, int index) {
   assert(node != NULL);
   landmark_tree_node* leaf = landmark_tree_find_leaf(node, index);
+  // default to 50% probability if we have no data
   double p = 0.5;
   double sum = leaf->landmark.seen + leaf->landmark.unseen;
   if (sum > 0)

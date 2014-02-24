@@ -33,11 +33,13 @@ const static int START_END = 500;
 const static  int MINE_BEGIN = 1250;
 */
 
+/*
 // bedroom arena
 #define ARENA_WIDTH 3960
 #define ARENA_HEIGHT 3400
 const static int START_END = 4000;
 const static  int MINE_BEGIN = 1250;
+*/
 
 /*
 // entire apartment
@@ -54,4 +56,10 @@ const static  int MINE_BEGIN = 1250;
 const static int START_END = 4880;
 const static  int MINE_BEGIN = 1250;
 */
+
+// ESB 757
+#define ARENA_WIDTH 8000
+#define ARENA_HEIGHT 4000
+const static int START_END = 7500;
+const static int MINE_BEGIN = 7500;
 #endif

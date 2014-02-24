@@ -2,6 +2,7 @@
 
 static particle particles[PARTICLE_COUNT];
 static particle previous_particles[PARTICLE_COUNT];
+static particle best_particle;
 static int iterations = 0;
 
 void swarm_init() {
@@ -49,7 +50,6 @@ void swarm_init() {
 
 void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   int i, j, k, l;
-  particle p, other_top;
   int swap;
   double posterior, distance, degrees, theta, x, y, total;
 
@@ -57,7 +57,6 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   // evaulate each direction for each particle
   for (i = 0; i < PARTICLE_COUNT; i++) {
     posterior = 1.0;
-    p = particles[i];
 
     // TODO: this will be _ETH since
     // that will be our localization sensor,
@@ -69,15 +68,15 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 	  // TODO: same as above (_ETH)
 	  degrees = -120 + j*SENSOR_SPACING_USB;
 
-	  theta = (degrees + p.theta)*M_PI/180;
-	  x = distance*cos(theta) + p.x;
-	  y = distance*sin(theta) + p.y;
+	  theta = (degrees + particles[i].theta)*M_PI/180;
+	  x = distance*cos(theta) + particles[i].x;
+	  y = distance*sin(theta) + particles[i].y;
 
 	  // make sure it is in bounds
 	  if (in_arena(x, y)) {
 	    l = buffer_index_from_x_y(x, y);
-	    posterior *= landmark_seen_probability(p.map, l);
-	  } else posterior *= 0.5;
+	    posterior *= landmark_seen_probability(particles[i].map, l);
+	  }// else posterior *= 0.5;
       }
     }
     particles[i].p *= posterior;
@@ -91,14 +90,15 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   // bubblesort particles by p
   swap = 1;
   i = 0;
+  particle temp;
   do {
     swap = 0;
     for (j = 0; j < PARTICLE_COUNT - i - 1; j++)
       // if the left particle is smaller probability, bubble it right
       if (particles[j].p < particles[j + 1].p) {
-	p = particles[j];
-	particles[j + 1] = particles[j];
-	particles[j] = p;
+	temp = particles[j];
+	particles[j] = particles[j + 1];
+	particles[j + 1] = temp;
 	swap = 1;
       }
     i++;
@@ -117,6 +117,10 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
     landmark_tree_node_reference(particles[i].map);
   }
 
+  // save best
+  best_particle = previous_particles[0];
+  landmark_tree_node_reference(best_particle.map);
+
   // dereference previous particle maps
   for (i = 0; i < PARTICLE_COUNT; i++) {
     landmark_tree_node_dereference(previous_particles[i].map);
@@ -126,5 +130,5 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 }
 
 particle swarm_get_best() {
-  return previous_particles[0];
+  return best_particle;
 }
