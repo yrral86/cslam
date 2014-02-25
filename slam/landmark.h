@@ -4,6 +4,11 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "const.h"
+
+// BUFFER or TREE
+#define __LANDMARK_BUFFER__
+
 typedef struct landmark {
   double x;
   double y;
@@ -12,11 +17,17 @@ typedef struct landmark {
 } landmark;
 
 typedef struct landmark_tree_node {
+#ifdef __LANDMARK_TREE__
   int references;
   int index;
   struct landmark_tree_node *left;
   struct landmark_tree_node *right;
   landmark landmark;
+#endif
+
+#ifdef __LANDMARK_BUFFER__
+  landmark map[BUFFER_SIZE];
+#endif
 } landmark_tree_node;
 
 landmark_tree_node* landmark_tree_copy(landmark_tree_node*);

@@ -6,15 +6,10 @@
 #include <stdint.h>
 #include <strings.h>
 
+#include "const.h"
 #include "arena.h"
 #include "particle.h"
 #include "sensor.h"
-
-#define BUFFER_FACTOR 100
-#define BORDER_WIDTH 1
-#define BUFFER_WIDTH (ARENA_WIDTH/BUFFER_FACTOR)
-#define BUFFER_HEIGHT (ARENA_HEIGHT/BUFFER_FACTOR)
-#define BUFFER_SIZE (BUFFER_WIDTH*BUFFER_HEIGHT)
 
 uint8_t* buffer_allocate();
 void buffer_attenuate(uint8_t*, double);

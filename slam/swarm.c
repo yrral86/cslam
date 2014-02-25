@@ -69,8 +69,8 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 	  degrees = -120 + j*SENSOR_SPACING_USB;
 	  theta = (degrees + particles[i].theta)*M_PI/180;
 
-	  // check and record unseen
-	  for (l = BUFFER_FACTOR; l < distance; l += BUFFER_FACTOR) {
+	  // check and record unseen every 10 mm
+	  for (l = 0; l < distance; l += 10) {
 	    x = l*cos(theta) + particles[i].x;
 	    y = l*sin(theta) + particles[i].y;
 
@@ -78,8 +78,10 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 	    if (in_arena(x, y)) {
 	      m = buffer_index_from_x_y(x, y);
 	      posterior *= landmark_unseen_probability(particles[i].map, m);
-	      landmark_set_unseen(particles[i].map, m);
-	    } else posterior *= 0.5;
+	      // only update map once a second
+	      if (iterations % 10 == 0)
+		landmark_set_unseen(particles[i].map, m);
+	    } else posterior *= 0.05;
 	  }
 
 	  // check and record seen
@@ -90,8 +92,10 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 	  if (in_arena(x, y)) {
 	    m = buffer_index_from_x_y(x, y);
 	    posterior *= landmark_seen_probability(particles[i].map, m);
-	    landmark_set_seen(particles[i].map, m);
-	  } else posterior *= 0.5;
+	    // only update map once a second
+	    if (iterations % 10 == 0)
+	      landmark_set_seen(particles[i].map, m);
+	  } else posterior *= 0.05;
       }
     }
     particles[i].p *= posterior;
@@ -129,12 +133,12 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
     while (j++ && total < p)
       total += previous_particles[j - 1].p;
     particles[i] = previous_particles[j - 1];
-    landmark_tree_node_reference(particles[i].map);
+    particles[i].map = landmark_tree_copy(particles[i].map);
   }
 
-  // save best
+  // save best, copy the map we are about to dereference
   best_particle = previous_particles[0];
-  landmark_tree_node_reference(best_particle.map);
+  best_particle.map = landmark_tree_copy(best_particle.map);
 
   // dereference previous particle maps
   for (i = 0; i < PARTICLE_COUNT; i++) {

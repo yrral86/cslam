@@ -66,7 +66,7 @@ raw_sensor_scan sensor_read_raw() {
   int sleep_time = poll_time_usb - (utime() - last_poll_usb);
   if (sleep_time > 0)
     usleep(sleep_time);
-  else printf("sleepless\n");
+  else printf("sleepless for %g seconds\n", -sleep_time/1000000.0);
 
   if (eth) {
     step_num = urg_get_distance(&connection_eth, buffer_eth, &timestamp);
