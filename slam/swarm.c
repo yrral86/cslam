@@ -4,6 +4,11 @@ static particle particles[PARTICLE_COUNT];
 static particle previous_particles[PARTICLE_COUNT];
 static particle best_particle;
 static int iterations = 0;
+// TODO: _ETH
+static double K[RAW_SENSOR_DISTANCES_USB*3], H[RAW_SENSOR_DISTANCES_USB*3], P[9];
+// 1% of measurement, avereage around 40 mm
+static double R = 40;
+// TODO: VRV(T) to scale R based on distances
 
 void swarm_init() {
   int i, j, k, x, y, theta;
@@ -58,9 +63,36 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   for (i = 0; i < PARTICLE_COUNT; i++) {
     posterior = 1.0;
 
+    // EKF
+    //    H = magical_jacobian_magic();
+    // TODO: _ETH
+    bzero(H,sizeof(double)*RAW_SENSOR_DISTANCES_USB*3);
+    double var[3];
+    var[0] = particles[i].x_var;
+    var[1] = particles[i].y_var;
+    var[2] = particles[i].theta_var;
+    for (j = 0; j < 3; j++)
+      for (k = 0; k < 3; k++)
+	if (j == k)
+	  P[j*3+k] = var[j];
+	else
+	  P[j*3+k] = sqrt(var[j])*sqrt(var[k]);
+    
+    // K
+    // TODO: _ETH
+    bzero(K, sizeof(double)*RAW_SENSOR_DISTANCES_USB*3);
+    // TODO: _ETH
+    for (j = 0; j < RAW_SENSOR_DISTANCES_USB; j++)
+      for (k = 0; k < 3; k++)
+	for (l = 0; l < 3; l++)
+	  // TODO _ETH
+	  K[k*3 + j] += P[k*3 +l]*H[j*RAW_SENSOR_DISTANCES_USB + l];
+
+    // TODO: calculate denominator and invert
+
+
+
     // TODO: this will be _ETH since
-    // that will be our localization sensor,
-    // just working on new usb driver for the moment
     for (j = 0; j < RAW_SENSOR_DISTANCES_USB; j++) {
       for (k = 0; k < sample_count; k++) {
 	  distance = scans[k].distances[j];
