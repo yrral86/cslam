@@ -1,6 +1,10 @@
 #include "landmark.h"
 #include "buffer.h"
 
+#define __LANDMARK_TREE__
+
+#ifdef __LANDMARK_TREE__
+
 landmark_tree_node* landmark_tree_copy(landmark_tree_node *parent) {
   landmark_tree_node *head;
   if (parent == NULL) {
@@ -195,3 +199,10 @@ landmark_tree_node* landmark_tree_find_leaf(landmark_tree_node *node, int index)
   else
     return landmark_tree_find_leaf(node->right, index);
 }
+
+
+#endif
+
+#ifdef __LANDMARK_BUFFER__
+
+#endif
