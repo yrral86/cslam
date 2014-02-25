@@ -38,6 +38,8 @@ namespace lunabotics.RCU.Autonomy
 
         #region Methods
         public Dictionary<CommandFields, short> MoveForward(double steps)
+            // Move the robot forward a certain number of hall counts
+            // ~1800 is one full wheel rotation
         {
              
             Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
@@ -57,6 +59,8 @@ namespace lunabotics.RCU.Autonomy
         }
 
         public Dictionary<CommandFields, short> MoveReverse(double steps)
+            // Move the robot backward a certain number of hall counts
+            // ~1800 is one full wheel rotation
         {
 
             Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
@@ -76,8 +80,8 @@ namespace lunabotics.RCU.Autonomy
         }
 
         public Dictionary<CommandFields, short> tankTurnRight(double steps)
+            // Turn the robot right a certain number of hall counts
         {
-
             Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
 
             while (
@@ -95,6 +99,7 @@ namespace lunabotics.RCU.Autonomy
         }
 
         public Dictionary<CommandFields, short> tankTurnLeft(double steps)
+            // Turn the robot left a certain number of hall counts
         {
 
             Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();

@@ -8,15 +8,18 @@ namespace lunabotics.Configuration
 {
     public class AutonomyConfiguration
     {
+        // added 'static' to all (2/24/14)
         #region Fields
-        public double ArenaWidth;
-        public double ArenaLength;
-        public double Interval;
-        public double RoverLength;
-        public double RoverWidth;
-        public double SafetyLength;
-        public double MaximumRuntime;
-        public int MaximumRegolith;
+        public static double ArenaWidth;
+        public static double ArenaLength;
+        public static double Interval;
+        public static double RoverLength;
+        public static double RoverWidth;
+        public static double SafetyLength;
+        public static double MiningRuns;
+        public static double MaximumMiningRuns;
+        public static double MaximumRuntime;
+        public static int MaximumRegolith;
         #endregion
         }
 }
