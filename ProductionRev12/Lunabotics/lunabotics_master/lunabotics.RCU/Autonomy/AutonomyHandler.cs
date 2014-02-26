@@ -1,6 +1,7 @@
 ﻿using lunabotics.Comms.CommandEncoding;
 using lunabotics.Comms.TelemetryEncoding;
 using lunabotics.Configuration;
+using lunabotics.Configuration.AutonomyConfiguration;
 using lunabotics.RCU.Telemetry;
 using System;
 using System.Collections.Generic;
@@ -24,7 +25,18 @@ namespace lunabotics.RCU.Autonomy
             TraverseToDeposition,
             Mining,
             Deposition,
-            TemporaryTesting
+            TemporaryTesting,
+
+            // new states for autonomy
+            initialize,
+            driveR,
+            driveL,
+            driveM,
+            mineR,
+            mineL,
+            mineM,
+            traverse,
+            deposit
         }
         public enum Zone
         {
@@ -247,6 +259,123 @@ namespace lunabotics.RCU.Autonomy
                     //    default:
                     //        break;
                     //}
+
+                    // New Autonomy algorithm zone:
+                    switch (state)
+                        // initialize, drive(R/L), mine(R/L), return(R/L), dump(R/L), deposit
+                    {
+                        case State.initialize:
+                            // rotate to face mining area
+                            //dist = l + r;
+                            //while ( ( ((autonomyconfiguration.arenawidth * 0.1) < dist) && (dist < (autonomyconfiguration.arenawidth * 0.1)) ) || (c < (autonomyconfiguration.arenalength * 0.35)) ) // adjust tolerance values
+                            //{
+                            //    robot.tankturnleft(225);
+                            //    //dist = l + r;
+                            //}
+                            //if  (l > r)
+                            //    state = state.driveR;
+                            //else
+                            //    state = state.driveL;
+                            state = state.driveR
+                            break;
+
+                        case State.driveR:
+                            // wheel diameter is 35.6cm -> circumference is 111.84cm
+                            robot.MoveForward(9500); // move into mining area
+                            robot.tankTurnLeft(1800); // 90* turn
+                            state = State.mineR;
+                            break;
+
+                        case State.driveL:
+                            robot.MoveForward(9500); // move into mining area
+                            robot.tankTurnRight(1800); // 90* turn
+                            state = State.mineR;
+                            break;
+
+                        case State.driveM:
+                            // wheel diameter is 35.6cm -> circumference is 111.84cm
+                            robot.MoveForward(9500); // move into mining area
+                            state = State.mineM;
+                            break;
+
+                        case State.mineR:
+                            robot.MoveForward(3122);
+                            AutonomyConfiguration.MiningRuns++;
+                            if (AutonomyConfiguration.MaximumMiningRuns < AutonomyConfiguration.MiningRuns)
+                            {
+                                state = State.mineL;
+                                robot.tankTurnRight(3600);  // 180* turn
+                            }
+                            else
+                            {
+                                robot.MoveReverse(1561);
+                                robot.tankTurnRight(1800); // 90* turn
+                                state = State.traverse;
+                            }
+                            break;
+
+                        case State.mineL:
+                            robot.MoveForward(3122);
+                            AutonomyConfiguration.MiningRuns++;
+                            if (AutonomyConfiguration.MaximumMiningRuns < AutonomyConfiguration.MiningRuns)
+                            {
+                                state = State.mineR;
+                                robot.tankTurnLeft(3600);  // 180* turn
+                            }
+                            else
+                            {
+                                robot.MoveReverse(1561);
+                                robot.tankTurnLeft(1800); // 90* turn
+                                state = State.traverse;
+                            }
+                            break;
+                        
+                        case State.mineM:
+                            robot.tankTurnLeft(1800); // 90* turn
+                            robot.MoveForward(1561);
+                            AutonomyConfiguration.MiningRuns++;
+                            if (AutonomyConfiguration.MaximumMiningRuns < AutonomyConfiguration.MiningRuns)
+                            {
+                                state = State.mineR;
+                                robot.tankTurnLeft(3600);  // 180* turn
+                            }
+                            else
+                            {
+                                robot.MoveReverse(1561);
+                                robot.tankTurnLeft(1800); // 90* turn
+                                state = State.traverse;
+                            }
+                            break;
+
+                        case State.traverse:
+                            // return down middle of arena (backwards) from mining area
+                            robot.MoveReverse(10300);
+                            state = State.deposit;
+                            break;
+
+                        case State.deposit:
+                            // wiggle it
+                            robot.tankTurnLeft(200);robot.tankTurnRight(200);
+                            robot.tankTurnLeft(200);robot.tankTurnRight(200);
+                            robot.tankTurnLeft(200);robot.tankTurnRight(200);
+                            state = State.driveM;
+                            break;
+
+                        case State.Manual:
+                            // Should not be here, but just in case
+                            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+                            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+                            outputState[Comms.CommandEncoding.CommandFields.BucketPivot] = 0;
+                            outputState[Comms.CommandEncoding.CommandFields.BucketPitch] = 0;
+                            outputState[Comms.CommandEncoding.CommandFields.LeftBucketActuator] = 0;
+                            outputState[Comms.CommandEncoding.CommandFields.RightBucketActuator] = 0;
+                            outputState[Comms.CommandEncoding.CommandFields.RangeFinderServo] = 90;
+                            break;
+
+                        case State.TemporaryTesting:
+                            // for robot testing
+                            break;
+                    }
 
                     // Update output state
                     outputState = robot.MoveForward(1850);
