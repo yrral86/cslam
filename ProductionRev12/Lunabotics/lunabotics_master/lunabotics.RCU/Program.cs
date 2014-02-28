@@ -27,7 +27,7 @@ namespace lunabotics.RCU
         
         static RCUConfiguration configuration;
 
-        static List<Controllers.RoboteQ> roboteqs = new List<Controllers.RoboteQ>();
+        public static List<Controllers.RoboteQ> roboteqs = new List<Controllers.RoboteQ>();
         static Mode mode;
         static RangeFinder frontRangeFinder;
         static RangeFinder rearRangeFinder;

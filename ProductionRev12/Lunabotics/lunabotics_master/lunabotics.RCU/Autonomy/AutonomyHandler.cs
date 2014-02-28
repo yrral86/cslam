@@ -19,9 +19,10 @@ namespace lunabotics.RCU.Autonomy
         public enum State
         {
             Manual,
-            //LowRiskLocalization,
-            TraverseToMining,
-            TraverseToDeposition,
+            InitializeAutonomy,
+            TraverseWithObstacleAvoidance,
+            TraverseClearPath,
+            ReturnToDeposition,
             Mining,
             Deposition,
             TemporaryTesting
@@ -47,13 +48,14 @@ namespace lunabotics.RCU.Autonomy
         private AutonomyConfiguration configuration;
         private Deposition depositionAlgorithm;
         private Dictionary<CommandFields, short> staticOutput;
-        //private LowRiskLocalization lowRiskLocalizationAlgorithm;
-        //private MonteCarloLocalization localization;
         private Robot robot;
         private State state;
         private Stopwatch stopwatch;
         private Timer timer;
         private Zone expectedZone;
+        // Create output state
+        private Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
+
         #endregion
 
         #region Constructors
@@ -61,9 +63,6 @@ namespace lunabotics.RCU.Autonomy
         {
             // Assign fields
             this.configuration = configuration;
-
-            // Create localization logic
-            //localization = new MonteCarloLocalization(configuration);
 
             // Create robot
             robot = new Robot(configuration);
@@ -78,10 +77,6 @@ namespace lunabotics.RCU.Autonomy
             timer = new Timer(configuration.Interval);
             timer.Elapsed += timer_Elapsed;
 
-            // Create algorithms
-            //depositionAlgorithm = new Deposition(configuration);
-            //lowRiskLocalizationAlgorithm = new LowRiskLocalization(configuration);
-            
             // Create static state
             staticOutput = new Dictionary<CommandFields, short>();
             staticOutput[Comms.CommandEncoding.CommandFields.Mode] = 1;
@@ -141,11 +136,12 @@ namespace lunabotics.RCU.Autonomy
             // Reset stopwatch
             stopwatch.Restart();
             // Set state
-            state = State.TraverseToMining;
+            state = State.TemporaryTesting;
             // Set flag
             started = true;
             // Set zone
             expectedZone = Zone.Start;
+
         }
 
         public void Stop()
@@ -172,92 +168,37 @@ namespace lunabotics.RCU.Autonomy
             {
                 try
                 {
-                    // Create output state
-                    Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
-
                     // Process state
-                    //Console.WriteLine(stopwatch.Elapsed);
-                    //switch (state)
-                    //{
-                    //    case State.Manual:
-                    //        // Should not be here, but just in case
-                    //        outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
-                    //        outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
-                    //        outputState[Comms.CommandEncoding.CommandFields.BucketPivot] = 0;
-                    //        outputState[Comms.CommandEncoding.CommandFields.BucketPitch] = 0;
-                    //        outputState[Comms.CommandEncoding.CommandFields.LeftBucketActuator] = 0;
-                    //        outputState[Comms.CommandEncoding.CommandFields.RightBucketActuator] = 0;
-                    //        outputState[Comms.CommandEncoding.CommandFields.RangeFinderServo] = 90;
-                    //        break;
-                    //    case State.TemporaryTesting:
-                    //        outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 1000;
-                    //        outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
-                    //        outputState[Comms.CommandEncoding.CommandFields.BucketPivot] = 0;
-                    //        outputState[Comms.CommandEncoding.CommandFields.BucketPitch] = 0;
-                    //        outputState[Comms.CommandEncoding.CommandFields.LeftBucketActuator] = 0;
-                    //        outputState[Comms.CommandEncoding.CommandFields.RightBucketActuator] = 0;
-                    //        outputState[Comms.CommandEncoding.CommandFields.RangeFinderServo] = 90;
-                    //        break;
-                    //    //case State.LowRiskLocalization:
-                    //    //     Perform Monte Carlo localization
-                    //    //    localization.Update(configuration.Interval / 1000.0d, robot, expectedZone, true);
-                    //    //    robot.SetState(localization.Tracker);
-                    //    //     Calculate new output state
-                    //    //    outputState = lowRiskLocalizationAlgorithm.Update(robot, localization, stopwatch);
-                            
-                    //    //     If done, move on to the next step
-                    //    //    if (lowRiskLocalizationAlgorithm.State == LowRiskLocalization.AlgorithmState.Done)
-                    //    //    {
-                    //    //         Move to the next state
-                    //    //        if (robot.Regolith < configuration.MinRegolithPerRun)
-                    //    //        {
-                    //    //            state = State.TraverseToMining;
-                    //    //        }
-                    //    //        else
-                    //    //        {
-                    //    //            state = State.TraverseToDeposition;
-                    //    //        }
-                    //    //    }
+                    Console.WriteLine(stopwatch.Elapsed);
+                    switch (state)
+                    {
+                        case State.Manual:
+                            // Should not be here, but just in case
+                            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+                            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+                            outputState[Comms.CommandEncoding.CommandFields.BucketPivot] = 0;
+                            outputState[Comms.CommandEncoding.CommandFields.BucketPitch] = 0;
+                            outputState[Comms.CommandEncoding.CommandFields.LeftBucketActuator] = 0;
+                            outputState[Comms.CommandEncoding.CommandFields.RightBucketActuator] = 0;
+                            outputState[Comms.CommandEncoding.CommandFields.RangeFinderServo] = 90;
+                            break;
 
-                    //        break;
-                    //    case State.TraverseToMining:
-                    //        // Perform Monte Carlo localization
-                    //        localization.Update(configuration.Interval / 1000.0d, robot, expectedZone, true);
-                    //        robot.SetState(localization.Tracker);
-                    //        // Calculate new output state
+                        case State.TemporaryTesting:
+                            MoveForward(1850, 500);
+                            MoveForward(1850, 500);
+                            tankTurnLeft(925, -500);
 
+                            break;
 
-                    //        break;
-                    //    case State.TraverseToDeposition:
-                    //        break;
-                    //    case State.Mining:
-                    //        break;
-                    //    case State.Deposition:
-                    //        // Continue localization
-                    //        //localization.Update(configuration.Interval / 1000.0d, robot, expectedZone, true);
-                    //        //robot.SetState(localization.Tracker);
-                    //        // Perform deposition algorithm
-                    //        outputState = depositionAlgorithm.Update(robot, stopwatch);
-                    //        // Check converged
-                    //        if (depositionAlgorithm.State == Deposition.AlgorithmState.Done)
-                    //        {
-
-                    //        }
-                    //        break;
-                    //    default:
-                    //        break;
-                    //}
-
-                    // Update output state
-                    outputState = robot.MoveForward(1850);
-                    
-                    outputState = MergeStates(outputState, staticOutput);
-                    OnAutonomyUpdated(new AutonomyArgs(outputState));
-
+                        default:
+                            break;
+                    }
+                
                     // Store robot velocities
-                    robot.SetVelocities(
-                        Kinematics.GetTranslationalVelocity(outputState[CommandFields.TranslationalVelocity]),
-                        Kinematics.GetRotationalVelocity(outputState[CommandFields.RotationalVelocity]));
+                    //*******John - See if this works while it is commented out
+                    //robot.SetVelocities(
+                    //    Kinematics.GetTranslationalVelocity(outputState[CommandFields.TranslationalVelocity]),
+                    //    Kinematics.GetRotationalVelocity(outputState[CommandFields.RotationalVelocity]));
                     
 
 
@@ -298,6 +239,114 @@ namespace lunabotics.RCU.Autonomy
 
         //    OnTelemetryUpdated(new TelemetryEventArgs((int)configuration.Interval, dictionary));
         //}
+
+
+        //Send Hall count steps and motor power as parameters
+        public void MoveForward(double steps, short power)
+        {
+
+            while (
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2) < steps)
+            {
+                //Print Hall count for debugging
+                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
+                //Set Velocity of motor. Power between 0 and 1000
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = power;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+                //Set Output States
+                outputState = MergeStates(outputState, staticOutput);
+                //Make calls to event handler to move motors
+                OnAutonomyUpdated(new AutonomyArgs(outputState));
+            }
+            //Stop motors
+            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+            outputState = MergeStates(outputState, staticOutput);
+            OnAutonomyUpdated(new AutonomyArgs(outputState));
+            //Reset Hall count for next motor command
+            ResetCounters();
+        }
+
+
+        //Send Hall count steps and motor power as parameters
+        public void MoveReverse(double steps, short power)
+        {
+
+            while (
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2) < steps)
+            {
+                //Print Hall count for debugging
+                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
+                //Set Velocity of motor. Power between -1000 and 0
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = power;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+                //Set Output States
+                outputState = MergeStates(outputState, staticOutput);
+                //Make calls to event handler to move motors
+                OnAutonomyUpdated(new AutonomyArgs(outputState));
+            }
+            //Stop motors
+            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+            outputState = MergeStates(outputState, staticOutput);
+            OnAutonomyUpdated(new AutonomyArgs(outputState));
+            //Reset Hall count for next motor command
+            ResetCounters();
+        }
+
+
+        //Send Hall count steps and motor power as parameters
+        public void tankTurnRight(double steps, short power)
+        {
+
+            while (
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps)
+            {
+                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1));
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = power;
+                outputState = MergeStates(outputState, staticOutput);
+                OnAutonomyUpdated(new AutonomyArgs(outputState));
+            }
+            //Break
+            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+            outputState = MergeStates(outputState, staticOutput);
+            OnAutonomyUpdated(new AutonomyArgs(outputState));
+            ResetCounters();
+        }
+
+
+        //Send Hall count steps and motor power as parameters
+        public void tankTurnLeft(double steps, short power)
+        {
+
+            while (
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps)
+            {
+                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1));
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = power;
+                outputState = MergeStates(outputState, staticOutput);
+                OnAutonomyUpdated(new AutonomyArgs(outputState));
+            }
+            //Break
+            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+            outputState = MergeStates(outputState, staticOutput);
+            OnAutonomyUpdated(new AutonomyArgs(outputState));
+            ResetCounters();
+        }
+
+
+        //Call each time to reset the Hall Count for all of the Roboteqs in config
+        public void ResetCounters()
+        {
+            foreach (Controllers.RoboteQ roboteq in lunabotics.RCU.Program.roboteqs)
+            {
+                roboteq.ClearHallSensorCounts();
+            }
+        }
 
         #endregion
 

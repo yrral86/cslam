@@ -100,6 +100,12 @@ namespace lunabotics.RCU.Controllers
 
         }
 
+        public void ClearHallSensorCounts()
+        {
+            serial_port.Write("!CB 1 0");
+            serial_port.Write("!CB 2 0");
+        }
+
         public void Deactivate()
         {
             if (!isActive)
