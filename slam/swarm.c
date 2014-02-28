@@ -5,7 +5,7 @@ static particle previous_particles[PARTICLE_COUNT];
 static particle best_particle;
 static int iterations = 0;
 // TODO: _ETH
-static double K[RAW_SENSOR_DISTANCES_USB*3], H[RAW_SENSOR_DISTANCES_USB*3], P[9], PH[3*RAW_SENSOR_DISTANCES_USB], HPH[RAW_SENSOR_DISTANCES_USB*RAW_SENSOR_DISTANCES_USB];
+static double K[3*RAW_SENSOR_DISTANCES_USB], H[RAW_SENSOR_DISTANCES_USB*3], P[9], PH[3*RAW_SENSOR_DISTANCES_USB], HPH[RAW_SENSOR_DISTANCES_USB*RAW_SENSOR_DISTANCES_USB];
 // 1% of measurement, avereage around 40 mm
 static double R = 40;
 // TODO: VRV(T) to scale R based on distances
@@ -56,7 +56,9 @@ void swarm_init() {
 void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   int i, j, k, l, m;
   int swap;
-  double posterior, distance, degrees, theta, x, y, total;
+  double posterior, distance, degrees, theta, x, y, s, c, total;
+  double xyt[3];
+  raw_sensor_scan sim;
 
   total = 0.0;
   // evaulate each direction for each particle
@@ -66,33 +68,65 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
     // EKF
     //    H = magical_jacobian_magic();
     // TODO: _ETH
-    bzero(H,sizeof(double)*RAW_SENSOR_DISTANCES_USB*3);
-    double var[3];
-    var[0] = particles[i].x_var;
-    var[1] = particles[i].y_var;
-    var[2] = particles[i].theta_var;
+    bzero(H, sizeof(double)*RAW_SENSOR_DISTANCES_USB*3);
+    xyt[0] = particles[i].x_var;
+    xyt[1] = particles[i].y_var;
+    xyt[2] = particles[i].theta_var;
     for (j = 0; j < 3; j++)
       for (k = 0; k < 3; k++)
 	if (j == k)
-	  P[j*3+k] = var[j];
+	  P[j*3+k] = xyt[j];
 	else
-	  P[j*3+k] = sqrt(var[j])*sqrt(var[k]);
+	  P[j*3+k] = sqrt(xyt[j])*sqrt(xyt[k]);
     
-    // K
+    // K NUMERATOR
     // TODO: _ETH
-    bzero(K, sizeof(double)*RAW_SENSOR_DISTANCES_USB*3);
+    bzero(PH, sizeof(double)*3*RAW_SENSOR_DISTANCES_USB);
     // TODO: _ETH
     for (j = 0; j < RAW_SENSOR_DISTANCES_USB; j++)
       for (k = 0; k < 3; k++)
 	for (l = 0; l < 3; l++)
 	  // TODO _ETH
-	  PH[k*3 + j] += P[k*3 +l]*H[j*RAW_SENSOR_DISTANCES_USB + l];
+	  PH[k*RAW_SENSOR_DISTANCES_USB + j] += P[k*3 + l]*H[k*RAW_SENSOR_DISTANCES_USB + l];
 
-    // TODO: calculate denominator and invert
+    
+    // K DENOMINATOR
+    // TODO: _ETH
+    bzero(HPH, sizeof(double)*RAW_SENSOR_DISTANCES_USB*RAW_SENSOR_DISTANCES_USB);
+    for (j = 0; j < RAW_SENSOR_DISTANCES_USB; j++)
+      for (k = 0; k < RAW_SENSOR_DISTANCES_USB; k++)
+	for (l = 0; l < 3; l++) {
+	  HPH[k*RAW_SENSOR_DISTANCES_USB + j] += H[k*3 + l]*PH[l*RAW_SENSOR_DISTANCES_USB + k]; 
+	  if (j == k)
+	    HPH[k*RAW_SENSOR_DISTANCES_USB + j] += R;
+	}
 
+    // INVERT K DENOMINATOR
 
+    // K
+    // TODO: _ETH
+    bzero(K, sizeof(double)*3*RAW_SENSOR_DISTANCES_USB);
+    for (j = 0; j < RAW_SENSOR_DISTANCES_USB; j++)
+      for (k = 0; k < 3; k++)
+	for (l = 0; l < RAW_SENSOR_DISTANCES_USB; l++)
+	  K[k*RAW_SENSOR_DISTANCES_USB + j] += PH[k*RAW_SENSOR_DISTANCES_USB + l] *
+	    HPH[l*RAW_SENSOR_DISTANCES_USB + j];
 
-    // TODO: this will be _ETH since
+    // K(actual - simulated)
+    sim = landmark_tree_simulate_scan(particles[i]);
+    bzero(xyt, sizeof(double)*3);
+    for (j = 0; j < 3; j++)
+      for (l = 0; l < RAW_SENSOR_DISTANCES_USB; l++)
+	// use first scan if there are multiple
+	xyt[j] += K[j*RAW_SENSOR_DISTANCES + l]*(scans[0].distances[l]-sim.distances[l]);
+
+    // adjust particle
+    particles[i].x += xyt[0];
+    particles[i].y += xyt[1];
+    particles[i].theta += xyt[2];
+
+    // evaluate the particle's relative probability
+    // TODO: _ETH
     for (j = 0; j < RAW_SENSOR_DISTANCES_USB; j++) {
       for (k = 0; k < sample_count; k++) {
 	  distance = scans[k].distances[j];
@@ -100,11 +134,13 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 	  // TODO: same as above (_ETH)
 	  degrees = -120 + j*SENSOR_SPACING_USB;
 	  theta = (degrees + particles[i].theta)*M_PI/180;
+	  s = sin(theta);
+	  c = cos(theta);
 
 	  // check and record unseen every 10 mm
 	  for (l = 0; l < distance; l += 10) {
-	    x = l*cos(theta) + particles[i].x;
-	    y = l*sin(theta) + particles[i].y;
+	    x = l*c + particles[i].x;
+	    y = l*s + particles[i].y;
 
 	    // make sure it is in bounds
 	    if (in_arena(x, y)) {

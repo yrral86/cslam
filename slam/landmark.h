@@ -46,5 +46,7 @@ void landmark_write_map_subtree(landmark_tree_node*, uint8_t*);
 double landmark_seen_probability(landmark_tree_node*, int);
 double landmark_unseen_probability(landmark_tree_node*, int);
 landmark_tree_node* landmark_tree_find_leaf(landmark_tree_node*, int);
+int landmark_tree_node_find_distance(landmark_tree_node*, int, particle);
+raw_sensor_scan landmark_tree_simulate_scan(particle);
 
 #endif

@@ -265,3 +265,40 @@ landmark_tree_node* landmark_tree_find_leaf(landmark_tree_node *node, int index)
     return landmark_tree_find_leaf(node->right, index);
 }
 #endif
+
+// returns distance in the direction specified by step in mm, according to the map
+int landmark_tree_node_find_distance(landmark_tree_node *node, int step, particle p) {
+  int d, done;
+  double x, y, c, s, degrees, theta;
+
+  // forward is now 0 degrees, left -, right +
+  // TODO: _ETH
+  degrees = -120 + step*SENSOR_SPACING_USB;
+  theta = (degrees + p.theta)*M_PI/180;
+  c = cos(theta);
+  s = sin(theta);
+
+  done = 0;
+  for (d = 0; !done; d++) {
+    x = d*c + p.x;
+    y = d*s + p.y;
+
+    // make sure it is in bounds and we can see it
+    if (in_arena(x, y) &&
+	landmark_seen_probability(node, buffer_index_from_x_y(x, y)) > 0.9)
+      done = 1;
+  }
+
+  return d - 1;
+}
+
+raw_sensor_scan landmark_tree_simulate_scan(particle p) {
+  raw_sensor_scan scan;
+  int i;
+
+  // TODO: _ETH
+  for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++)
+    scan.distances[i] = landmark_tree_node_find_distance(p.map, i, p);
+
+  return scan;
+}
