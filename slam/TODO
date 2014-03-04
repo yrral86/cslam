@@ -2,5 +2,4 @@ testing in general
 
 save a rescue overall map to revert to if overall map becomes noisy
 
-convert sensor reading to x,y with robot as origin, use k means with k = 6 to cover obstacles
-find mean and std dev of obstacle clusters, use as landmarks for fastslam
+fix resampling to use a single random number and evenly spaced samples
