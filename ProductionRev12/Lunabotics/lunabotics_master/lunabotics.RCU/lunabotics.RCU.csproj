@@ -84,6 +84,8 @@
     <Compile Include="Controllers\IController.cs" />
     <Compile Include="Controllers\RoboteQ.cs" />
     <Compile Include="Controllers\RoboteQUpdateQueue.cs" />
+    <Compile Include="Hokuyo\get_distance_ethernet.cs" />
+    <Compile Include="Hokuyo\SCIP_library.cs" />
     <Compile Include="Models\BucketController.cs" />
     <Compile Include="Models\Kinematics.cs" />
     <Compile Include="Models\RangeFinder.cs" />
