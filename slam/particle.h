@@ -11,7 +11,7 @@ typedef struct particle {
   double x_var;
   double y_var;
   double theta_var;
-  landmark_map_node *map;
+  landmark_map *map;
 } particle;
 
 #include "swarm.h"

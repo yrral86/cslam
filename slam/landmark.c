@@ -12,7 +12,7 @@ landmark_map* landmark_map_copy(landmark_map *parent) {
   return head;
 }
 
-void landmark_map_dereference(landmark_map *node) {
+void landmark_map_free(landmark_map *node) {
   assert(node != NULL);
   free(node);
 }

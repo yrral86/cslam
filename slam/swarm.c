@@ -50,7 +50,7 @@ void swarm_init() {
     // sample motion distribution
     particles[i] = particle_sample_motion(particles[i], 0, 0, 0);
     // dereference old map, particle_sample_motion copied it already
-    landmark_map_node_dereference(p.map);
+    landmark_map_free(p.map);
   }
 }
 
@@ -213,7 +213,7 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 
   // dereference previous particle maps
   for (i = 0; i < PARTICLE_COUNT; i++) {
-    landmark_map_node_dereference(previous_particles[i].map);
+    landmark_map_free(previous_particles[i].map);
   }
 
   iterations++;
