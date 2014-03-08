@@ -101,7 +101,7 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 	    HPH[k*RAW_SENSOR_DISTANCES_USB + j] += R;
 	}
 
-    // INVERT K DENOMINATOR
+    // TODO: INVERT K DENOMINATOR
 
     // K
     // TODO: _ETH

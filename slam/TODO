@@ -3,3 +3,7 @@ testing in general
 save a rescue overall map to revert to if overall map becomes noisy
 
 fix resampling to use a single random number and evenly spaced samples
+
+EKF:
+	Calculate jacobian
+	Invert Denominator of K
