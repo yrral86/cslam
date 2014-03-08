@@ -9,7 +9,7 @@ particle particle_sample_motion(particle parent, double dx, double dy, double dt
   p.x_var = parent.x_var;
   p.y_var = parent.y_var;
   p.theta_var = parent.theta_var;
-  p.map = landmark_tree_copy(parent.map);
+  p.map = landmark_map_copy(parent.map);
 
   return p;
 }
@@ -24,6 +24,6 @@ particle particle_init(double x, double y, double theta) {
   p.x_var = INITIAL_POSITION_VARIANCE;
   p.y_var = INITIAL_POSITION_VARIANCE;
   p.theta_var = INITIAL_ANGLE_VARIANCE;
-  p.map = landmark_tree_copy(NULL);
+  p.map = landmark_map_copy(NULL);
   return p;
 }

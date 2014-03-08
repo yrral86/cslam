@@ -50,7 +50,7 @@ void swarm_init() {
     // sample motion distribution
     particles[i] = particle_sample_motion(particles[i], 0, 0, 0);
     // dereference old map, particle_sample_motion copied it already
-    landmark_tree_node_dereference(p.map);
+    landmark_map_node_dereference(p.map);
   }
 }
 
@@ -115,7 +115,7 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 	    HPH[l*RAW_SENSOR_DISTANCES_USB + j];
 
     // K(actual - simulated)
-    sim = landmark_tree_simulate_scan(particles[i]);
+    sim = landmark_map_simulate_scan(particles[i]);
     bzero(xyt, sizeof(double)*3);
     for (j = 0; j < 3; j++)
       for (l = 0; l < RAW_SENSOR_DISTANCES_USB; l++)
@@ -204,16 +204,16 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
     while (j++ && total < p)
       total += previous_particles[j - 1].p;
     particles[i] = previous_particles[j - 1];
-    particles[i].map = landmark_tree_copy(particles[i].map);
+    particles[i].map = landmark_map_copy(particles[i].map);
   }
 
   // save best, copy the map we are about to dereference
   best_particle = previous_particles[0];
-  best_particle.map = landmark_tree_copy(best_particle.map);
+  best_particle.map = landmark_map_copy(best_particle.map);
 
   // dereference previous particle maps
   for (i = 0; i < PARTICLE_COUNT; i++) {
-    landmark_tree_node_dereference(previous_particles[i].map);
+    landmark_map_node_dereference(previous_particles[i].map);
   }
 
   iterations++;

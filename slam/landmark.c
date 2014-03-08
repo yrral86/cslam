@@ -1,26 +1,26 @@
 #include "landmark.h"
 #include "buffer.h"
 
-landmark_tree_node* landmark_tree_copy(landmark_tree_node *parent) {
-  landmark_tree_node *head;
+landmark_map_node* landmark_map_copy(landmark_map_node *parent) {
+  landmark_map_node *head;
   if (parent == NULL) {
     head = landmark_build_subtree(0, BUFFER_SIZE - 1);
   } else {
-    head = malloc(sizeof(landmark_tree_node));
+    head = malloc(sizeof(landmark_map_node));
     memcpy(head->map, parent->map, sizeof(landmark)*BUFFER_SIZE);
   }
   return head;
 }
 
-void landmark_tree_node_dereference(landmark_tree_node *node) {
+void landmark_map_node_dereference(landmark_map_node *node) {
   assert(node != NULL);
   free(node);
 }
 
-landmark_tree_node* landmark_build_subtree(int min, int max) {
+landmark_map_node* landmark_build_subtree(int min, int max) {
   assert(min <= max);
   int i;
-  landmark_tree_node *node = malloc(sizeof(landmark_tree_node));
+  landmark_map_node *node = malloc(sizeof(landmark_map_node));
   for (i = min; i <= max; i++) {
     node->map[i].x = x_from_buffer_index(i);
     node->map[i].y = y_from_buffer_index(i);
@@ -30,43 +30,43 @@ landmark_tree_node* landmark_build_subtree(int min, int max) {
   return node;
 }
 
-void landmark_set_seen(landmark_tree_node *node, int index) {
+void landmark_set_seen(landmark_map_node *node, int index) {
   assert(node != NULL);
   node->map[index].seen++;
 }
 
-void landmark_set_seen_value(landmark_tree_node *node, int index, int value) {
+void landmark_set_seen_value(landmark_map_node *node, int index, int value) {
   assert(node != NULL);
   assert(node->map != NULL);
   node->map[index].seen = value;
 }
 
-void landmark_set_unseen(landmark_tree_node *node, int index) {
+void landmark_set_unseen(landmark_map_node *node, int index) {
   assert(node != NULL);
   assert(node->map != NULL);
   node->map[index].unseen++;
 }
 
-void landmark_set_unseen_value(landmark_tree_node *node, int index, int value) {
+void landmark_set_unseen_value(landmark_map_node *node, int index, int value) {
   assert(node != NULL);
   node->map[index].unseen = value;
 }
 
 // writes a byte buffer given the head of a landmark tree
-void landmark_write_map(landmark_tree_node *head, uint8_t *buffer) {
+void landmark_write_map(landmark_map_node *head, uint8_t *buffer) {
   bzero(buffer, BUFFER_SIZE*sizeof(uint8_t));
   landmark_write_map_subtree(head, buffer);
 }
 
 // writes a subtree to the given byte buffer
-void landmark_write_map_subtree(landmark_tree_node *node, uint8_t *buffer) {
+void landmark_write_map_subtree(landmark_map_node *node, uint8_t *buffer) {
   assert(node != NULL);
   int i;
   for (i = 0; i < BUFFER_SIZE; i++)
     buffer[i] = 255*landmark_seen_probability(node, i);
 }
 
-double landmark_seen_probability(landmark_tree_node *node, int index) {
+double landmark_seen_probability(landmark_map_node *node, int index) {
   assert(node != NULL);
   landmark l = node->map[index];
 
@@ -78,12 +78,12 @@ double landmark_seen_probability(landmark_tree_node *node, int index) {
   return p;
 }
 
-double landmark_unseen_probability(landmark_tree_node *node, int index) {
+double landmark_unseen_probability(landmark_map_node *node, int index) {
   return 1 - landmark_seen_probability(node, index);
 }
 
 // returns distance in the direction specified by step in mm, according to the map
-int landmark_tree_node_find_distance(landmark_tree_node *node, int step, particle p) {
+int landmark_map_node_find_distance(landmark_map_node *node, int step, particle p) {
   int d, done;
   double x, y, c, s, degrees, theta;
 
@@ -108,13 +108,13 @@ int landmark_tree_node_find_distance(landmark_tree_node *node, int step, particl
   return d - 1;
 }
 
-raw_sensor_scan landmark_tree_simulate_scan(particle p) {
+raw_sensor_scan landmark_map_simulate_scan(particle p) {
   raw_sensor_scan scan;
   int i;
 
   // TODO: _ETH
   for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++)
-    scan.distances[i] = landmark_tree_node_find_distance(p.map, i, p);
+    scan.distances[i] = landmark_map_node_find_distance(p.map, i, p);
 
   return scan;
 }
