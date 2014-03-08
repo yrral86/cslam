@@ -10,8 +10,8 @@ typedef struct landmark {
   unsigned int unseen;
 } landmark;
 
-typedef struct landmark_map_node {
+typedef struct landmark_map {
   landmark map[BUFFER_SIZE];
-} landmark_map_node;
+} landmark_map;
 
 #endif
