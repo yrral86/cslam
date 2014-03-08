@@ -5,37 +5,10 @@
 #include <stdint.h>
 
 #include "const.h"
-
-// BUFFER or TREE
-#define __LANDMARK_BUFFER__
-
-typedef struct landmark {
-  double x;
-  double y;
-  unsigned int seen;
-  unsigned int unseen;
-} landmark;
-
-typedef struct landmark_tree_node {
-#ifdef __LANDMARK_TREE__
-  int references;
-  int index;
-  struct landmark_tree_node *left;
-  struct landmark_tree_node *right;
-  landmark landmark;
-#endif
-
-#ifdef __LANDMARK_BUFFER__
-  landmark map[BUFFER_SIZE];
-#endif
-} landmark_tree_node;
+#include "particle.h"
 
 landmark_tree_node* landmark_tree_copy(landmark_tree_node*);
-void landmark_tree_node_copy_left(landmark_tree_node*, landmark_tree_node*);
-void landmark_tree_node_copy_right(landmark_tree_node*, landmark_tree_node*);
-void landmark_tree_node_delete(landmark_tree_node*);
 void landmark_tree_node_dereference(landmark_tree_node*);
-void landmark_tree_node_reference(landmark_tree_node*);
 landmark_tree_node* landmark_build_subtree(int, int);
 void landmark_set_seen(landmark_tree_node*, int);
 void landmark_set_seen_value(landmark_tree_node*, int, int);
@@ -45,7 +18,6 @@ void landmark_write_map(landmark_tree_node*, uint8_t*);
 void landmark_write_map_subtree(landmark_tree_node*, uint8_t*);
 double landmark_seen_probability(landmark_tree_node*, int);
 double landmark_unseen_probability(landmark_tree_node*, int);
-landmark_tree_node* landmark_tree_find_leaf(landmark_tree_node*, int);
 int landmark_tree_node_find_distance(landmark_tree_node*, int, particle);
 raw_sensor_scan landmark_tree_simulate_scan(particle);
 

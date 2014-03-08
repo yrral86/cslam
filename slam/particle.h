@@ -1,7 +1,7 @@
 #ifndef __PARTICLE_H__
 #define __PARTICLE_H__
 
-#include "landmark.h"
+#include "landmark_types.h"
 
 typedef struct particle {
   double p;

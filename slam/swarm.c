@@ -4,12 +4,13 @@ static particle particles[PARTICLE_COUNT];
 static particle previous_particles[PARTICLE_COUNT];
 static particle best_particle;
 static int iterations = 0;
+/*
 // TODO: _ETH
 static double K[3*RAW_SENSOR_DISTANCES_USB], H[RAW_SENSOR_DISTANCES_USB*3], P[9], PH[3*RAW_SENSOR_DISTANCES_USB], HPH[RAW_SENSOR_DISTANCES_USB*RAW_SENSOR_DISTANCES_USB];
 // 1% of measurement, avereage around 40 mm
 static double R = 40;
 // TODO: VRV(T) to scale R based on distances
-
+*/
 void swarm_init() {
   int i, j, k, x, y, theta;
   particle p;
@@ -65,6 +66,7 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   for (i = 0; i < PARTICLE_COUNT; i++) {
     posterior = 1.0;
 
+    /*
     // EKF
     //    H = magical_jacobian_magic();
     // TODO: _ETH
@@ -124,6 +126,7 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
     particles[i].x += xyt[0];
     particles[i].y += xyt[1];
     particles[i].theta += xyt[2];
+    */
 
     // evaluate the particle's relative probability
     // TODO: _ETH
