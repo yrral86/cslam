@@ -103,7 +103,7 @@ namespace lunabotics.RCU
                 if (configuration == null)
                     throw new Exception("None or invalid configuration specified");
 
-                mode = Mode.Autonomous;
+                mode = Mode.Manual;
                 feedback = new TelemetryFeedback();
                 stopwatch = new Stopwatch();
 
@@ -160,7 +160,7 @@ namespace lunabotics.RCU
                 {
                     // Start autonomy logic
                     autonomy = new AutonomyHandler(configuration.AutonomyConfiguration, ref telemetryHandler);
-                    autonomy.AutonomyUpdated += autonomy_AutonomyUpdated;    //No idea
+                    autonomy.AutonomyUpdated += autonomy_AutonomyUpdated;
                     autonomy.Activate();
                     autonomy.Start(); //Added
                     telemetryHandler.AddProvider(autonomy);
@@ -172,13 +172,6 @@ namespace lunabotics.RCU
                 receiver.Activate();
 
                 telemetryHandler.TelemetryFeedbackProcessed += telemetryHandler_TelemetryFeedbackProcessed;
-
-                ///// Test Code
-                //Dictionary<CommandFields, short> state = new Dictionary<CommandFields, short>();
-                //state[CommandFields.RotationalVelocity] = 0;
-                //state[CommandFields.TranslationalVelocity] = 1000;
-                //stateQueue.Enqueue(state);
-
 
                 //packet handler
                 stateProcessor = new Thread(new ThreadStart(StateProcessorDoWork));

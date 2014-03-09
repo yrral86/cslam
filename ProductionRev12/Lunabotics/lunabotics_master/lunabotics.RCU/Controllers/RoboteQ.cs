@@ -102,8 +102,13 @@ namespace lunabotics.RCU.Controllers
 
         public void ClearHallSensorCounts()
         {
-            serial_port.Write("!CB 1 0");
-            serial_port.Write("!CB 2 0");
+            lock (serialPortSync)
+            {
+                if (!serial_port.IsOpen) //try to recover serial port if it has become disconnected
+                    serial_port.Open();
+                //Motor speed write to RoboteQ
+                serial_port.Write("!CB 1 1_!CB 2 1 \r");
+            }
         }
 
         public void Deactivate()
@@ -163,7 +168,7 @@ namespace lunabotics.RCU.Controllers
                 {
                     Dictionary<Devices, int> state = queue.Dequeue(tokenSource.Token);
                     lock (updateSync) //synchronization with watchdog timer
-                    {
+                    {       
                         SetMotorValue(state, RoboteqChannel.Motor1);
                         SetMotorValue(state, RoboteqChannel.Motor2);
                         Update();

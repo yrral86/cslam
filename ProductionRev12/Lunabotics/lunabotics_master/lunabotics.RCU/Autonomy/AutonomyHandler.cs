@@ -8,8 +8,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Timers;
+using System.Threading;
 using lunabotics.RCU.Autonomy.Algorithms;
 using lunabotics.RCU.Models;
+using lunabotics.RCU.Hokuyo;
 
 namespace lunabotics.RCU.Autonomy
 {
@@ -39,9 +41,14 @@ namespace lunabotics.RCU.Autonomy
         #region Events
         public event EventHandler<AutonomyArgs> AutonomyUpdated;
         public event EventHandler<Telemetry.TelemetryEventArgs> TelemetryUpdated;
+        public List<long> EthernetSensorData;
         #endregion
 
         #region Fields
+        //Initialize motor powers (Note forward power is negative)
+        public short forwardPower = -500;
+        public short reversePower = 500;
+
         private bool active; // Thread started
         private bool started; // State set to run
         private readonly object timerSync = new object();
@@ -50,8 +57,10 @@ namespace lunabotics.RCU.Autonomy
         private Dictionary<CommandFields, short> staticOutput;
         private Robot robot;
         private State state;
+        private get_distance_ethernet utm = new get_distance_ethernet();
+
         private Stopwatch stopwatch;
-        private Timer timer;
+        private System.Timers.Timer timer;
         private Zone expectedZone;
         // Create output state
         private Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
@@ -67,6 +76,8 @@ namespace lunabotics.RCU.Autonomy
             // Create robot
             robot = new Robot(configuration);
 
+            
+
             // Create stopwatch
             stopwatch = new Stopwatch();
 
@@ -74,7 +85,7 @@ namespace lunabotics.RCU.Autonomy
             telemetryHandler.TelemetryFeedbackProcessed += telemetryHandler_TelemetryFeedbackProcessed;
 
             // Create timer
-            timer = new Timer(configuration.Interval);
+            timer = new System.Timers.Timer(configuration.Interval);
             timer.Elapsed += timer_Elapsed;
 
             // Create static state
@@ -169,7 +180,8 @@ namespace lunabotics.RCU.Autonomy
                 try
                 {
                     // Process state
-                    Console.WriteLine(stopwatch.Elapsed);
+                    Thread.CurrentThread.Name = "AutonomyHandlerThread";
+                    //Console.WriteLine(stopwatch.Elapsed);
                     switch (state)
                     {
                         case State.Manual:
@@ -184,12 +196,27 @@ namespace lunabotics.RCU.Autonomy
                             break;
 
                         case State.TemporaryTesting:
-                            MoveForward(1850, 500);
-                            MoveForward(1850, 500);
-                            tankTurnLeft(925, -500);
-
+                            EthernetSensorData = utm.EthernetScan();
+                            for (int j = 0; j < 760; j++)
+                            {
+                                Console.WriteLine(EthernetSensorData[j].ToString());
+                            }
+                            Thread.Sleep(200);
+                            tankTurnRight(1200);
+                            Thread.Sleep(200);
+                            tankTurnLeft(1200);
+                            Thread.Sleep(200);
+                            state = State.Mining;
                             break;
 
+                        case State.Mining:
+                            MoveReverse(1200);
+                            Thread.Sleep(200);
+                            MoveReverse(1200);
+                            Thread.Sleep(200);
+                            state = State.TemporaryTesting;
+                            break;
+                         
                         default:
                             break;
                     }
@@ -241,44 +268,17 @@ namespace lunabotics.RCU.Autonomy
         //}
 
 
-        //Send Hall count steps and motor power as parameters
-        public void MoveForward(double steps, short power)
+        //Send Hall count steps
+        public void MoveForward(double steps)
         {
-
-            while (
-                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2) < steps)
-            {
-                //Print Hall count for debugging
-                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
-                //Set Velocity of motor. Power between 0 and 1000
-                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = power;
-                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
-                //Set Output States
-                outputState = MergeStates(outputState, staticOutput);
-                //Make calls to event handler to move motors
-                OnAutonomyUpdated(new AutonomyArgs(outputState));
-            }
-            //Stop motors
-            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
-            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
-            outputState = MergeStates(outputState, staticOutput);
-            OnAutonomyUpdated(new AutonomyArgs(outputState));
-            //Reset Hall count for next motor command
-            ResetCounters();
-        }
-
-
-        //Send Hall count steps and motor power as parameters
-        public void MoveReverse(double steps, short power)
-        {
-
+            //System.Diagnostics.Debug.WriteLine("Forward");
             while (
                 Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2) < steps)
             {
                 //Print Hall count for debugging
                 System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
                 //Set Velocity of motor. Power between -1000 and 0
-                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = power;
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = forwardPower;
                 outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
                 //Set Output States
                 outputState = MergeStates(outputState, staticOutput);
@@ -295,16 +295,44 @@ namespace lunabotics.RCU.Autonomy
         }
 
 
-        //Send Hall count steps and motor power as parameters
-        public void tankTurnRight(double steps, short power)
+        //Send Hall count steps
+        public void MoveReverse(double steps)
+        {
+            //System.Diagnostics.Debug.WriteLine("Reverse");
+            while (
+               Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2) < steps)
+            {
+                //Print Hall count for debugging
+                //System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
+
+                //Set Velocity of motor. Power between 0 and 1000
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = reversePower;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+                //Set Output States
+                outputState = MergeStates(outputState, staticOutput);
+                //Make calls to event handler to move motors
+                OnAutonomyUpdated(new AutonomyArgs(outputState));
+            }
+            //Stop motors
+            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
+            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+            outputState = MergeStates(outputState, staticOutput);
+            OnAutonomyUpdated(new AutonomyArgs(outputState));
+            //Reset Hall count for next motor command
+            ResetCounters();
+        }
+
+
+        public void tankTurnRight(double steps)
         {
 
             while (
-                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps)
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2) < steps)
             {
-                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1));
+                //System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
                 outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
-                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = power;
+                //Velocity must be Positive for right turn
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 500;
                 outputState = MergeStates(outputState, staticOutput);
                 OnAutonomyUpdated(new AutonomyArgs(outputState));
             }
@@ -317,16 +345,17 @@ namespace lunabotics.RCU.Autonomy
         }
 
 
-        //Send Hall count steps and motor power as parameters
-        public void tankTurnLeft(double steps, short power)
+        public void tankTurnLeft(double steps)
+
         {
 
             while (
-                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps)
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2) < steps)
             {
-                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1));
+                System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
                 outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
-                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = power;
+                //Velocity must be negative for left turn
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = -500;
                 outputState = MergeStates(outputState, staticOutput);
                 OnAutonomyUpdated(new AutonomyArgs(outputState));
             }

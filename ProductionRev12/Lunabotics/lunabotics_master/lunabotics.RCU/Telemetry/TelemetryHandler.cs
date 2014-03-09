@@ -17,6 +17,8 @@ namespace lunabotics.RCU.Telemetry
         //Hall Counter Variables
         public static double Robo1HallCount1;
         public static double Robo1HallCount2;
+        public static double Robo2HallCount1;
+        public static double Robo2HallCount2;
 
         // Telemetry received event
         public event EventHandler<TelemetryFeedbackArgs> TelemetryFeedbackProcessed;
@@ -242,7 +244,12 @@ namespace lunabotics.RCU.Telemetry
                         case Configuration.Telemetry.RoboteQ_2_MotorAmpsCh2:
                             UpdatePowerUsed(Robo2BatteryVoltage, e.UpdatedTelemetry[telem] / 10.0, e.Interval);
                             break;
-
+                        case Configuration.Telemetry.RoboteQ_2_HallCountCh1:
+                            Robo1HallCount1 = e.UpdatedTelemetry[telem];
+                            break;
+                        case Configuration.Telemetry.RoboteQ_2_HallCountCh2:
+                            Robo1HallCount2 = e.UpdatedTelemetry[telem];
+                            break;
                         case Configuration.Telemetry.RoboteQ_2_BatteryVoltage:
                             robo2BatteryVoltage = e.UpdatedTelemetry[telem];
                             break;
