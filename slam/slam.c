@@ -27,7 +27,7 @@ int main (int argc, char **argv) {
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], map[2], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/25, ARENA_HEIGHT/25);
+  initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), ARENA_WIDTH/25, ARENA_HEIGHT/25);
 
   rand_normal_init();
 
@@ -39,7 +39,7 @@ int main (int argc, char **argv) {
 
   iterations = 0;
 
-  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, ARENA_WIDTH, ARENA_HEIGHT, START_END);
+  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, 7380, 3880, 1500);
 
   while(1) {
     swarm_move(0, 0, 0);
@@ -64,7 +64,7 @@ int main (int argc, char **argv) {
     current_particle.theta = swarm_get_best_theta();
 
     // copy best map to buffer
-    landmark_write_map(current_particle.map, map[0]);
+    //    landmark_write_map(current_particle.map, map[0]);
 
     // draw position
     double s, c, t;
@@ -94,7 +94,8 @@ int main (int argc, char **argv) {
 
     // update historical map
     // and display map
-    bzero(map[2], BUFFER_SIZE*sizeof(uint8_t));
+    //    bzero(map[2], buffer_get_size()*sizeof(uint8_t));
+    /*
     for (i = 0; i < BUFFER_SIZE; i++) {
       // j is our current value minus a threshold (200)
       j = map[0][i] - 200;
@@ -118,9 +119,9 @@ int main (int argc, char **argv) {
       if (map[1][i] > 200)
 	map[2][i] = 255;
     }
-
+    */
     // attenuate current map
-    buffer_attenuate(map[0], 0.75);
+    //    buffer_attenuate(map[0], 0.75);
 
     glutMainLoopEvent();
 

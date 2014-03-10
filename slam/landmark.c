@@ -4,7 +4,7 @@
 landmark_map* landmark_map_copy(landmark_map *parent) {
   landmark_map *head;
   if (parent == NULL) {
-    head = landmark_map_init(BUFFER_SIZE);
+    head = landmark_map_init(buffer_get_size());
   } else {
     head = parent;
     landmark_map_reference(head);
@@ -34,13 +34,14 @@ void landmark_map_dereference(landmark_map *node) {
 landmark_map* landmark_map_init(int size) {
   int i;
   landmark_map *node = malloc(sizeof(landmark_map));
+  node->references = 1;
+  node->map = malloc(sizeof(landmark)*buffer_get_size());
   for (i = 0; i < size; i++) {
     node->map[i].x = x_from_buffer_index(i);
     node->map[i].y = y_from_buffer_index(i);
     node->map[i].seen = 0;
     node->map[i].unseen = 0;
   }
-  node->references = 1;
   return node;
 }
 
@@ -68,7 +69,7 @@ void landmark_set_unseen_value(landmark_map *node, int index, int value) {
 
 // writes a byte buffer given the head of a landmark tree
 void landmark_write_map(landmark_map *head, uint8_t *buffer) {
-  bzero(buffer, BUFFER_SIZE*sizeof(uint8_t));
+  bzero(buffer, buffer_get_size()*sizeof(uint8_t));
   landmark_write_map_subtree(head, buffer);
 }
 
@@ -76,7 +77,7 @@ void landmark_write_map(landmark_map *head, uint8_t *buffer) {
 void landmark_write_map_subtree(landmark_map *node, uint8_t *buffer) {
   assert(node != NULL);
   int i;
-  for (i = 0; i < BUFFER_SIZE; i++)
+  for (i = 0; i < buffer_get_size(); i++)
     buffer[i] = 255*landmark_seen_probability(node, i);
 }
 

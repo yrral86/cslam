@@ -1,7 +1,7 @@
 #ifndef __CONST_H__
 #define __CONST_H__
 
-#include "arena.h"
+//#include "arena.h"
 
 #define PARTICLE_COUNT 100
 #define INITIAL_POSITION_VARIANCE 100
@@ -9,8 +9,9 @@
 
 #define BUFFER_FACTOR 10
 #define BORDER_WIDTH 10
+/*
 #define BUFFER_WIDTH (ARENA_WIDTH/BUFFER_FACTOR)
 #define BUFFER_HEIGHT (ARENA_HEIGHT/BUFFER_FACTOR)
 #define BUFFER_SIZE (BUFFER_WIDTH*BUFFER_HEIGHT)
-
+*/
 #endif

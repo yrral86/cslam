@@ -24,6 +24,8 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   start = start_in;
   spacing = degrees/(double)(m);
 
+  buffer_set_arena_size(long_side, short_side);
+
   initial_map.map = landmark_map_copy(NULL);
 
   // draw initial border
@@ -43,7 +45,7 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
 
   // initialize first round of particles
   for (i = 0; i < PARTICLE_COUNT; i++) {
-    x = START_END/2;
+    x = start/2;
     y = short_side/4;
     if (rand_limit(2))
       y *= 3;
