@@ -16,7 +16,7 @@ particle particle_sample_motion(particle parent, double dx, double dy, double dt
 
 particle particle_init(double x, double y, double theta) {
   particle p;
-  p.p = 1.0;
+  p.p = 0.0;
   p.x = x;
   p.y = y;
   p.theta = theta;
@@ -24,6 +24,6 @@ particle particle_init(double x, double y, double theta) {
   p.x_var = INITIAL_POSITION_VARIANCE;
   p.y_var = INITIAL_POSITION_VARIANCE;
   p.theta_var = INITIAL_ANGLE_VARIANCE;
-  p.map = landmark_map_copy(NULL);
+
   return p;
 }

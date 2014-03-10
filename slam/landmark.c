@@ -4,10 +4,10 @@
 landmark_map* landmark_map_copy(landmark_map *parent) {
   landmark_map *head;
   if (parent == NULL) {
-    head = landmark_build_subtree(0, BUFFER_SIZE - 1);
+    head = landmark_map_init(buffer_get_size());
   } else {
-    head = malloc(sizeof(landmark_map));
-    memcpy(head->map, parent->map, sizeof(landmark)*BUFFER_SIZE);
+    head = parent;
+    landmark_map_reference(head);
   }
   return head;
 }
@@ -17,11 +17,26 @@ void landmark_map_free(landmark_map *node) {
   free(node);
 }
 
-landmark_map* landmark_build_subtree(int min, int max) {
-  assert(min <= max);
+void landmark_map_reference(landmark_map *node) {
+  assert(node != NULL);
+  assert(node->references > 0);
+  node->references++;
+}
+
+void landmark_map_dereference(landmark_map *node) {
+  assert(node != NULL);
+  assert(node->references > 0);
+  node->references--;
+  if (node->references < 1)
+    landmark_map_free(node);
+}
+
+landmark_map* landmark_map_init(int size) {
   int i;
   landmark_map *node = malloc(sizeof(landmark_map));
-  for (i = min; i <= max; i++) {
+  node->references = 1;
+  node->map = malloc(sizeof(landmark)*size);
+  for (i = 0; i < size; i++) {
     node->map[i].x = x_from_buffer_index(i);
     node->map[i].y = y_from_buffer_index(i);
     node->map[i].seen = 0;
@@ -54,7 +69,7 @@ void landmark_set_unseen_value(landmark_map *node, int index, int value) {
 
 // writes a byte buffer given the head of a landmark tree
 void landmark_write_map(landmark_map *head, uint8_t *buffer) {
-  bzero(buffer, BUFFER_SIZE*sizeof(uint8_t));
+  bzero(buffer, buffer_get_size()*sizeof(uint8_t));
   landmark_write_map_subtree(head, buffer);
 }
 
@@ -62,7 +77,7 @@ void landmark_write_map(landmark_map *head, uint8_t *buffer) {
 void landmark_write_map_subtree(landmark_map *node, uint8_t *buffer) {
   assert(node != NULL);
   int i;
-  for (i = 0; i < BUFFER_SIZE; i++)
+  for (i = 0; i < buffer_get_size(); i++)
     buffer[i] = 255*landmark_seen_probability(node, i);
 }
 
@@ -75,6 +90,11 @@ double landmark_seen_probability(landmark_map *node, int index) {
   double p = 0.05;
   if (sum > 0)
     p = l.seen/sum;
+
+  // max p is 95% to avoid unseen probability of 0%
+  if (p > 0.95)
+    p = 0.95;
+
   return p;
 }
 
@@ -108,13 +128,8 @@ int landmark_map_find_distance(landmark_map *node, int step, particle p) {
   return d - 1;
 }
 
-raw_sensor_scan landmark_map_simulate_scan(particle p) {
-  raw_sensor_scan scan;
+void landmark_map_simulate_scan(particle p, int *distances, int m) {
   int i;
-
-  // TODO: _ETH
-  for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++)
-    scan.distances[i] = landmark_map_find_distance(p.map, i, p);
-
-  return scan;
+  for (i = 0; i < m; i++)
+    distances[i] = landmark_map_find_distance(p.map, i, p);
 }

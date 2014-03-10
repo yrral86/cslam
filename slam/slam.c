@@ -8,6 +8,8 @@ static uint8_t* map[BUFFER_HISTORY];
 
 static raw_sensor_scan *scans;
 static particle current_particle;
+static int arena_width = 4960;
+static int arena_height = 3400;
 
 int main (int argc, char **argv) {
   int i, j, iterations;
@@ -21,13 +23,17 @@ int main (int argc, char **argv) {
 
   scans = malloc(sample_count*sizeof(raw_sensor_scan));
 
+  // swarm_init will set up buffer sizing
+  //  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, 7380, 3880, 1500);
+  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, arena_width, arena_height, 2000);
+
   // allocate buffers
   for (i = 0; i < BUFFER_HISTORY; i++)
     map[i] = buffer_allocate();
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], map[2], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/5, ARENA_HEIGHT/5);
+  initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 2*buffer_get_width(), 2*buffer_get_height());
 
   rand_normal_init();
 
@@ -40,7 +46,7 @@ int main (int argc, char **argv) {
   iterations = 0;
 
   while(1) {
-    swarm_init();
+    swarm_move(0, 0, 0);
 
     // wait for sensor
     assert(pthread_join(sensor_thread, NULL) == 0);
@@ -54,14 +60,15 @@ int main (int argc, char **argv) {
     sensor_thread = sensor_read_raw_n_thread(sample_count);
 
     // give the swarm the new scans and the historical map
-    swarm_filter(scans, map[1], sample_count);
+    swarm_update(scans[0].distances);
 
     // update localization
-    current_particle = swarm_get_best();
-
+    current_particle.x = swarm_get_best_x();
+    current_particle.y = swarm_get_best_y();
+    current_particle.theta = swarm_get_best_theta();
 
     // copy best map to buffer
-    landmark_write_map(current_particle.map, map[0]);
+    swarm_get_best_buffer(map[0]);
 
     // draw position
     double s, c, t;
@@ -91,7 +98,8 @@ int main (int argc, char **argv) {
 
     // update historical map
     // and display map
-    bzero(map[2], BUFFER_SIZE*sizeof(uint8_t));
+    //    bzero(map[2], buffer_get_size()*sizeof(uint8_t));
+    /*
     for (i = 0; i < BUFFER_SIZE; i++) {
       // j is our current value minus a threshold (200)
       j = map[0][i] - 200;
@@ -115,9 +123,9 @@ int main (int argc, char **argv) {
       if (map[1][i] > 200)
 	map[2][i] = 255;
     }
-
+    */
     // attenuate current map
-    buffer_attenuate(map[0], 0.75);
+    //    buffer_attenuate(map[0], 0.75);
 
     glutMainLoopEvent();
 
@@ -144,11 +152,5 @@ void record_distance(int angle_index, double distance) {
 void record_map_position(int index, int x, int y, uint8_t value) {
   if (in_arena(x, y))
     map[index][buffer_index_from_x_y(x, y)] = value;
-}
-
-int in_arena(int x, int y) {
-  if (x >= 0 && x < ARENA_WIDTH && y >= 0 && y < ARENA_HEIGHT)
-    return 1;
-  else return 0;
 }
 

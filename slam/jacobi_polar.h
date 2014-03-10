@@ -1,6 +1,8 @@
 #ifndef __JACOBI_POLAR__
 #define __JACOBI_POLAR__
 
-void jacobian_polar(particle);
+#include "particle.h"
+
+void jacobian_polar(particle, int);
 
 #endif

@@ -10,7 +10,7 @@ const static int OBSTACLE_COUNT = 6;
 /*
 // real arena
 #define ARENA_WIDTH 7380
-#define ARENA_HIEGHT 3880
+#define ARENA_HEIGHT 3880
 const static int START_END = 1500;
 // TODO we may want to add some tolerance to MINE_BEGIN so we make sure
 // we don't mine early
@@ -33,11 +33,13 @@ const static int START_END = 500;
 const static  int MINE_BEGIN = 1250;
 */
 
+/*
 // bedroom arena
 #define ARENA_WIDTH 3960
 #define ARENA_HEIGHT 3400
 const static int START_END = 2000;
 const static  int MINE_BEGIN = 1250;
+*/
 
 /*
 // entire apartment
