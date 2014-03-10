@@ -11,7 +11,8 @@ typedef struct landmark {
 } landmark;
 
 typedef struct landmark_map {
-  landmark map[BUFFER_SIZE];
+  int references;
+  landmark *map;
 } landmark_map;
 
 #endif

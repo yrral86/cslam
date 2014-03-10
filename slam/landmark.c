@@ -4,10 +4,10 @@
 landmark_map* landmark_map_copy(landmark_map *parent) {
   landmark_map *head;
   if (parent == NULL) {
-    head = landmark_build_subtree(0, BUFFER_SIZE - 1);
+    head = landmark_map_init(BUFFER_SIZE);
   } else {
-    head = malloc(sizeof(landmark_map));
-    memcpy(head->map, parent->map, sizeof(landmark)*BUFFER_SIZE);
+    head = parent;
+    landmark_map_reference(head);
   }
   return head;
 }
@@ -17,16 +17,30 @@ void landmark_map_free(landmark_map *node) {
   free(node);
 }
 
-landmark_map* landmark_build_subtree(int min, int max) {
-  assert(min <= max);
+void landmark_map_reference(landmark_map *node) {
+  assert(node != NULL);
+  assert(node->references > 0);
+  node->references++;
+}
+
+void landmark_map_dereference(landmark_map *node) {
+  assert(node != NULL);
+  assert(node->references > 0);
+  node->references--;
+  if (node->references < 1)
+    landmark_map_free(node);
+}
+
+landmark_map* landmark_map_init(int size) {
   int i;
   landmark_map *node = malloc(sizeof(landmark_map));
-  for (i = min; i <= max; i++) {
+  for (i = 0; i < size; i++) {
     node->map[i].x = x_from_buffer_index(i);
     node->map[i].y = y_from_buffer_index(i);
     node->map[i].seen = 0;
     node->map[i].unseen = 0;
   }
+  node->references = 1;
   return node;
 }
 
