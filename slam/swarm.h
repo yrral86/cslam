@@ -15,5 +15,6 @@ int swarm_get_best_x();
 int swarm_get_best_y();
 int swarm_get_best_theta();
 void swarm_get_best_buffer(uint8_t*);
+int in_arena(int, int);
 
 #endif

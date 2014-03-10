@@ -154,9 +154,3 @@ void record_map_position(int index, int x, int y, uint8_t value) {
     map[index][buffer_index_from_x_y(x, y)] = value;
 }
 
-int in_arena(int x, int y) {
-  if (x >= 0 && x < arena_width && y >= 0 && y < arena_height)
-    return 1;
-  else return 0;
-}
-

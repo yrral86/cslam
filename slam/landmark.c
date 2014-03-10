@@ -90,6 +90,11 @@ double landmark_seen_probability(landmark_map *node, int index) {
   double p = 0.05;
   if (sum > 0)
     p = l.seen/sum;
+
+  // max p is 95% to avoid unseen probability of 0%
+  if (p > 0.95)
+    p = 0.95;
+
   return p;
 }
 

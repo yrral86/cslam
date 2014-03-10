@@ -16,7 +16,8 @@ double R = 40;
 // TODO: VRV(T) to scale R based on distances
 */
 void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
-  int i, j, k, x, y, theta;
+  int i, j, k;
+  double x, y, theta;
   particle initial_map;
   m = m_in;
   sensor_degrees = degrees_in;
@@ -76,13 +77,13 @@ void swarm_move(int dx, int dy, int dtheta) {
 void swarm_update(int *distances) {
   int i, j, k, l;
   int swap;
-  double posterior, distance, degrees, theta, x, y, s, c, total;
+  double posterior, distance, degrees, theta, x, y, s, c, total, min, p;
   double xyt[3];
 
-  total = 0.0;
+  min = 10000.0;
   // evaulate each direction for each particle
   for (i = 0; i < PARTICLE_COUNT; i++) {
-    posterior = 1.0;
+    posterior = 0.0;
 
     /*
     // EKF
@@ -150,7 +151,7 @@ void swarm_update(int *distances) {
     for (j = 0; j < m; j++) {
       distance = distances[j];
       // forward is now 0 degrees, left -, right +
-      degrees = -sensor_degrees/2 + j*spacing;
+      degrees = -sensor_degrees/2.0 + j*spacing;
       theta = (degrees + particles[i].theta)*M_PI/180;
       s = sin(theta);
       c = cos(theta);
@@ -163,28 +164,39 @@ void swarm_update(int *distances) {
 	// make sure it is in bounds
 	if (in_arena(x, y)) {
 	  k = buffer_index_from_x_y(x, y);
-	  posterior *= landmark_unseen_probability(particles[i].map, k);
-	} else posterior *= 0.05;
+	  p = landmark_unseen_probability(particles[i].map, k);
+	  posterior += -log2(p);
+	} else posterior += -log2(0.05);
       }
 
       // check and record seen
-      x = distance*cos(theta) + particles[i].x;
-      y = distance*sin(theta) + particles[i].y;
+      x = distance*c + particles[i].x;
+      y = distance*s + particles[i].y;
 
       // make sure it is in bounds
       if (in_arena(x, y)) {
 	k = buffer_index_from_x_y(x, y);
-	posterior *= landmark_seen_probability(particles[i].map, k);
-      } else posterior *= 0.05;
+	p = landmark_seen_probability(particles[i].map, k);
+	posterior += -log2(p);
+      } else posterior += -log2(0.05);
     }
-    
-    particles[i].p *= posterior;
+
+    particles[i].p += posterior;
+    if (particles[i].p < min)
+      min = particles[i].p;
+  }
+
+  // normalize particle log probabilities, convert to normal probabilities for resampling
+  total = 0.0;
+  for (i = 0; i < PARTICLE_COUNT; i++) {
+    particles[i].p -= min;
+    particles[i].p = pow(2, -particles[i].p);
     total += particles[i].p;
   }
 
-  // normalize particle probabilities
-  for (i = 0; i < PARTICLE_COUNT; i++)
+  for (i = 0; i < PARTICLE_COUNT; i++) {
     particles[i].p /= total;
+  }
 
   // bubblesort particles by p
   swap = 1;
@@ -203,10 +215,17 @@ void swarm_update(int *distances) {
     i++;
   } while (swap);
 
+  /*
+  for (i = 0; i < PARTICLE_COUNT; i++) {
+    if (particles[i].p > 0)
+      printf("i: %i, p: %g\n", i, particles[i].p);
+  }
+  */
+
   // save old particles before we resample
   memcpy(previous_particles, particles, sizeof(particle)*PARTICLE_COUNT);
   // resample with replacement
-  double p = rand()/(double)RAND_MAX;
+  p = rand()/(double)RAND_MAX;
   double step = 1.0/PARTICLE_COUNT;
   for (i = 0; i < PARTICLE_COUNT; i++) {
     p += step;
@@ -224,9 +243,12 @@ void swarm_update(int *distances) {
   best_particle.map = landmark_map_copy(best_particle.map);
 
   // dereference previous particle maps
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  for (i = 0; i < PARTICLE_COUNT; i++)
     landmark_map_dereference(previous_particles[i].map);
-  }
+
+  // restore log probabilities
+  for (i = 0; i < PARTICLE_COUNT; i++)
+    particles[i].p = -log2(particles[i].p);
 
   iterations++;
 }
@@ -245,4 +267,10 @@ int swarm_get_best_theta() {
 
 void swarm_get_best_buffer(uint8_t *buffer) {
   landmark_write_map(best_particle.map, buffer);
+}
+
+int in_arena(int x, int y) {
+  if (x >= 0 && x < long_side && y >= 0 && y < short_side)
+    return 1;
+  else return 0;
 }

@@ -16,7 +16,7 @@ particle particle_sample_motion(particle parent, double dx, double dy, double dt
 
 particle particle_init(double x, double y, double theta) {
   particle p;
-  p.p = 1.0;
+  p.p = 0.0;
   p.x = x;
   p.y = y;
   p.theta = theta;
