@@ -14,10 +14,6 @@ double K[3*RAW_SENSOR_DISTANCES_USB], H[RAW_SENSOR_DISTANCES_USB*3], P[9], PH[3*
 double R = 40;
 // TODO: VRV(T) to scale R based on distances
 */
-int swarm_test(int in) {
-  return in;
-}
-
 void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
   int i, j, k, x, y, theta;
   m = m_in;

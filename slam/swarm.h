@@ -8,7 +8,6 @@
 #include "particle.h"
 #include "random.h"
 
-int swarm_test(int);
 void swarm_init(int, int, int, int, int);
 void swarm_move(int, int, int);
 void swarm_update(int*);

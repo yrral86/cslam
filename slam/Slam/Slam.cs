@@ -6,7 +6,6 @@ namespace Slam
 	public class Swarm
 	{
 		#region imports
-		[DllImport("slam")] public static extern int swarm_test(int input);
 		/*
 		 * swarm_init
 		 * m: number of sensor steps
