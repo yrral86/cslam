@@ -24,7 +24,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release</OutputPath>
     <OutputName>slam</OutputName>
-    <CompileTarget>StaticLibrary</CompileTarget>
+    <CompileTarget>SharedLibrary</CompileTarget>
     <OptimizationLevel>3</OptimizationLevel>
     <DefineSymbols>MONODEVELOP</DefineSymbols>
     <SourceDirectory>.</SourceDirectory>
@@ -39,7 +39,6 @@
     <None Include="jacobi_polar.h" />
     <None Include="landmark.h" />
     <None Include="landmark_types.h" />
-    <None Include="lazygl.h" />
     <None Include="particle.h" />
     <None Include="random.h" />
     <None Include="swarm.h" />
@@ -49,7 +48,6 @@
     <Compile Include="buffer.c" />
     <Compile Include="jacobi_polar.c" />
     <Compile Include="landmark.c" />
-    <Compile Include="lazygl.c" />
     <Compile Include="particle.c" />
     <Compile Include="random.c" />
     <Compile Include="swarm.c" />

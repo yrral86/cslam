@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{2857B73E-F847-4B02-9238-064979017E93}") = "slam", "slam.cproj", "{4F799135-6E26-4106-950A-BE33630295A5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Slam", "Slam\Slam.csproj", "{F9BB9E93-EBD4-40C9-B59C-59BE8B5F5A57}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,6 +15,10 @@ Global
 		{4F799135-6E26-4106-950A-BE33630295A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F799135-6E26-4106-950A-BE33630295A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F799135-6E26-4106-950A-BE33630295A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9BB9E93-EBD4-40C9-B59C-59BE8B5F5A57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9BB9E93-EBD4-40C9-B59C-59BE8B5F5A57}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9BB9E93-EBD4-40C9-B59C-59BE8B5F5A57}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9BB9E93-EBD4-40C9-B59C-59BE8B5F5A57}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = slam.cproj

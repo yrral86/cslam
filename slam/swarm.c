@@ -4,62 +4,76 @@ static particle particles[PARTICLE_COUNT];
 static particle previous_particles[PARTICLE_COUNT];
 static particle best_particle;
 static int iterations = 0;
+static int m, degrees, long_side, short_side, start;
+static double spacing;
+
 /*
 // TODO: _ETH
-static double K[3*RAW_SENSOR_DISTANCES_USB], H[RAW_SENSOR_DISTANCES_USB*3], P[9], PH[3*RAW_SENSOR_DISTANCES_USB], HPH[RAW_SENSOR_DISTANCES_USB*RAW_SENSOR_DISTANCES_USB];
+double K[3*RAW_SENSOR_DISTANCES_USB], H[RAW_SENSOR_DISTANCES_USB*3], P[9], PH[3*RAW_SENSOR_DISTANCES_USB], HPH[RAW_SENSOR_DISTANCES_USB*RAW_SENSOR_DISTANCES_USB];
 // 1% of measurement, avereage around 40 mm
-static double R = 40;
+double R = 40;
 // TODO: VRV(T) to scale R based on distances
 */
-void swarm_init() {
+int swarm_test(int in) {
+  return in;
+}
+
+void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
   int i, j, k, x, y, theta;
-  particle p;
+  m = m_in;
+  degrees = degrees_in;
+  long_side = long_side_in;
+  short_side = short_side_in;
+  start = start_in;
+  spacing = degrees/(double)(m);
 
   // initialize first round of particles
-  if (iterations == 0) {
-    for (i = 0; i < PARTICLE_COUNT; i++) {
-      x = START_END/2;
-      if (rand_limit(2))
-	y = ARENA_HEIGHT/4;
-      else
-	y = 3*ARENA_HEIGHT/4;
-      theta = rand_limit(360) - 180;
-      particles[i] = particle_init(x, y, theta);
+  for (i = 0; i < PARTICLE_COUNT; i++) {
+    x = START_END/2;
+    y = short_side/4;
+    if (rand_limit(2))
+      y *= 3;
+    theta = rand_limit(360) - 180;
+    particles[i] = particle_init(x, y, theta);
 
-      // draw initial border
-      for (k = 0; k < ARENA_WIDTH; k++)
-	for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j += BUFFER_FACTOR) {
-	  landmark_set_seen_value(particles[i].map, buffer_index_from_x_y(k, j), 10000);
-	  landmark_set_seen_value(particles[i].map,
-				  buffer_index_from_x_y(k, ARENA_HEIGHT - 1 - j), 10000);
-	}
+    particles[i].map;
 
-      for (k = 0; k < ARENA_HEIGHT; k++)
-	for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j+= BUFFER_FACTOR) {
-	  landmark_set_seen_value(particles[i].map, buffer_index_from_x_y(j, k), 10000);
-	  landmark_set_seen_value(particles[i].map,
-				  buffer_index_from_x_y(ARENA_WIDTH - 1 - j, k), 10000);
-	}
+    // draw initial border
+    for (k = 0; k < long_side; k++)
+      for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j += BUFFER_FACTOR) {
+	landmark_set_seen_value(particles[i].map, buffer_index_from_x_y(k, j), 10000);
+	landmark_set_seen_value(particles[i].map,
+				buffer_index_from_x_y(k, short_side - 1 - j), 10000);
+      }
 
-    }
+    for (k = 0; k < short_side; k++)
+      for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j+= BUFFER_FACTOR) {
+	landmark_set_seen_value(particles[i].map, buffer_index_from_x_y(j, k), 10000);
+	landmark_set_seen_value(particles[i].map,
+				buffer_index_from_x_y(long_side - 1 - j, k), 10000);
+      }
   }
+}
+
+void swarm_move(int dx, int dy, int dtheta) {
+  int i;
+  particle p;
 
   // add motion (nothing for now, relying on high variance and lots of particles)
   for (i = 0; i < PARTICLE_COUNT; i++) {
     p = particles[i];
     // sample motion distribution
-    particles[i] = particle_sample_motion(particles[i], 0, 0, 0);
+    particles[i] = particle_sample_motion(particles[i], dx, dy, dtheta);
     // dereference old map, particle_sample_motion copied it already
     landmark_map_free(p.map);
   }
 }
 
-void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
+void swarm_update(int *distances) {
   int i, j, k, l, m;
   int swap;
   double posterior, distance, degrees, theta, x, y, s, c, total;
   double xyt[3];
-  raw_sensor_scan sim;
 
   total = 0.0;
   // evaulate each direction for each particle
@@ -130,45 +144,44 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
 
     // evaluate the particle's relative probability
     // TODO: _ETH
-    for (j = 0; j < RAW_SENSOR_DISTANCES_USB; j++) {
-      for (k = 0; k < sample_count; k++) {
-	  distance = scans[k].distances[j];
-	  // forward is now 0 degrees, left -, right +
-	  // TODO: same as above (_ETH)
-	  degrees = -120 + j*SENSOR_SPACING_USB;
-	  theta = (degrees + particles[i].theta)*M_PI/180;
-	  s = sin(theta);
-	  c = cos(theta);
+    for (j = 0; j < m; j++) {
+      distance = distances[j];
+      // forward is now 0 degrees, left -, right +
+      // TODO: same as above (_ETH)
+      degrees = -120 + j*spacing;
+      theta = (degrees + particles[i].theta)*M_PI/180;
+      s = sin(theta);
+      c = cos(theta);
 
-	  // check and record unseen every 10 mm
-	  for (l = 0; l < distance; l += 10) {
-	    x = l*c + particles[i].x;
-	    y = l*s + particles[i].y;
+      // check and record unseen every 10 mm
+      for (l = 0; l < distance; l += 10) {
+	x = l*c + particles[i].x;
+	y = l*s + particles[i].y;
 
-	    // make sure it is in bounds
-	    if (in_arena(x, y)) {
-	      m = buffer_index_from_x_y(x, y);
-	      posterior *= landmark_unseen_probability(particles[i].map, m);
-	      // only update map once a second
-	      if (iterations % 10 == 0)
-		landmark_set_unseen(particles[i].map, m);
-	    } else posterior *= 0.05;
-	  }
-
-	  // check and record seen
-	  x = distance*cos(theta) + particles[i].x;
-	  y = distance*sin(theta) + particles[i].y;
-
-	  // make sure it is in bounds
-	  if (in_arena(x, y)) {
-	    m = buffer_index_from_x_y(x, y);
-	    posterior *= landmark_seen_probability(particles[i].map, m);
-	    // only update map once a second
-	    if (iterations % 10 == 0)
-	      landmark_set_seen(particles[i].map, m);
-	  } else posterior *= 0.05;
+	// make sure it is in bounds
+	if (in_arena(x, y)) {
+	  m = buffer_index_from_x_y(x, y);
+	  posterior *= landmark_unseen_probability(particles[i].map, m);
+	  // only update map once a second
+	  if (iterations % 10 == 0)
+	    landmark_set_unseen(particles[i].map, m);
+	} else posterior *= 0.05;
       }
+
+      // check and record seen
+      x = distance*cos(theta) + particles[i].x;
+      y = distance*sin(theta) + particles[i].y;
+
+      // make sure it is in bounds
+      if (in_arena(x, y)) {
+	m = buffer_index_from_x_y(x, y);
+	posterior *= landmark_seen_probability(particles[i].map, m);
+	// only update map once a second
+	if (iterations % 10 == 0)
+	  landmark_set_seen(particles[i].map, m);
+      } else posterior *= 0.05;
     }
+    
     particles[i].p *= posterior;
     total += particles[i].p;
   }
@@ -219,6 +232,14 @@ void swarm_filter(raw_sensor_scan *scans, uint8_t *map, int sample_count) {
   iterations++;
 }
 
-particle swarm_get_best() {
-  return best_particle;
+int swarm_get_best_x() {
+  return best_particle.x;
+}
+
+int swarm_get_best_y() {
+  return best_particle.y;
+}
+
+int swarm_get_best_theta() {
+  return best_particle.theta;
 }

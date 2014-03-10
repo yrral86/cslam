@@ -2,14 +2,18 @@
 #define __SWARM_H__
 
 #include <string.h>
+#include <math.h>
 
 #include "const.h"
 #include "particle.h"
-#include "sensor.h"
-#include "slam.h"
+#include "random.h"
 
-void swarm_init();
-void swarm_filter(raw_sensor_scan*, uint8_t*, int);
-particle swarm_get_best();
+int swarm_test(int);
+void swarm_init(int, int, int, int, int);
+void swarm_move(int, int, int);
+void swarm_update(int*);
+int swarm_get_best_x();
+int swarm_get_best_y();
+int swarm_get_best_theta();
 
 #endif

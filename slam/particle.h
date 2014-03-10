@@ -15,6 +15,7 @@ typedef struct particle {
 } particle;
 
 #include "swarm.h"
+#include "landmark.h"
 
 particle particle_sample_motion(particle, double, double, double);
 particle particle_init(double, double, double);

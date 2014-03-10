@@ -108,13 +108,8 @@ int landmark_map_find_distance(landmark_map *node, int step, particle p) {
   return d - 1;
 }
 
-raw_sensor_scan landmark_map_simulate_scan(particle p) {
-  raw_sensor_scan scan;
+void landmark_map_simulate_scan(particle p, int *distances, int m) {
   int i;
-
-  // TODO: _ETH
-  for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++)
-    scan.distances[i] = landmark_map_find_distance(p.map, i, p);
-
-  return scan;
+  for (i = 0; i < m; i++)
+    distances[i] = landmark_map_find_distance(p.map, i, p);
 }

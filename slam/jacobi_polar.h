@@ -3,6 +3,6 @@
 
 #include "particle.h"
 
-void jacobian_polar(particle);
+void jacobian_polar(particle, int);
 
 #endif

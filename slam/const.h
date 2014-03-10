@@ -3,7 +3,7 @@
 
 #include "arena.h"
 
-#define PARTICLE_COUNT 200
+#define PARTICLE_COUNT 25
 #define INITIAL_POSITION_VARIANCE 100
 #define INITIAL_ANGLE_VARIANCE 5
 

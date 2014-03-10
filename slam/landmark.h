@@ -19,6 +19,6 @@ void landmark_write_map_subtree(landmark_map*, uint8_t*);
 double landmark_seen_probability(landmark_map*, int);
 double landmark_unseen_probability(landmark_map*, int);
 int landmark_map_find_distance(landmark_map*, int, particle);
-raw_sensor_scan landmark_map_simulate_scan(particle);
+void landmark_map_simulate_scan(particle, int*, int);
 
 #endif

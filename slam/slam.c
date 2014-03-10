@@ -27,7 +27,7 @@ int main (int argc, char **argv) {
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], map[2], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/5, ARENA_HEIGHT/5);
+  initGL(map[0], map[2], BUFFER_WIDTH, BUFFER_HEIGHT, ARENA_WIDTH/25, ARENA_HEIGHT/25);
 
   rand_normal_init();
 
@@ -39,8 +39,10 @@ int main (int argc, char **argv) {
 
   iterations = 0;
 
+  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, ARENA_WIDTH, ARENA_HEIGHT, START_END);
+
   while(1) {
-    swarm_init();
+    swarm_move(0, 0, 0);
 
     // wait for sensor
     assert(pthread_join(sensor_thread, NULL) == 0);
@@ -54,11 +56,12 @@ int main (int argc, char **argv) {
     sensor_thread = sensor_read_raw_n_thread(sample_count);
 
     // give the swarm the new scans and the historical map
-    swarm_filter(scans, map[1], sample_count);
+    swarm_update(scans[0].distances);
 
     // update localization
-    current_particle = swarm_get_best();
-
+    current_particle.x = swarm_get_best_x();
+    current_particle.y = swarm_get_best_y();
+    current_particle.theta = swarm_get_best_theta();
 
     // copy best map to buffer
     landmark_write_map(current_particle.map, map[0]);

@@ -25,5 +25,6 @@ particle particle_init(double x, double y, double theta) {
   p.y_var = INITIAL_POSITION_VARIANCE;
   p.theta_var = INITIAL_ANGLE_VARIANCE;
   p.map = landmark_map_copy(NULL);
+
   return p;
 }
