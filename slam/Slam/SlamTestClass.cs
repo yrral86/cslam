@@ -63,7 +63,7 @@ namespace Slam
 			// within 5 mm
 			Assert.IsTrue (Swarm.swarm_get_best_x () - x < 5);
 			Assert.IsTrue (Swarm.swarm_get_best_y () - y < 5);
-			//for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 10; i++) {
 				Swarm.swarm_move (dx, dy, 0);
 				distances [0] -= dy;
 				distances [1] -= dx;
@@ -73,7 +73,7 @@ namespace Slam
 				y += dy;
 				Assert.IsTrue (Swarm.swarm_get_best_x () - x < 5);
 				Assert.IsTrue (Swarm.swarm_get_best_y () - y < 5);
-			//}
+			}
 		}
 	}
 }
