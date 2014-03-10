@@ -1,6 +1,26 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench />
+  <MonoDevelop.Ide.Workbench ActiveDocument="const.h">
+    <Files>
+      <File FileName="Slam/Slam.cs" Line="1" Column="1" />
+      <File FileName="swarm.c" Line="1" Column="1" />
+      <File FileName="swarm.h" Line="1" Column="1" />
+      <File FileName="const.h" Line="6" Column="27" />
+    </Files>
+    <Pads>
+      <Pad Id="MonoDevelop.NUnit.TestPad">
+        <State expanded="True">
+          <Node name="Slam" expanded="True">
+            <Node name="Slam" expanded="True">
+              <Node name="SlamTestClass" expanded="True">
+                <Node name="Test03All" selected="True" />
+              </Node>
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
