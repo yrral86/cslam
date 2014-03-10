@@ -8,6 +8,8 @@ static uint8_t* map[BUFFER_HISTORY];
 
 static raw_sensor_scan *scans;
 static particle current_particle;
+static int arena_width = 4960;
+static int arena_height = 3400;
 
 int main (int argc, char **argv) {
   int i, j, iterations;
@@ -21,13 +23,17 @@ int main (int argc, char **argv) {
 
   scans = malloc(sample_count*sizeof(raw_sensor_scan));
 
+  // swarm_init will set up buffer sizing
+  //  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, 7380, 3880, 1500);
+  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, arena_width, arena_height, 2000);
+
   // allocate buffers
   for (i = 0; i < BUFFER_HISTORY; i++)
     map[i] = buffer_allocate();
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), ARENA_WIDTH/25, ARENA_HEIGHT/25);
+  initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 2*buffer_get_width(), 2*buffer_get_height());
 
   rand_normal_init();
 
@@ -38,8 +44,6 @@ int main (int argc, char **argv) {
   sensor_thread = sensor_read_raw_n_thread(sample_count);
 
   iterations = 0;
-
-  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, 7380, 3880, 1500);
 
   while(1) {
     swarm_move(0, 0, 0);
@@ -64,7 +68,7 @@ int main (int argc, char **argv) {
     current_particle.theta = swarm_get_best_theta();
 
     // copy best map to buffer
-    //    landmark_write_map(current_particle.map, map[0]);
+    swarm_get_best_buffer(map[0]);
 
     // draw position
     double s, c, t;
@@ -151,7 +155,7 @@ void record_map_position(int index, int x, int y, uint8_t value) {
 }
 
 int in_arena(int x, int y) {
-  if (x >= 0 && x < ARENA_WIDTH && y >= 0 && y < ARENA_HEIGHT)
+  if (x >= 0 && x < arena_width && y >= 0 && y < arena_height)
     return 1;
   else return 0;
 }

@@ -49,8 +49,8 @@ namespace Slam
 			distances = new int[3];
 			x = 1500 / 2;
 			y = 3880 / 4;
-			dx = 10;
-			dy = 10;
+			dx = 20;
+			dy = 20;
 			Swarm.swarm_init (3, 180, 7380, 3880, 1500);
 			Swarm.swarm_move (0, 0, 0);
 			// left

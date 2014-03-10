@@ -50,6 +50,8 @@ void* sensor_init(void *null_pointer) {
     scip2SetComSpeed(connection_usb,115200);
     last_poll_usb = utime() - poll_time_usb;
   }
+
+  return NULL;
 }
 
 
@@ -99,6 +101,8 @@ void* sensor_read_raw_n(void *null_pointer) {
   int i;
   for (i = 0; i < n && i < MAX_SCANS; i++)
     n_scans[i] = sensor_read_raw();
+
+  return NULL;
 }
 
 pthread_t sensor_read_raw_n_thread(int requested_n) {

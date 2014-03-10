@@ -1,4 +1,5 @@
 #include "buffer.h"
+#include <assert.h>
 
 static int buffer_size, buffer_width, buffer_height, arena_width, arena_height;
 
@@ -38,9 +39,9 @@ int buffer_index_from_x_y(double x, double y) {
   int i_x, i_y;
   i_x = x/BUFFER_FACTOR;
   i_y = y/BUFFER_FACTOR;
-  if (i_x < buffer_width && i_y < buffer_height)
+  if (i_x >= 0 && i_x < buffer_width && i_y >= 0 && i_y < buffer_height)
     return i_y*buffer_width + i_x;
-  else return 0;
+  else assert(0);
 }
 
 int x_from_buffer_index(int index) {
@@ -59,12 +60,12 @@ int index_protected(int index) {
 }
 
 // returns 1 if the position is "protected"
-// protected pixels are the 10 buffer pixels around the border
+// protected pixels are the border pixels
 // returns 0 if the position is not protected
 int x_y_protected(int x, int y) {
   int protected = 0;
-  if (x < BORDER_WIDTH*BUFFER_FACTOR || x > arena_width - BORDER_WIDTH*BUFFER_FACTOR ||
-      y < BORDER_WIDTH*BUFFER_FACTOR || y > arena_height - BORDER_WIDTH*BUFFER_FACTOR)
+  if (x < BORDER_WIDTH || x > arena_width - BORDER_WIDTH ||
+      y < BORDER_WIDTH || y > arena_height - BORDER_WIDTH)
     protected = 1;
   return protected;
 }

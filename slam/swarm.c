@@ -1,10 +1,11 @@
 #include "swarm.h"
+#include <stdio.h>
 
 static particle particles[PARTICLE_COUNT];
 static particle previous_particles[PARTICLE_COUNT];
 static particle best_particle;
 static int iterations = 0;
-static int m, degrees, long_side, short_side, start;
+static int m, sensor_degrees, long_side, short_side, start;
 static double spacing;
 
 /*
@@ -18,34 +19,34 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   int i, j, k, x, y, theta;
   particle initial_map;
   m = m_in;
-  degrees = degrees_in;
+  sensor_degrees = degrees_in;
   long_side = long_side_in;
   short_side = short_side_in;
   start = start_in;
-  spacing = degrees/(double)(m);
+  spacing = sensor_degrees/(double)(m);
 
   buffer_set_arena_size(long_side, short_side);
 
   initial_map.map = landmark_map_copy(NULL);
 
   // draw initial border
-  for (k = 0; k < long_side; k++)
-    for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j += BUFFER_FACTOR) {
-      landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(k, j), 10000);
+  for (k = 0; k < long_side; k += BUFFER_FACTOR)
+    for (j = 0; j < BORDER_WIDTH; j += BUFFER_FACTOR) {
+      landmark_set_seen_value(initial_map.map, buffer_index_from_x_y((double)k, (double)j), 10000);
       landmark_set_seen_value(initial_map.map,
-			      buffer_index_from_x_y(k, short_side - 1 - j), 10000);
+			      buffer_index_from_x_y((double)k, (double)(short_side - 1 - j)), 10000);
     }
 
-  for (k = 0; k < short_side; k++)
-    for (j = 0; j < BORDER_WIDTH*BUFFER_FACTOR; j+= BUFFER_FACTOR) {
-      landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(j, k), 10000);
+  for (k = 0; k < short_side; k += BUFFER_FACTOR)
+    for (j = 0; j < BORDER_WIDTH; j += BUFFER_FACTOR) {
+      landmark_set_seen_value(initial_map.map, buffer_index_from_x_y((double)j, (double)k), 10000);
       landmark_set_seen_value(initial_map.map,
-			      buffer_index_from_x_y(long_side - 1 - j, k), 10000);
+			      buffer_index_from_x_y((double)(long_side - 1 - j), (double)k), 10000);
     }
 
   // initialize first round of particles
+  x = start/2;
   for (i = 0; i < PARTICLE_COUNT; i++) {
-    x = start/2;
     y = short_side/4;
     if (rand_limit(2))
       y *= 3;
@@ -73,7 +74,7 @@ void swarm_move(int dx, int dy, int dtheta) {
 }
 
 void swarm_update(int *distances) {
-  int i, j, k, l, m;
+  int i, j, k, l;
   int swap;
   double posterior, distance, degrees, theta, x, y, s, c, total;
   double xyt[3];
@@ -146,25 +147,23 @@ void swarm_update(int *distances) {
     */
 
     // evaluate the particle's relative probability
-    // TODO: _ETH
     for (j = 0; j < m; j++) {
       distance = distances[j];
       // forward is now 0 degrees, left -, right +
-      // TODO: same as above (_ETH)
-      degrees = -120 + j*spacing;
+      degrees = -sensor_degrees/2 + j*spacing;
       theta = (degrees + particles[i].theta)*M_PI/180;
       s = sin(theta);
       c = cos(theta);
 
-      // check and record unseen every 10 mm
-      for (l = 0; l < distance; l += 10) {
+      // check and record unseen every 1000 mm
+      for (l = 0; l < distance; l += 1000) {
 	x = l*c + particles[i].x;
 	y = l*s + particles[i].y;
 
 	// make sure it is in bounds
 	if (in_arena(x, y)) {
-	  m = buffer_index_from_x_y(x, y);
-	  posterior *= landmark_unseen_probability(particles[i].map, m);
+	  k = buffer_index_from_x_y(x, y);
+	  posterior *= landmark_unseen_probability(particles[i].map, k);
 	} else posterior *= 0.05;
       }
 
@@ -174,8 +173,8 @@ void swarm_update(int *distances) {
 
       // make sure it is in bounds
       if (in_arena(x, y)) {
-	m = buffer_index_from_x_y(x, y);
-	posterior *= landmark_seen_probability(particles[i].map, m);
+	k = buffer_index_from_x_y(x, y);
+	posterior *= landmark_seen_probability(particles[i].map, k);
       } else posterior *= 0.05;
     }
     
@@ -242,4 +241,8 @@ int swarm_get_best_y() {
 
 int swarm_get_best_theta() {
   return best_particle.theta;
+}
+
+void swarm_get_best_buffer(uint8_t *buffer) {
+  landmark_write_map(best_particle.map, buffer);
 }
