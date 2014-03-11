@@ -68,6 +68,7 @@
     <Compile Include="Autonomy\Field.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Autonomy\Localization\Slam.cs" />
     <Compile Include="Autonomy\MappingAlgorithm.cs">
       <SubType>Code</SubType>
     </Compile>

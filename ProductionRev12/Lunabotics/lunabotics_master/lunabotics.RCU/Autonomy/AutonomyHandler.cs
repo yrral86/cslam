@@ -41,7 +41,7 @@ namespace lunabotics.RCU.Autonomy
         #region Events
         public event EventHandler<AutonomyArgs> AutonomyUpdated;
         public event EventHandler<Telemetry.TelemetryEventArgs> TelemetryUpdated;
-        public List<long> EthernetSensorData;
+        public int[] EthernetSensorData;
         #endregion
 
         #region Fields
@@ -201,12 +201,12 @@ namespace lunabotics.RCU.Autonomy
                             {
                                 Console.WriteLine(EthernetSensorData[j].ToString());
                             }
-                            Thread.Sleep(200);
-                            tankTurnRight(1200);
-                            Thread.Sleep(200);
-                            tankTurnLeft(1200);
-                            Thread.Sleep(200);
-                            state = State.Mining;
+                            //Thread.Sleep(200);
+                            //tankTurnRight(1200);
+                            //Thread.Sleep(200);
+                            //tankTurnLeft(1200);
+                            //Thread.Sleep(200);
+                            //state = State.Mining;
                             break;
 
                         case State.Mining:

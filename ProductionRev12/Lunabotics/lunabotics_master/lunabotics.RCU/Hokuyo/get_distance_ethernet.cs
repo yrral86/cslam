@@ -17,13 +17,15 @@ namespace lunabotics.RCU.Hokuyo
     class get_distance_ethernet
     {
 
-        public List<long> EthernetScan()
+        public int[] EthernetScan()
         {
             const int start_step = 0;
-            const int end_step = 760;
+            const int end_step = 1080;
 
-            //List to hold all 760 distance values
-            List<long> distances = new List<long>();
+            //List to hold all 1080 distance values
+            List<int> distances = new List<int>();
+
+            int[] distanceArray;
 
             try
             {
@@ -72,7 +74,8 @@ namespace lunabotics.RCU.Hokuyo
                 Console.WriteLine(ex.StackTrace);
             }
 
-            return distances;
+            distanceArray = distances.ToArray();
+            return distanceArray;
         }
 
 

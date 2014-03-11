@@ -2,7 +2,9 @@
 #define __SWARM_H__
 
 #include <string.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
+#define log2(x) (log(x)/log(2))
 
 #include "const.h"
 #include "particle.h"

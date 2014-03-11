@@ -13,6 +13,8 @@ namespace lunabotics.RCU.Models
         public static double MaximumTranslationalVelocity = 55.66; // m/s
         public static double WheelRadius = 19.65; // cm
         public static double WheelTrack = 65.0; // cm
+        public static double HallCountPerRev = 1200;
+        public static double CMPerCount = (WheelRadius * 2 * Math.PI) / HallCountPerRev;
 
         public static Dictionary<Devices, int> GetWheelStates(double translationalVelocity, double rotationalVelocity)
         {
@@ -48,5 +50,39 @@ namespace lunabotics.RCU.Models
         {
             return ((double)command / 1000.0d) * MaximumTranslationalVelocity;
         }
+
+        public static Dictionary<Pose, double> UpdatePose(int stepsRight, int stepsLeft, int heading, Dictionary<Pose, int> LastPose)
+        {
+            Dictionary<Pose, double> updatedPose = new Dictionary<Pose, double>();
+
+            double RightWheelDeltaS = stepsRight * CMPerCount; //[centimeteres]
+            double LeftWheelDeltaS = stepsLeft * CMPerCount; //[centimeters]  
+            double LeftRightDistance = (RightWheelDeltaS - LeftWheelDeltaS); //[centimeters]
+            double RobotCenterDeltaS = (RightWheelDeltaS + LeftWheelDeltaS) / 2; //[centimeters]
+
+            //driving straight
+            if (Math.Abs(LeftRightDistance) < 0.01)
+            {
+                updatedPose[Pose.Heading] = LastPose[Pose.Heading]; //if driving straight, no heading change
+                updatedPose[Pose.Xpos] = (int)(LastPose[Pose.Xpos] + RobotCenterDeltaS * Math.Cos(updatedPose[Pose.Heading]));
+                updatedPose[Pose.Ypos] = (int)(LastPose[Pose.Ypos] + RobotCenterDeltaS * Math.Sin(updatedPose[Pose.Heading]));
+            }
+            else //not driving straight
+            {
+                double ICR = (WheelTrack * RobotCenterDeltaS) / LeftRightDistance;
+                double HeadingChange = LeftRightDistance / WheelTrack;
+                updatedPose[Pose.Heading] = LastPose[Pose.Heading] + HeadingChange;
+                updatedPose[Pose.Xpos] = (int)(LastPose[Pose.Xpos] + ICR * Math.Cos(updatedPose[Pose.Heading]) - ICR * Math.Cos(LastPose[Pose.Heading]));
+                updatedPose[Pose.Ypos] = (int)(LastPose[Pose.Ypos] - ICR * Math.Cos(updatedPose[Pose.Heading]) + ICR * Math.Cos(LastPose[Pose.Heading]));
+            }
+            return updatedPose;
+        }
+    }
+
+    public enum Pose
+    {
+        Xpos,
+        Ypos,
+        Heading
     }
 }

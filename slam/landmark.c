@@ -75,19 +75,21 @@ void landmark_write_map(landmark_map *head, uint8_t *buffer) {
 
 // writes a subtree to the given byte buffer
 void landmark_write_map_subtree(landmark_map *node, uint8_t *buffer) {
-  assert(node != NULL);
   int i;
+  assert(node != NULL);
   for (i = 0; i < buffer_get_size(); i++)
     buffer[i] = 255*landmark_seen_probability(node, i);
 }
 
 double landmark_seen_probability(landmark_map *node, int index) {
+  landmark l;
+  double p, sum;
   assert(node != NULL);
-  landmark l = node->map[index];
+  l = node->map[index];
 
-  double sum = l.seen + l.unseen;
+  sum = l.seen + l.unseen;
   // default to 5% probability if we have no data
-  double p = 0.05;
+  p = 0.05;
   if (sum > 0)
     p = l.seen/sum;
 
@@ -101,7 +103,7 @@ double landmark_seen_probability(landmark_map *node, int index) {
 double landmark_unseen_probability(landmark_map *node, int index) {
   return 1 - landmark_seen_probability(node, index);
 }
-
+/*
 // returns distance in the direction specified by step in mm, according to the map
 int landmark_map_find_distance(landmark_map *node, int step, particle p) {
   int d, done;
@@ -133,3 +135,4 @@ void landmark_map_simulate_scan(particle p, int *distances, int m) {
   for (i = 0; i < m; i++)
     distances[i] = landmark_map_find_distance(p.map, i, p);
 }
+*/

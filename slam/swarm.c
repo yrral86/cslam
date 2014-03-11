@@ -77,8 +77,9 @@ void swarm_move(int dx, int dy, int dtheta) {
 void swarm_update(int *distances) {
   int i, j, k, l;
   int swap;
-  double posterior, distance, degrees, theta, x, y, s, c, total, min, p;
+  double posterior, distance, degrees, theta, x, y, s, c, total, min, p, step;
   double xyt[3];
+  particle temp;
 
   min = 10000.0;
   // evaulate each direction for each particle
@@ -201,7 +202,6 @@ void swarm_update(int *distances) {
   // bubblesort particles by p
   swap = 1;
   i = 0;
-  particle temp;
   do {
     swap = 0;
     for (j = 0; j < PARTICLE_COUNT - i - 1; j++)
@@ -226,7 +226,7 @@ void swarm_update(int *distances) {
   memcpy(previous_particles, particles, sizeof(particle)*PARTICLE_COUNT);
   // resample with replacement
   p = rand()/(double)RAND_MAX;
-  double step = 1.0/PARTICLE_COUNT;
+  step = 1.0/PARTICLE_COUNT;
   for (i = 0; i < PARTICLE_COUNT; i++) {
     p += step;
     if (p > 1.0) p -= 1.0;

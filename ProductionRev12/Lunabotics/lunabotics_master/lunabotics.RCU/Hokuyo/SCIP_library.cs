@@ -62,7 +62,7 @@ namespace SCIP_library
         /// <param name="time_stamp">timestamp data</param>
         /// <param name="distances">distance data</param>
         /// <returns>is successful</returns>
-        public static bool MD(string get_command, ref long time_stamp, ref List<long> distances)
+        public static bool MD(string get_command, ref long time_stamp, ref List<int> distances)
         {
             distances.Clear();
             string[] split_command = get_command.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
@@ -88,7 +88,7 @@ namespace SCIP_library
         /// <param name="lines"></param>
         /// <param name="start_line"></param>
         /// <returns></returns>
-        public static bool distance_data(string[] lines, int start_line, ref List<long> distances)
+        public static bool distance_data(string[] lines, int start_line, ref List<int> distances)
         {
             StringBuilder sb = new StringBuilder();
             for (int i = start_line; i < lines.Length; ++i) {
@@ -104,13 +104,13 @@ namespace SCIP_library
         /// <param name="size">encode size</param>
         /// <param name="offset">decode start position</param>
         /// <returns>decode result</returns>
-        public static long decode(string data, int size, int offset = 0)
+        public static int decode(string data, int size, int offset = 0)
         {
-            long value = 0;
+            int value = 0;
 
             for (int i = 0; i < size; ++i) {
                 value <<= 6;
-                value |= (long)data[offset + i] - 0x30;
+                value |= (int)data[offset + i] - 0x30;
             }
 
             return value;
@@ -122,7 +122,7 @@ namespace SCIP_library
         /// <param name="data">encoded string</param>
         /// <param name="size">encode size</param>
         /// <returns>decode result</returns>
-        public static bool decode_array(string data, int size, ref List<long> decoded_data)
+        public static bool decode_array(string data, int size, ref List<int> decoded_data)
         {
             for (int pos = 0; pos <= data.Length - size; pos += size) {
                 decoded_data.Add(decode(data, size, pos));
