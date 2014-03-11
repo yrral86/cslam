@@ -238,7 +238,9 @@ void swarm_update(int *distances) {
     particles[i].map = landmark_map_copy(particles[i].map);
   }
 
-  // save best, copy the map we are about to dereference
+  // clear old best, save new best, copy the map we are about to dereference
+  if (iterations > 0)
+    landmark_map_dereference(best_particle.map);
   best_particle = previous_particles[0];
   best_particle.map = landmark_map_copy(best_particle.map);
 
