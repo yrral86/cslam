@@ -166,8 +166,8 @@ void swarm_update(int *distances) {
 	if (in_arena(x, y)) {
 	  k = buffer_index_from_x_y(x, y);
 	  p = landmark_unseen_probability(particles[i].map, k);
-	  posterior += -log2(p);
-	} else posterior += -log2(0.05);
+	  posterior += -log(p);
+	} else posterior += -log(0.05);
       }
 
       // check and record seen
@@ -178,8 +178,8 @@ void swarm_update(int *distances) {
       if (in_arena(x, y)) {
 	k = buffer_index_from_x_y(x, y);
 	p = landmark_seen_probability(particles[i].map, k);
-	posterior += -log2(p);
-      } else posterior += -log2(0.05);
+	posterior += -log(p);
+      } else posterior += -log(0.05);
     }
 
     particles[i].p += posterior;
@@ -191,7 +191,7 @@ void swarm_update(int *distances) {
   total = 0.0;
   for (i = 0; i < PARTICLE_COUNT; i++) {
     particles[i].p -= min;
-    particles[i].p = pow(2, -particles[i].p);
+    particles[i].p = pow(M_E, -particles[i].p);
     total += particles[i].p;
   }
 
@@ -248,7 +248,7 @@ void swarm_update(int *distances) {
 
   // restore log probabilities
   for (i = 0; i < PARTICLE_COUNT; i++)
-    particles[i].p = -log2(particles[i].p);
+    particles[i].p = -log(particles[i].p);
 
   iterations++;
 }

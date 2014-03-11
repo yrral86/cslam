@@ -10,7 +10,6 @@
 #include "const.h"
 #include "arena.h"
 #include "particle.h"
-//#include "sensor.h"
 
 void buffer_set_arena_size(int, int);
 int buffer_get_size();
