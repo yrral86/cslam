@@ -25,7 +25,7 @@ int buffer_get_height() {
 
 uint8_t* buffer_allocate() {
   uint8_t *buffer = malloc(sizeof(uint8_t)*buffer_size);
-  bzero(buffer, sizeof(uint8_t)*buffer_size);
+  memset(buffer, '\0', sizeof(uint8_t)*buffer_size);
   return buffer;
 }
 

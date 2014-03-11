@@ -4,11 +4,9 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdint.h>
-//#include <strings.h>
-#define bzero(b, len) (memset((b), '\0', (len)), (void) 0)
+#include <string.h>
 
 #include "const.h"
-#include "arena.h"
 #include "particle.h"
 
 void buffer_set_arena_size(int, int);
