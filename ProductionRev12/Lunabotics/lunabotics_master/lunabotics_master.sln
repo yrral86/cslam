@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utility", "..\..\Common\Uti
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lunabotics.OCU", "lunabotics.OCU\lunabotics.OCU.csproj", "{BBD28DCD-50E7-4724-B58A-A34335E779A4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Slam", "..\..\..\..\..\Visual Studio 2010\Projects\Slam\Slam\Slam.vcxproj", "{1781069D-EA82-42C2-BABC-CFBED0F7AFE5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Slam", "..\Slam\Slam\Slam.vcxproj", "{1781069D-EA82-42C2-BABC-CFBED0F7AFE5}"
 EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution

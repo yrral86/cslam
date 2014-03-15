@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Slam
+namespace lunabotics.RCU.Localization
 {
 	public class Swarm
 	{

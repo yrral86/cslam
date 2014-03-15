@@ -11,8 +11,8 @@ namespace lunabotics.RCU.Models
         public static double MaximumWheelVelocity = 2.827; // rad/s
         public static double MaximumRotationalVelocity = 1.713; // rad/s
         public static double MaximumTranslationalVelocity = 55.66; // m/s
-        public static double WheelRadius = 19.65; // cm
-        public static double WheelTrack = 65.0; // cm
+        public static double WheelRadius = 1965; // mm
+        public static double WheelTrack = 6500; // mm
         public static double HallCountPerRev = 1200;
         public static double CMPerCount = (WheelRadius * 2 * Math.PI) / HallCountPerRev;
 
@@ -51,14 +51,15 @@ namespace lunabotics.RCU.Models
             return ((double)command / 1000.0d) * MaximumTranslationalVelocity;
         }
 
-        public static Dictionary<Pose, double> UpdatePose(int stepsRight, int stepsLeft, int heading, Dictionary<Pose, int> LastPose)
+        public static Dictionary<Pose, double> UpdatePose(int stepsRight, int stepsLeft, Dictionary<Pose, double> LastPose)
         {
             Dictionary<Pose, double> updatedPose = new Dictionary<Pose, double>();
+            Dictionary<Pose, double> deltaPose = new Dictionary<Pose, double>();
 
-            double RightWheelDeltaS = stepsRight * CMPerCount; //[centimeteres]
-            double LeftWheelDeltaS = stepsLeft * CMPerCount; //[centimeters]  
-            double LeftRightDistance = (RightWheelDeltaS - LeftWheelDeltaS); //[centimeters]
-            double RobotCenterDeltaS = (RightWheelDeltaS + LeftWheelDeltaS) / 2; //[centimeters]
+            double RightWheelDeltaS = stepsRight * CMPerCount; //[millimeteres]
+            double LeftWheelDeltaS = stepsLeft * CMPerCount; //[millimeters]  
+            double LeftRightDistance = (RightWheelDeltaS - LeftWheelDeltaS); //[millimeters]
+            double RobotCenterDeltaS = (RightWheelDeltaS + LeftWheelDeltaS) / 2; //[millimeters]
 
             //driving straight
             if (Math.Abs(LeftRightDistance) < 0.01)
@@ -72,10 +73,14 @@ namespace lunabotics.RCU.Models
                 double ICR = (WheelTrack * RobotCenterDeltaS) / LeftRightDistance;
                 double HeadingChange = LeftRightDistance / WheelTrack;
                 updatedPose[Pose.Heading] = LastPose[Pose.Heading] + HeadingChange;
-                updatedPose[Pose.Xpos] = (int)(LastPose[Pose.Xpos] + ICR * Math.Cos(updatedPose[Pose.Heading]) - ICR * Math.Cos(LastPose[Pose.Heading]));
+                updatedPose[Pose.Xpos] = (int)(LastPose[Pose.Xpos] + ICR * Math.Sin(updatedPose[Pose.Heading]) - ICR * Math.Sin(LastPose[Pose.Heading]));
                 updatedPose[Pose.Ypos] = (int)(LastPose[Pose.Ypos] - ICR * Math.Cos(updatedPose[Pose.Heading]) + ICR * Math.Cos(LastPose[Pose.Heading]));
             }
-            return updatedPose;
+
+            deltaPose[Pose.Heading] = updatedPose[Pose.Heading] - LastPose[Pose.Heading];
+            deltaPose[Pose.Xpos] = updatedPose[Pose.Xpos] - LastPose[Pose.Xpos];
+            deltaPose[Pose.Ypos] = updatedPose[Pose.Ypos] - LastPose[Pose.Ypos];
+            return deltaPose;
         }
     }
 
