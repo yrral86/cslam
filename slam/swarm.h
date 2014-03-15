@@ -10,13 +10,13 @@
 #include "random.h"
 #include "buffer.h"
 
-_declspec(dllexport) void swarm_init(int, int, int, int, int);
-_declspec(dllexport) void swarm_move(int, int, int);
-_declspec(dllexport) void swarm_update(int*);
-_declspec(dllexport) int swarm_get_best_x();
-_declspec(dllexport) int swarm_get_best_y();
-_declspec(dllexport) int swarm_get_best_theta();
-_declspec(dllexport) void swarm_get_best_buffer(uint8_t*);
+__declspec(dllexport) void swarm_init(int, int, int, int, int);
+__declspec(dllexport) void swarm_move(int, int, int);
+__declspec(dllexport) void swarm_update(int*);
+__declspec(dllexport) int swarm_get_best_x();
+__declspec(dllexport) int swarm_get_best_y();
+__declspec(dllexport) int swarm_get_best_theta();
+__declspec(dllexport) void swarm_get_best_buffer(uint8_t*);
 int in_arena(int, int);
 
 #endif

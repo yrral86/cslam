@@ -15,7 +15,7 @@ double K[3*RAW_SENSOR_DISTANCES_USB], H[RAW_SENSOR_DISTANCES_USB*3], P[9], PH[3*
 double R = 40;
 // TODO: VRV(T) to scale R based on distances
 */
-_declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
+__declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
   int i, j, k;
   double x, y, theta;
   particle initial_map;
@@ -60,7 +60,7 @@ _declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in,
   landmark_map_dereference(initial_map.map);
 }
 
-_declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
+__declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
   int i;
   particle p;
 
@@ -74,7 +74,7 @@ _declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
   }
 }
 
-_declspec(dllexport) void swarm_update(int *distances) {
+__declspec(dllexport) void swarm_update(int *distances) {
   int i, j, k, l;
   int swap;
   double posterior, distance, degrees, theta, x, y, s, c, total, min, p, step;
@@ -253,19 +253,19 @@ _declspec(dllexport) void swarm_update(int *distances) {
   iterations++;
 }
 
-_declspec(dllexport) int swarm_get_best_x() {
+__declspec(dllexport) int swarm_get_best_x() {
   return best_particle.x;
 }
 
-_declspec(dllexport) int swarm_get_best_y() {
+__declspec(dllexport) int swarm_get_best_y() {
   return best_particle.y;
 }
 
-_declspec(dllexport) int swarm_get_best_theta() {
+__declspec(dllexport) int swarm_get_best_theta() {
   return best_particle.theta;
 }
 
-_declspec(dllexport) void swarm_get_best_buffer(uint8_t *buffer) {
+__declspec(dllexport) void swarm_get_best_buffer(uint8_t *buffer) {
   landmark_write_map(best_particle.map, buffer);
 }
 
