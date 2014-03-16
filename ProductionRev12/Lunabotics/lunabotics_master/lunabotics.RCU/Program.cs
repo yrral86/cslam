@@ -110,18 +110,18 @@ namespace lunabotics.RCU
                 telemetryHandler = new Telemetry.TelemetryHandler(configuration.TelemetryConfiguration, configuration.OCU_IP_Address);
                 telemetryHandler.Activate();
 
-                //// Load RoboteQs
-                //if (useRoboteQs)
-                //{
-                //    foreach (var roboteq_config in configuration.RoboteqConfigurations)
-                //        roboteqs.Add(new Controllers.RoboteQ(roboteq_config));
+                // Load RoboteQs
+                if (useRoboteQs)
+                {
+                    foreach (var roboteq_config in configuration.RoboteqConfigurations)
+                        roboteqs.Add(new Controllers.RoboteQ(roboteq_config));
 
-                //    foreach (Controllers.RoboteQ roboteq in roboteqs)
-                //    {
-                //        telemetryHandler.AddProvider(roboteq);
-                //        roboteq.Activate();
-                //    }
-                //}
+                    foreach (Controllers.RoboteQ roboteq in roboteqs)
+                    {
+                        telemetryHandler.AddProvider(roboteq);
+                        roboteq.Activate();
+                    }
+                }
 
                 // Load rangefinders
                 if (useRangeFinders)

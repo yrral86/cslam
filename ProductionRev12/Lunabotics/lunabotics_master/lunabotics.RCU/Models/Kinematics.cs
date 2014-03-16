@@ -33,10 +33,10 @@ namespace lunabotics.RCU.Models
 
             // Set output
             Dictionary<Devices, int> output = new Dictionary<Devices, int>();
-            output[Devices.FrontLeftWheel] = leftCommand;
-            output[Devices.RearLeftWheel] = leftCommand;
-            output[Devices.FrontRightWheel] = rightCommand;
-            output[Devices.RearRightWheel] = rightCommand;
+            output[Devices.FrontLeftWheel] = leftCommand * 100;
+            output[Devices.RearLeftWheel] = leftCommand * 100;
+            output[Devices.FrontRightWheel] = rightCommand * 100;
+            output[Devices.RearRightWheel] = rightCommand * 100;
 
             return output;
         }
