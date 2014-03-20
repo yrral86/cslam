@@ -69,7 +69,7 @@ void landmark_set_unseen_value(landmark_map *node, int index, int value) {
 
 // writes a byte buffer given the head of a landmark tree
 void landmark_write_map(landmark_map *head, uint8_t *buffer) {
-  bzero(buffer, buffer_get_size()*sizeof(uint8_t));
+  memset(buffer, '\0', buffer_get_size()*sizeof(uint8_t));
   landmark_write_map_subtree(head, buffer);
 }
 
