@@ -1,5 +1,6 @@
 #include "swarm.h"
 #include <stdio.h>
+#include "slamd.h"
 
 static particle particles[PARTICLE_COUNT];
 static particle previous_particles[PARTICLE_COUNT];
@@ -8,6 +9,54 @@ static int iterations = 0;
 static int m, sensor_degrees, long_side, short_side, start;
 static double spacing;
 
+__declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
+
+  // set up shared memory
+  param_sem = CreateSemaphore(NULL, 0, 1, param_sem_name);
+  return_sem = CreateSemaphore(NULL, 0, 1, return_sem_name);
+  assert(param_sem != NULL);
+  assert(return_sem != NULL);
+
+  // parameter space size is (sensor readings + 1) * sizeof(int)
+  // first int specifies which function, remainder are params
+  param_size = (m_in + 1)*sizeof(int);
+  param_handle = CreateFileMapping((HANDLE)0xFFFFFFFF, NULL, PAGE_READWRITE, 0, param_size, param_shm_name);
+  assert(param_handle != NULL);
+
+  // return space size is sizeof(int)
+  return_size = sizeof(int);
+  return_handle = CreateFileMapping((HANDLE)0xFFFFFFFF, NULL, PAGE_READWRITE, 0, return_size, return_shm_name);
+  assert(return_handle != NULL);
+
+  params = (int*)MapViewOfFile(param_handle, FILE_MAP_WRITE, 0, 0, param_size);
+  assert(params != NULL);
+
+  return_value = (int*)MapViewOfFile(return_handle, FILE_MAP_WRITE, 0, 0, return_size);
+  assert(return_value != NULL);
+
+
+}
+
+__declspec(dllexport) void swarm_move(int, int, int) {
+
+}
+
+__declspec(dllexport) void swarm_update(int*) {
+
+}
+
+__declspec(dllexport) int swarm_get_best_x() {
+
+}
+
+__declspec(dllexport) int swarm_get_best_y() {
+
+}
+
+__declspec(dllexport) int swarm_get_best_theta() {
+
+}
+
 /*
 // TODO: _ETH
 double K[3*RAW_SENSOR_DISTANCES_USB], H[RAW_SENSOR_DISTANCES_USB*3], P[9], PH[3*RAW_SENSOR_DISTANCES_USB], HPH[RAW_SENSOR_DISTANCES_USB*RAW_SENSOR_DISTANCES_USB];
@@ -15,7 +64,7 @@ double K[3*RAW_SENSOR_DISTANCES_USB], H[RAW_SENSOR_DISTANCES_USB*3], P[9], PH[3*
 double R = 40;
 // TODO: VRV(T) to scale R based on distances
 */
-__declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
+void swarm_init_internal(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
   int i, j, k;
   double x, y, theta;
   particle initial_map;
@@ -60,7 +109,7 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   landmark_map_dereference(initial_map.map);
 }
 
-__declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
+void swarm_move_internal(int dx, int dy, int dtheta) {
   int i;
   particle p;
 
@@ -74,7 +123,7 @@ __declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
   }
 }
 
-__declspec(dllexport) void swarm_update(int *distances) {
+void swarm_update_internal(int *distances) {
   int i, j, k, l;
   int swap;
   double posterior, distance, degrees, theta, x, y, s, c, total, min, p, step;
@@ -272,19 +321,19 @@ __declspec(dllexport) void swarm_update(int *distances) {
   iterations++;
 }
 
-__declspec(dllexport) int swarm_get_best_x() {
+int swarm_get_best_x_internal() {
   return best_particle.x;
 }
 
-__declspec(dllexport) int swarm_get_best_y() {
+int swarm_get_best_y_internal() {
   return best_particle.y;
 }
 
-__declspec(dllexport) int swarm_get_best_theta() {
+int swarm_get_best_theta_internal() {
   return best_particle.theta;
 }
 
-__declspec(dllexport) void swarm_get_best_buffer(uint8_t *buffer) {
+void swarm_get_best_buffer(uint8_t *buffer) {
   landmark_write_map(best_particle.map, buffer);
 }
 

@@ -1,7 +1,7 @@
 #include "slamd.h"
 
 int main(int argc, char **argv) {
-  int inputs[5], i;
+  int inputs[5], i, param_size, return_size;
 
   if (argc != 6) {
     printf("Usage: %s sensor_steps sensor_degrees arena_long arena_short start\n", argv[0]);
@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
     }
 
   // initialize swarm
-  swarm_init(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4]);
+  swarm_init_internal(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4]);
 
   // set up shared memory
   param_sem = CreateSemaphore(NULL, 0, 1, param_sem_name);
@@ -23,10 +23,44 @@ int main(int argc, char **argv) {
   assert(param_sem != NULL);
   assert(return_sem != NULL);
 
-  HANDLE ap = CreateFileMapping(
+  // parameter space size is (sensor readings + 1) * sizeof(int)
+  // first int specifies which function, remainder are params
+  param_size = (inputs[0] + 1)*sizeof(int);
+  param_handle = CreateFileMapping((HANDLE)0xFFFFFFFF, NULL, PAGE_READWRITE, 0, param_size, param_shm_name);
+
+  // return space size is sizeof(int)
+  return_size = sizeof(int);
+  return_handle = CreateFileMapping((HANDLE)0xFFFFFFFF, NULL, PAGE_READWRITE, 0, return_size, return_shm_name);
+
+  params = (int*)MapViewOfFile(param_handle, FILE_MAP_WRITE, 0, 0, param_size);
+  assert(params != NULL);
+
+  return_value = (int*)MapViewOfFile(return_handle, FILE_MAP_WRITE, 0, 0, return_size);
+  assert(return_value != NULL);
+
+//  ReleaseSemaphore(return_sem);
 
   while (1) {
-
+	  WaitForSingleObject(param_sem);
+	  switch (params[0]) {
+	  case SLAMD_MOVE:
+		  swarm_move_internal(params[1], params[2], params[3]);
+		  break;
+	  case SLAMD_UPDATE:
+		  swarm_update_internal(params + 1)
+		  break;
+	  case SLAMD_X:
+		  *return_value = swarm_get_best_x_internal();
+		  break;
+	  case SLAMD_Y:
+		  *return_value = swarm_get_best_y_internal();
+		  break;
+	  case SLAMD_THETA:
+		  *return_value = swarm_get_best_theta_internal();
+		  break;
+	  }
+	  ReleaseSemaphore(return_sem);
   }
 
+  return 0;
 }

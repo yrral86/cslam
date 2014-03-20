@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lunabotics.OCU", "lunabotic
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Slam", "..\Slam\Slam\Slam.vcxproj", "{1781069D-EA82-42C2-BABC-CFBED0F7AFE5}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Slamd", "..\Slamd\Slamd.vcxproj", "{242DE1D0-ECBE-4E38-8993-AAEA48406FD0}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = lunabotics_master.vsmdi
@@ -114,6 +116,18 @@ Global
 		{1781069D-EA82-42C2-BABC-CFBED0F7AFE5}.Release|Win32.ActiveCfg = Release|Win32
 		{1781069D-EA82-42C2-BABC-CFBED0F7AFE5}.Release|Win32.Build.0 = Release|Win32
 		{1781069D-EA82-42C2-BABC-CFBED0F7AFE5}.Release|x86.ActiveCfg = Release|Win32
+		{242DE1D0-ECBE-4E38-8993-AAEA48406FD0}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{242DE1D0-ECBE-4E38-8993-AAEA48406FD0}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{242DE1D0-ECBE-4E38-8993-AAEA48406FD0}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{242DE1D0-ECBE-4E38-8993-AAEA48406FD0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{242DE1D0-ECBE-4E38-8993-AAEA48406FD0}.Debug|Win32.Build.0 = Debug|Win32
+		{242DE1D0-ECBE-4E38-8993-AAEA48406FD0}.Debug|x86.ActiveCfg = Debug|Win32
+		{242DE1D0-ECBE-4E38-8993-AAEA48406FD0}.Release|Any CPU.ActiveCfg = Release|Win32
+		{242DE1D0-ECBE-4E38-8993-AAEA48406FD0}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{242DE1D0-ECBE-4E38-8993-AAEA48406FD0}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{242DE1D0-ECBE-4E38-8993-AAEA48406FD0}.Release|Win32.ActiveCfg = Release|Win32
+		{242DE1D0-ECBE-4E38-8993-AAEA48406FD0}.Release|Win32.Build.0 = Release|Win32
+		{242DE1D0-ECBE-4E38-8993-AAEA48406FD0}.Release|x86.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
