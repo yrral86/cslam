@@ -10,6 +10,21 @@ static int m, sensor_degrees, long_side, short_side, start;
 static double spacing;
 
 __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
+  int param_size, return_size;
+  char *command = malloc(sizeof(char) * 100);
+  STARTUPINFO si;
+  PROCESS_INFORMATION pi;
+
+  m = m_in;
+  sensor_degrees = degrees_in;
+  long_side = long_side_in;
+  short_side = short_side_in;
+  start = start_in;
+  spacing = sensor_degrees/(double)(m);
+
+  ZeroMemory(&si, sizeof(si));
+  si.cb = sizeof(si);
+  ZeroMemory(&pi, sizeof(pi));
 
   // set up shared memory
   param_sem = CreateSemaphore(NULL, 0, 1, param_sem_name);
@@ -34,27 +49,46 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   return_value = (int*)MapViewOfFile(return_handle, FILE_MAP_WRITE, 0, 0, return_size);
   assert(return_value != NULL);
 
+  sprintf(command, "Slamd.exe %i %i %i %i %i", m_in, degrees_in, long_side_in, short_side_in, start_in);
 
+  CreateProcess(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
 }
 
-__declspec(dllexport) void swarm_move(int, int, int) {
-
+__declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
+	params[0] = SLAMD_MOVE;
+	params[1] = dx;
+	params[2] = dy;
+	params[3] = dtheta;
+	ReleaseSemaphore(param_sem, 1, NULL);
+	WaitForSingleObject(return_sem, INFINITE);
 }
 
-__declspec(dllexport) void swarm_update(int*) {
-
+__declspec(dllexport) void swarm_update(int *distances) {
+	params[0] = SLAMD_UPDATE;
+	memcpy(params + 1, distances, m*sizeof(int));
+	ReleaseSemaphore(param_sem, 1, NULL);
+	WaitForSingleObject(return_sem, INFINITE);
 }
 
 __declspec(dllexport) int swarm_get_best_x() {
-
+	params[0] = SLAMD_X;
+	ReleaseSemaphore(param_sem, 1, NULL);
+	WaitForSingleObject(return_sem, INFINITE);
+	return *return_value;
 }
 
 __declspec(dllexport) int swarm_get_best_y() {
-
+	params[0] = SLAMD_Y;
+	ReleaseSemaphore(param_sem, 1, NULL);
+	WaitForSingleObject(return_sem, INFINITE);
+	return *return_value;
 }
 
 __declspec(dllexport) int swarm_get_best_theta() {
-
+	params[0] = SLAMD_THETA;
+	ReleaseSemaphore(param_sem, 1, NULL);
+	WaitForSingleObject(return_sem, INFINITE);
+	return *return_value;
 }
 
 /*

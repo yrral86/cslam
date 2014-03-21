@@ -41,13 +41,13 @@ int main(int argc, char **argv) {
 //  ReleaseSemaphore(return_sem);
 
   while (1) {
-	  WaitForSingleObject(param_sem);
+	  WaitForSingleObject(param_sem, INFINITE);
 	  switch (params[0]) {
 	  case SLAMD_MOVE:
 		  swarm_move_internal(params[1], params[2], params[3]);
 		  break;
 	  case SLAMD_UPDATE:
-		  swarm_update_internal(params + 1)
+		  swarm_update_internal(params + 1);
 		  break;
 	  case SLAMD_X:
 		  *return_value = swarm_get_best_x_internal();
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
 		  *return_value = swarm_get_best_theta_internal();
 		  break;
 	  }
-	  ReleaseSemaphore(return_sem);
+	  ReleaseSemaphore(return_sem, 1, NULL);
   }
 
   return 0;

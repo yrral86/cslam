@@ -16,8 +16,8 @@ static const char return_sem_name[] = "slamd_return";
 
 static HANDLE param_sem;
 static HANDLE return_sem;
-static HANDLE params;
-static HANDLE return_value;
+static HANDLE param_handle;
+static HANDLE return_handle;
 
 static int *params;
 static int *return_value;
