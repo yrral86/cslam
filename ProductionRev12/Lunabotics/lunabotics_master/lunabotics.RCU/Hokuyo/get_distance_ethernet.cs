@@ -30,7 +30,7 @@ namespace lunabotics.RCU.Hokuyo
             try
             {
 
-                string ip_address = "192.168.0.10";
+                string ip_address = "192.168.1.8";
                 int port_number = 10940;
 
                 TcpClient urg = new TcpClient();

@@ -186,15 +186,10 @@ namespace lunabotics.RCU.Autonomy
 
         private void timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-                // Reentry protection
+            // Reentry protection
             if (System.Threading.Monitor.TryEnter(timerSync))
             {
-                ThreadPool.QueueUserWorkItem(new WaitCallback(old_timer));
-            }
 
-        }
-
-        private void old_timer(Object nothing) {
                 try
                 {
                     // Process state
@@ -221,19 +216,9 @@ namespace lunabotics.RCU.Autonomy
                             //}
                             while (currentPose[Pose.Xpos] < 5440)
                             {
-                                //MoveForward(1200);
-                                //Thread.Sleep(200);
-                                //Scan Hokuyo
-                                EthernetSensorData = utm.EthernetScan();
-                                //Estimate Current Pose
-                                changePose = Kinematics.UpdatePose(100, 100, currentPose);
-                                //Particle filtering
-                                Swarm.swarm_move((int)changePose[Pose.Xpos], (int)changePose[Pose.Ypos], (int)changePose[Pose.Heading]);
-                                Swarm.swarm_update(ref EthernetSensorData);
-                                //Update Current Pose to Particle filter outputs
-                                currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
-                                currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
-                                currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
+                                MoveForward(300);
+                                Thread.Sleep(200);
+                                
                             }
 
                             state = State.Mining;
@@ -241,24 +226,24 @@ namespace lunabotics.RCU.Autonomy
 
                         case State.Mining:
                             tankTurnLeft(1200);
-                            Thread.Sleep(200);
+                            Thread.Sleep(200000);
                             state = State.SafeShutdown;
                             break;
 
                         case State.SafeShutdown:
 
                             break;
-                         
+
                         default:
                             break;
                     }
-                
+
                     // Store robot velocities
                     //*******John - See if this works while it is commented out
                     //robot.SetVelocities(
                     //    Kinematics.GetTranslationalVelocity(outputState[CommandFields.TranslationalVelocity]),
                     //    Kinematics.GetRotationalVelocity(outputState[CommandFields.RotationalVelocity]));
-                    
+
 
 
                 }
@@ -273,6 +258,7 @@ namespace lunabotics.RCU.Autonomy
                 {
                     System.Threading.Monitor.Exit(timerSync);
                 }
+            }
         }
 
         private void UpdateState()
@@ -334,11 +320,12 @@ namespace lunabotics.RCU.Autonomy
             changePose = Kinematics.UpdatePose(steps, steps, currentPose);
             //Particle filtering
             Swarm.swarm_move((int)changePose[Pose.Xpos], (int)changePose[Pose.Ypos], (int)changePose[Pose.Heading]);
-            Swarm.swarm_update(ref EthernetSensorData);
+            Swarm.swarm_update(EthernetSensorData);
             //Update Current Pose to Particle filter outputs
             currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
             currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
             currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
+            System.Diagnostics.Debug.WriteLine("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX POSITION " + currentPose[Pose.Xpos]);
             //Reset Hall count for next motor command
             ResetCounters();
         }
@@ -374,7 +361,7 @@ namespace lunabotics.RCU.Autonomy
             changePose = Kinematics.UpdatePose(steps, steps, currentPose);
             //Particle filtering
             Swarm.swarm_move((int)changePose[Pose.Xpos], (int)changePose[Pose.Ypos], (int)changePose[Pose.Heading]);
-            Swarm.swarm_update(ref EthernetSensorData);
+            Swarm.swarm_update(EthernetSensorData);
             //Update Current Pose to Particle filter outputs
             currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
             currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
@@ -395,7 +382,7 @@ namespace lunabotics.RCU.Autonomy
                 //System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
                 outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
                 //Velocity must be Positive for right turn
-                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 500;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = reversePower;
                 outputState = MergeStates(outputState, staticOutput);
                 OnAutonomyUpdated(new AutonomyArgs(outputState));
             }
@@ -410,7 +397,7 @@ namespace lunabotics.RCU.Autonomy
             changePose = Kinematics.UpdatePose(steps, steps, currentPose);
             //Particle filtering
             Swarm.swarm_move((int)changePose[Pose.Xpos], (int)changePose[Pose.Ypos], (int)changePose[Pose.Heading]);
-            Swarm.swarm_update(ref EthernetSensorData);
+            Swarm.swarm_update(EthernetSensorData);
             //Update Current Pose to Particle filter outputs
             currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
             currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
@@ -431,7 +418,7 @@ namespace lunabotics.RCU.Autonomy
                 System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
                 outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
                 //Velocity must be negative for left turn
-                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = -500;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = forwardPower;
                 outputState = MergeStates(outputState, staticOutput);
                 OnAutonomyUpdated(new AutonomyArgs(outputState));
             }
@@ -446,7 +433,7 @@ namespace lunabotics.RCU.Autonomy
             changePose = Kinematics.UpdatePose(steps, steps, currentPose);
             //Particle filtering
             Swarm.swarm_move((int)changePose[Pose.Xpos], (int)changePose[Pose.Ypos], (int)changePose[Pose.Heading]);
-            Swarm.swarm_update(ref EthernetSensorData);
+            Swarm.swarm_update(EthernetSensorData);
             //Update Current Pose to Particle filter outputs
             currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
             currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();

@@ -26,7 +26,7 @@ namespace lunabotics.RCU.Localization
 		 * swarm_update
 		 * sensor_distances: m measurements in mm (this is how the sensor returns it)
 		 */
-        [DllImport("slam", CallingConvention = CallingConvention.Cdecl)] public static extern void swarm_update(ref int[] sensor_distances);
+        [DllImport("slam", CallingConvention = CallingConvention.Cdecl)] public static extern void swarm_update(int[] sensor_distances);
         [DllImport("slam", CallingConvention = CallingConvention.Cdecl)] public static extern int swarm_get_best_x();
         [DllImport("slam", CallingConvention = CallingConvention.Cdecl)] public static extern int swarm_get_best_y();
         [DllImport("slam", CallingConvention = CallingConvention.Cdecl)] public static extern int swarm_get_best_theta();

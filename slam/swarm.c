@@ -11,7 +11,7 @@ static double spacing;
 
 __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
   int param_size, return_size;
-  char *command = malloc(sizeof(char) * 100);
+  LPWSTR command = L"Slamd.exe";
   STARTUPINFO si;
   PROCESS_INFORMATION pi;
 
@@ -40,7 +40,7 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
 
   // return space size is sizeof(int)
   return_size = sizeof(int);
-  return_handle = CreateFileMapping((HANDLE)0xFFFFFFFF, NULL, PAGE_READWRITE, 0, return_size, return_shm_name);
+  return_handle = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, return_size, return_shm_name);
   assert(return_handle != NULL);
 
   params = (int*)MapViewOfFile(param_handle, FILE_MAP_WRITE, 0, 0, param_size);
@@ -49,16 +49,26 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   return_value = (int*)MapViewOfFile(return_handle, FILE_MAP_WRITE, 0, 0, return_size);
   assert(return_value != NULL);
 
-  sprintf(command, "Slamd.exe %i %i %i %i %i", m_in, degrees_in, long_side_in, short_side_in, start_in);
+  params[0] = SLAMD_INIT;
+  params[1] = m_in;
+  params[2] = degrees_in;
+  params[3] = long_side_in;
+  params[4] = short_side_in;
+  params[5] = start_in;  
 
-  CreateProcess(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+  //CreateProcess(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+
+  ReleaseSemaphore(param_sem, 1, NULL);
 }
 
 __declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
+	FILE *debug_file = fopen("debug_swarm_move.txt", "w");
 	params[0] = SLAMD_MOVE;
 	params[1] = dx;
 	params[2] = dy;
 	params[3] = dtheta;
+	fprintf(debug_file, "before shm: %i, %i, %i\n", params[1], params[2], params[3]);
+	fclose(debug_file);
 	ReleaseSemaphore(param_sem, 1, NULL);
 	WaitForSingleObject(return_sem, INFINITE);
 }
@@ -163,13 +173,10 @@ void swarm_update_internal(int *distances) {
   double posterior, distance, degrees, theta, x, y, s, c, total, min, p, step;
   double xyt[3];
   particle temp;
-  FILE *debug_file = fopen("swarm_debug.txt", "w");
 
   min = 10000.0;
   // evaulate each direction for each particle
   for (i = 0; i < PARTICLE_COUNT; i++) {
-	  fprintf(debug_file, "First loop: i = %i\n", i);
-	  fflush(debug_file);
     posterior = 0.0;
 
     /*
@@ -273,22 +280,15 @@ void swarm_update_internal(int *distances) {
       min = particles[i].p;
   }
 
-  fprintf(debug_file, "First loop done", i);
-  fflush(debug_file);
-
   // normalize particle log probabilities, convert to normal probabilities for resampling
   total = 0.0;
   for (i = 0; i < PARTICLE_COUNT; i++) {
-	  fprintf(debug_file, "Second loop: i = %i\n", i);
-	  fflush(debug_file);
     particles[i].p -= min;
     particles[i].p = pow(M_E, -particles[i].p);
     total += particles[i].p;
   }
 
   for (i = 0; i < PARTICLE_COUNT; i++) {
-	  fprintf(debug_file, "Third loop: i = %i\n", i);
-	  fflush(debug_file);
     particles[i].p /= total;
   }
 
@@ -296,8 +296,6 @@ void swarm_update_internal(int *distances) {
   swap = 1;
   i = 0;
   do {
-	  fprintf(debug_file, "Fourth loop: i = %i\n", i);
-	  fflush(debug_file);
     swap = 0;
     for (j = 0; j < PARTICLE_COUNT - i - 1; j++)
       // if the left particle is smaller probability, bubble it right
@@ -323,8 +321,6 @@ void swarm_update_internal(int *distances) {
   p = rand()/(double)RAND_MAX;
   step = 1.0/PARTICLE_COUNT;
   for (i = 0; i < PARTICLE_COUNT; i++) {
-	  fprintf(debug_file, "FiFth loop: i = %i\n", i);
-	  fflush(debug_file);
     p += step;
     if (p > 1.0) p -= 1.0;
     total = 0.0;
@@ -341,13 +337,10 @@ void swarm_update_internal(int *distances) {
   best_particle = previous_particles[0];
   best_particle.map = landmark_map_copy(best_particle.map);
 
-  fprintf(debug_file, "before dereference\n");
-  fflush(debug_file);
   // dereference previous particle maps
   for (i = 0; i < PARTICLE_COUNT; i++)
     landmark_map_dereference(previous_particles[i].map);
-  fprintf(debug_file, "after dereference\n");
-  fflush(debug_file);
+
   // restore log probabilities
   for (i = 0; i < PARTICLE_COUNT; i++)
     particles[i].p = -log(particles[i].p);

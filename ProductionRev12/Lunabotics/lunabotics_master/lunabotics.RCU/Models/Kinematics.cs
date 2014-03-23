@@ -11,8 +11,8 @@ namespace lunabotics.RCU.Models
         public static double MaximumWheelVelocity = 2.827; // rad/s
         public static double MaximumRotationalVelocity = 1.713; // rad/s
         public static double MaximumTranslationalVelocity = 55.66; // m/s
-        public static double WheelRadius = 1965; // mm
-        public static double WheelTrack = 6500; // mm
+        public static double WheelRadius = 195; // mm
+        public static double WheelTrack = 650; // mm
         public static double HallCountPerRev = 1200;
         public static double CMPerCount = (WheelRadius * 2 * Math.PI) / HallCountPerRev;
 
@@ -78,8 +78,11 @@ namespace lunabotics.RCU.Models
             }
 
             deltaPose[Pose.Heading] = updatedPose[Pose.Heading] - LastPose[Pose.Heading];
+            Console.WriteLine(deltaPose[Pose.Heading].ToString());
             deltaPose[Pose.Xpos] = updatedPose[Pose.Xpos] - LastPose[Pose.Xpos];
+            Console.WriteLine(deltaPose[Pose.Xpos].ToString());
             deltaPose[Pose.Ypos] = updatedPose[Pose.Ypos] - LastPose[Pose.Ypos];
+            Console.WriteLine(deltaPose[Pose.Ypos].ToString());
             return deltaPose;
         }
     }
