@@ -1,6 +1,7 @@
 #ifndef __SLAMD_H__
 #define __SLAMD_H__
 
+#ifndef LINUX
 #include <windows.h>
 #include <stdio.h>
 #include <tchar.h>
@@ -21,5 +22,7 @@ static HANDLE return_handle;
 
 static int *params;
 static int *return_value;
+
+#endif
 
 #endif

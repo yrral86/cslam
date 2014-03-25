@@ -9,6 +9,7 @@ static int iterations = 0;
 static int m, sensor_degrees, long_side, short_side, start;
 static double spacing;
 
+#ifndef LINUX
 __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
   int param_size, return_size;
   LPWSTR command = L"Slamd.exe";
@@ -101,6 +102,8 @@ __declspec(dllexport) int swarm_get_best_theta() {
 	return *return_value;
 }
 
+#endif
+
 /*
 // TODO: _ETH
 double K[3*RAW_SENSOR_DISTANCES_USB], H[RAW_SENSOR_DISTANCES_USB*3], P[9], PH[3*RAW_SENSOR_DISTANCES_USB], HPH[RAW_SENSOR_DISTANCES_USB*RAW_SENSOR_DISTANCES_USB];
@@ -108,7 +111,13 @@ double K[3*RAW_SENSOR_DISTANCES_USB], H[RAW_SENSOR_DISTANCES_USB*3], P[9], PH[3*
 double R = 40;
 // TODO: VRV(T) to scale R based on distances
 */
+
+#ifndef LINUX
 void swarm_init_internal(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
+#endif
+#ifdef LINUX
+void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
+#endif
   int i, j, k;
   double x, y, theta;
   particle initial_map;
@@ -153,7 +162,12 @@ void swarm_init_internal(int m_in, int degrees_in, int long_side_in, int short_s
   landmark_map_dereference(initial_map.map);
 }
 
+#ifndef LINUX
 void swarm_move_internal(int dx, int dy, int dtheta) {
+#endif
+#ifdef LINUX
+void swarm_move(int dx, int dy, int dtheta) {
+#endif
   int i;
   particle p;
 
@@ -167,7 +181,12 @@ void swarm_move_internal(int dx, int dy, int dtheta) {
   }
 }
 
+#ifndef LINUX
 void swarm_update_internal(int *distances) {
+#endif
+#ifdef LINUX
+void swarm_update(int *distances) {
+#endif
   int i, j, k, l;
   int swap;
   double posterior, distance, degrees, theta, x, y, s, c, total, min, p, step;
@@ -348,15 +367,30 @@ void swarm_update_internal(int *distances) {
   iterations++;
 }
 
+#ifndef LINUX
 int swarm_get_best_x_internal() {
+#endif
+#ifdef LINUX
+int swarm_get_best_x() {
+#endif
   return best_particle.x;
 }
 
+#ifndef LINUX
 int swarm_get_best_y_internal() {
+#endif
+#ifdef LINUX
+int swarm_get_best_y() {
+#endif
   return best_particle.y;
 }
 
+#ifndef LINUX
 int swarm_get_best_theta_internal() {
+#endif
+#ifdef LINUX
+int swarm_get_best_theta() {
+#endif
   return best_particle.theta;
 }
 

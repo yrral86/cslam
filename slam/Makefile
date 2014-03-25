@@ -1,4 +1,4 @@
-CFLAGS = -lglut -lm -lGLU -lGL -lpthread -g -pthread
+CFLAGS = -lglut -lm -lGLU -lGL -lpthread -g -pthread -DLINUX
 OBJS = \
 	buffer \
 	landmark \
