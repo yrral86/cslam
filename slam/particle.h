@@ -18,6 +18,7 @@ typedef struct particle {
 #include "landmark.h"
 
 particle particle_sample_motion(particle, double, double, double);
+particle particle_sample_normal(particle);
 particle particle_init(double, double, double);
 
 #endif

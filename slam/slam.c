@@ -8,7 +8,7 @@ static uint8_t* map[BUFFER_HISTORY];
 
 static raw_sensor_scan *scans;
 static particle current_particle;
-static int arena_width = 4960;
+static int arena_width = 3960;
 static int arena_height = 3400;
 
 int main (int argc, char **argv) {

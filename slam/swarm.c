@@ -174,8 +174,13 @@ void swarm_move(int dx, int dy, int dtheta) {
   // add motion (nothing for now, relying on high variance and lots of particles)
   for (i = 0; i < PARTICLE_COUNT; i++) {
     p = particles[i];
-    // sample motion distribution
-    particles[i] = particle_sample_motion(particles[i], dx, dy, dtheta);
+    // ignore kinematics 20% of the time
+    if ((rand() / (double)RAND_MAX) < 0.8)
+      // sample motion distribution
+      particles[i] = particle_sample_motion(particles[i], dx, dy, dtheta);
+    else
+      // sample normal distribution
+      particles[i] = particle_sample_normal(particles[i]);
     // dereference old map, particle_sample_motion copied it already
     landmark_map_dereference(p.map);
   }
