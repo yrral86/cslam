@@ -1,6 +1,7 @@
 #ifndef __LAZYGL_H__
 #define __LAZYGL_H__
 
+#define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
 #include <math.h>
 

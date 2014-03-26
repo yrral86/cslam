@@ -20,3 +20,9 @@ void rand_normal_init() {
   r4_nor_setup(kn, fn, wn);
   seed = utime();
 }
+
+uint64_t utime() {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+}

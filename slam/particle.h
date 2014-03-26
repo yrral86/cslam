@@ -5,9 +5,9 @@
 
 typedef struct particle {
   double p;
-  double x;
-  double y;
-  double theta;
+  int x;
+  int y;
+  int theta;
   double x_var;
   double y_var;
   double theta_var;
@@ -17,7 +17,7 @@ typedef struct particle {
 #include "swarm.h"
 #include "landmark.h"
 
-particle particle_sample_motion(particle, double, double, double);
-particle particle_init(double, double, double);
+particle particle_sample_motion(particle, int, int, int);
+particle particle_init(int, int, int);
 
 #endif

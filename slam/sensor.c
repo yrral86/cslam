@@ -115,9 +115,3 @@ pthread_t sensor_read_raw_n_thread(int requested_n) {
 raw_sensor_scan sensor_fetch_index(int index) {
   return n_scans[index];
 }
-
-uint64_t utime() {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
-}

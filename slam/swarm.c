@@ -190,7 +190,7 @@ void swarm_update(int *distances) {
   int i, j, k, l;
   int swap;
   double posterior, distance, degrees, theta, x, y, s, c, total, min, p, step;
-  double xyt[3];
+  //  double xyt[3];
   particle temp;
 
   min = 10000.0;

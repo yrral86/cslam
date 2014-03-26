@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "random.h"
 #include "urg_driver/urg_sensor.h"
 #include "scip/scipUtil.h"
 
@@ -32,6 +33,5 @@ raw_sensor_scan sensor_read_raw();
 void* sensor_read_raw_n(void*);
 pthread_t sensor_read_raw_n_thread(int);
 raw_sensor_scan sensor_fetch_index(int);
-uint64_t utime();
 
 #endif

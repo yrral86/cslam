@@ -1,6 +1,6 @@
 #include "particle.h"
 
-particle particle_sample_motion(particle parent, double dx, double dy, double dtheta) {
+particle particle_sample_motion(particle parent, int dx, int dy, int dtheta) {
   particle p;
   p.p = parent.p;
   p.x = parent.x + dx + rand_normal(parent.x_var);
@@ -14,7 +14,7 @@ particle particle_sample_motion(particle parent, double dx, double dy, double dt
   return p;
 }
 
-particle particle_init(double x, double y, double theta) {
+particle particle_init(int x, int y, int theta) {
   particle p;
   p.p = 0.0;
   p.x = x;

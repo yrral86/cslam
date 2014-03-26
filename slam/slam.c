@@ -141,7 +141,6 @@ void record_distance(int angle_index, double distance) {
   // TODO: _ETH
   double degrees = -120 + angle_index*SENSOR_SPACING_USB;
   double theta, dx, dy;
-  int x, y;
   theta = (degrees + current_particle.theta)*M_PI/180;
   dx = distance*cos(theta) + current_particle.x;
   dy = distance*sin(theta) + current_particle.y;
