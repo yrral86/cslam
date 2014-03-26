@@ -35,7 +35,7 @@ void buffer_attenuate(uint8_t *buffer, double factor) {
     buffer[i] *= 0.75;
 }
 
-int buffer_index_from_x_y(double x, double y) {
+int buffer_index_from_x_y(int x, int y) {
   int i_x, i_y;
   i_x = x/BUFFER_FACTOR;
   i_y = y/BUFFER_FACTOR;
