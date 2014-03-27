@@ -21,8 +21,20 @@ void rand_normal_init() {
   seed = utime();
 }
 
+// do not use for actual time due to platform differences, only relative microseconds
 uint64_t utime() {
+	uint64_t t = 0;
+#ifndef LINUX
+	FILETIME ft;
+	GetSystemTimeAsFileTime(&ft);
+	t |= ft.dwHighDateTime;
+	t <<= 32;
+	t |= ft.dwLowDateTime;
+#endif
+#ifdef LINUX
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+  t= tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+#endif
+  return t;
 }

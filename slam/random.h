@@ -3,7 +3,13 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#ifndef LINUX
+#include <Windows.h>
+#include <time.h>
+#endif
+#ifdef LINUX
 #include <sys/time.h>
+#endif
 
 #include "ziggurat.h"
 
