@@ -13,6 +13,7 @@ using lunabotics.RCU.Autonomy.Algorithms;
 using lunabotics.RCU.Models;
 using lunabotics.RCU.Hokuyo;
 using lunabotics.RCU.Localization;
+using System.Net.Sockets;
 
 
 namespace lunabotics.RCU.Autonomy
@@ -50,8 +51,8 @@ namespace lunabotics.RCU.Autonomy
 
         #region Fields
         //Initialize motor powers (Note forward power is negative)
-        public short forwardPower = 500;
-        public short reversePower = -500;
+        public short forwardPower = -500;
+        public short reversePower = 500;
 
         private bool active; // Thread started
         private bool started; // State set to run
@@ -61,8 +62,13 @@ namespace lunabotics.RCU.Autonomy
         private Dictionary<CommandFields, short> staticOutput;
         private Robot robot;
         private State state;
-        private get_distance_ethernet utm = new get_distance_ethernet();
 
+        private get_distance_ethernet utm = new get_distance_ethernet();
+        string ip_address = "192.168.1.8";
+        int port_number = 10940;
+        NetworkStream stream;
+        TcpClient urg = new TcpClient();
+        
         private Stopwatch stopwatch;
         private System.Timers.Timer timer;
         private Zone expectedZone;
@@ -152,6 +158,10 @@ namespace lunabotics.RCU.Autonomy
 
         public void Start()
         {
+            //hokuyo initialization
+            urg.Connect(ip_address, port_number);
+            stream = urg.GetStream();
+            
             // Reset stopwatch
             stopwatch.Restart();
             // Set state
@@ -164,11 +174,12 @@ namespace lunabotics.RCU.Autonomy
             StartingAutonomy();
             //Initialize Particle Filter
             Swarm.swarm_init(1081, 270, 7380, 3880, 1940);
-
         }
 
         public void Stop()
         {
+            //close hokuyo
+            utm.quit(stream, urg); 
             // Set flags
             started = false;
             state = State.Manual;
@@ -209,19 +220,24 @@ namespace lunabotics.RCU.Autonomy
                             break;
 
                         case State.TemporaryTesting:
-                            //EthernetSensorData = utm.EthernetScan();
-                            //for (int j = 0; j < 760; j++)
-                            //{
-                            //    Console.WriteLine(EthernetSensorData[j].ToString());
-                            //}
-                            while (currentPose[Pose.Xpos] < 5440)
+                            TimeSpan startTime = stopwatch.Elapsed;
+                         
+                            EthernetSensorData = utm.EthernetScan(stream);
+                            for (int j = 0; j < 760; j++)
                             {
-                                MoveForward(300);
-                                Thread.Sleep(200);
-                                
+                                Console.WriteLine(EthernetSensorData[j].ToString());
                             }
+                       
+                            Console.WriteLine(stopwatch.Elapsed - startTime);
+                            Thread.Sleep(4000);
+                            //while (currentPose[Pose.Xpos] < 5440)
+                            //{
+                            //    MoveForward(300);
+                            //    Thread.Sleep(500);
+                                
+                            //}
 
-                            state = State.Mining;
+                            //state = State.Mining;
                             break;
 
                         case State.Mining:
@@ -315,7 +331,7 @@ namespace lunabotics.RCU.Autonomy
             outputState = MergeStates(outputState, staticOutput);
             OnAutonomyUpdated(new AutonomyArgs(outputState));
             //Scan Hokuyo
-            EthernetSensorData = utm.EthernetScan();
+            EthernetSensorData = utm.EthernetScan(stream);
             //Estimate Current Pose
             changePose = Kinematics.UpdatePose(steps, steps, currentPose);
             //Particle filtering
@@ -336,8 +352,7 @@ namespace lunabotics.RCU.Autonomy
         {
             //System.Diagnostics.Debug.WriteLine("Reverse");
             while (
-                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps || Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2) < steps ||
-                Math.Abs(Telemetry.TelemetryHandler.Robo2HallCount1) < steps || Math.Abs(Telemetry.TelemetryHandler.Robo2HallCount2) < steps)
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps )
             {
                 //Print Hall count for debugging
                 //System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
@@ -356,7 +371,7 @@ namespace lunabotics.RCU.Autonomy
             outputState = MergeStates(outputState, staticOutput);
             OnAutonomyUpdated(new AutonomyArgs(outputState));
             //Scan Hokuyo
-            EthernetSensorData = utm.EthernetScan();
+            EthernetSensorData = utm.EthernetScan(stream);
             //Estimate Current Pose
             changePose = Kinematics.UpdatePose(steps, steps, currentPose);
             //Particle filtering
@@ -376,13 +391,12 @@ namespace lunabotics.RCU.Autonomy
         {
 
             while (
-                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps || Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2) < steps ||
-                Math.Abs(Telemetry.TelemetryHandler.Robo2HallCount1) < steps || Math.Abs(Telemetry.TelemetryHandler.Robo2HallCount2) < steps)
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps)
             {
                 //System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
                 outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
                 //Velocity must be Positive for right turn
-                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = reversePower;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = forwardPower;
                 outputState = MergeStates(outputState, staticOutput);
                 OnAutonomyUpdated(new AutonomyArgs(outputState));
             }
@@ -392,7 +406,7 @@ namespace lunabotics.RCU.Autonomy
             outputState = MergeStates(outputState, staticOutput);
             OnAutonomyUpdated(new AutonomyArgs(outputState));
             //Scan Hokuyo
-            EthernetSensorData = utm.EthernetScan();
+            EthernetSensorData = utm.EthernetScan(stream);
             //Estimate Current Pose
             changePose = Kinematics.UpdatePose(steps, steps, currentPose);
             //Particle filtering
@@ -412,13 +426,12 @@ namespace lunabotics.RCU.Autonomy
         {
 
             while (
-                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps || Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2) < steps ||
-                Math.Abs(Telemetry.TelemetryHandler.Robo2HallCount1) < steps || Math.Abs(Telemetry.TelemetryHandler.Robo2HallCount2) < steps)
+                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps)
             {
                 System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
                 outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
                 //Velocity must be negative for left turn
-                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = forwardPower;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = reversePower;
                 outputState = MergeStates(outputState, staticOutput);
                 OnAutonomyUpdated(new AutonomyArgs(outputState));
             }
@@ -428,7 +441,7 @@ namespace lunabotics.RCU.Autonomy
             outputState = MergeStates(outputState, staticOutput);
             OnAutonomyUpdated(new AutonomyArgs(outputState));
             //Scan Hokuyo
-            EthernetSensorData = utm.EthernetScan();
+            EthernetSensorData = utm.EthernetScan(stream);
             //Estimate Current Pose
             changePose = Kinematics.UpdatePose(steps, steps, currentPose);
             //Particle filtering
