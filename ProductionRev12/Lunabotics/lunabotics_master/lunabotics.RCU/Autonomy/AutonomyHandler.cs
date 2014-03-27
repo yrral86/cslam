@@ -220,6 +220,8 @@ namespace lunabotics.RCU.Autonomy
                             break;
 
                         case State.TemporaryTesting:
+                            /*
+
                             TimeSpan startTime = stopwatch.Elapsed;
                          
                             EthernetSensorData = utm.EthernetScan(stream);
@@ -230,14 +232,16 @@ namespace lunabotics.RCU.Autonomy
                        
                             Console.WriteLine(stopwatch.Elapsed - startTime);
                             Thread.Sleep(4000);
-                            //while (currentPose[Pose.Xpos] < 5440)
-                            //{
-                            //    MoveForward(300);
-                            //    Thread.Sleep(500);
-                                
-                            //}
 
-                            //state = State.Mining;
+                            */
+                            while (currentPose[Pose.Xpos] < 5440)
+                            {
+                                MoveForward(300);
+                                Thread.Sleep(500);
+                                
+                            }
+
+                            state = State.Mining;
                             break;
 
                         case State.Mining:
@@ -330,6 +334,7 @@ namespace lunabotics.RCU.Autonomy
             outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
             outputState = MergeStates(outputState, staticOutput);
             OnAutonomyUpdated(new AutonomyArgs(outputState));
+            //Thread.Sleep(200);
             //Scan Hokuyo
             EthernetSensorData = utm.EthernetScan(stream);
             //Estimate Current Pose

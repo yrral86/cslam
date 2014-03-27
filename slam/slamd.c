@@ -60,9 +60,9 @@ int main(int argc, char **argv) {
     }
 
     // write to file
-    for (i = 0; i < m; i++)
+    for (i = 0; i < m + 1; i++)
       fprintf(record, "%i,", params[i]);
-    fprintf(record, "%i\n", params[m]);
+    fprintf(record, "%i\n", return_value[0]);
     fclose(record);
 
     ReleaseSemaphore(return_sem, 1, NULL);

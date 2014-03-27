@@ -60,6 +60,7 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   //CreateProcess(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
 
   ReleaseSemaphore(param_sem, 1, NULL);
+  WaitForSingleObject(return_sem, INFINITE);
 }
 
 __declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
@@ -175,8 +176,8 @@ void swarm_move(int dx, int dy, int dtheta) {
   for (i = 0; i < PARTICLE_COUNT; i++) {
     p = particles[i];
 	do {
-      // ignore kinematics 20% of the time
-      if ((rand() / (double)RAND_MAX) < 0.8)
+      // ignore kinematics 40% of the time
+      if ((rand() / (double)RAND_MAX) < 0.6)
         // sample motion distribution
         particles[i] = particle_sample_motion(particles[i], dx, dy, dtheta);
       else
