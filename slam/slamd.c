@@ -1,22 +1,8 @@
 #include "slamd.h"
 
 int main(int argc, char **argv) {
-  int inputs[5], i, param_size, return_size;
-  /*
-  if (argc != 6) {
-    printf("Usage: %s sensor_steps sensor_degrees arena_long arena_short start\n", argv[0]);
-    return 1;
-  }
-
-  for (i = 0; i < 5; i++)
-    if (sscanf(argv[i+1], "%i", inputs + i) != 1) {
-      printf("argument %i is not an integer\n", i + 1);
-      return 1;
-    }
-
-  // initialize swarm
-  swarm_init_internal(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4]);
-  */
+  int inputs[5], param_size, return_size;
+  
   // set up shared memory
   param_sem = CreateSemaphore(NULL, 0, 1, param_sem_name);
   return_sem = CreateSemaphore(NULL, 0, 1, return_sem_name);
@@ -54,19 +40,19 @@ int main(int argc, char **argv) {
 		  swarm_update_internal(params + 1);
 		  break;
 	  case SLAMD_X:
-		  printf("in slamd_x\n");
 		  *return_value = swarm_get_best_x_internal();
-		  printf("after slamd_x\n");
+		  printf("x value: %i\n", *return_value);
 		  break;
 	  case SLAMD_Y:
 		  *return_value = swarm_get_best_y_internal();
+		  printf("y value: %i\n", *return_value);
 		  break;
 	  case SLAMD_THETA:
 		  *return_value = swarm_get_best_theta_internal();
+		  printf("theta value: %i\n", *return_value);
 		  break;
 	  }
 
-	  printf("return value: %i\n", *return_value);
 	  ReleaseSemaphore(return_sem, 1, NULL);
   }
 

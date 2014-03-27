@@ -119,7 +119,7 @@ void swarm_init_internal(int m_in, int degrees_in, int long_side_in, int short_s
 void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
 #endif
   int i, j, k;
-  double x, y, theta;
+  int x, y, theta;
   particle initial_map;
   m = m_in;
   sensor_degrees = degrees_in;
@@ -135,16 +135,16 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   // draw initial border
   for (k = 0; k < long_side; k += BUFFER_FACTOR)
     for (j = 0; j < BORDER_WIDTH; j += BUFFER_FACTOR) {
-      landmark_set_seen_value(initial_map.map, buffer_index_from_x_y((double)k, (double)j), 10000);
+      landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(k, j), 10000);
       landmark_set_seen_value(initial_map.map,
-			      buffer_index_from_x_y((double)k, (double)(short_side - 1 - j)), 10000);
+			      buffer_index_from_x_y(k, short_side - 1 - j), 10000);
     }
 
   for (k = 0; k < short_side; k += BUFFER_FACTOR)
     for (j = 0; j < BORDER_WIDTH; j += BUFFER_FACTOR) {
-      landmark_set_seen_value(initial_map.map, buffer_index_from_x_y((double)j, (double)k), 10000);
+      landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(j, k), 10000);
       landmark_set_seen_value(initial_map.map,
-			      buffer_index_from_x_y((double)(long_side - 1 - j), (double)k), 10000);
+			      buffer_index_from_x_y(long_side - 1 - j, k), 10000);
     }
 
   // initialize first round of particles
@@ -174,15 +174,17 @@ void swarm_move(int dx, int dy, int dtheta) {
   // add motion (nothing for now, relying on high variance and lots of particles)
   for (i = 0; i < PARTICLE_COUNT; i++) {
     p = particles[i];
-    // ignore kinematics 20% of the time
-    if ((rand() / (double)RAND_MAX) < 0.8)
-      // sample motion distribution
-      particles[i] = particle_sample_motion(particles[i], dx, dy, dtheta);
-    else
-      // sample normal distribution
-      particles[i] = particle_sample_normal(particles[i]);
-    // dereference old map, particle_sample_motion copied it already
-    landmark_map_dereference(p.map);
+	do {
+      // ignore kinematics 20% of the time
+      if ((rand() / (double)RAND_MAX) < 0.8)
+        // sample motion distribution
+        particles[i] = particle_sample_motion(particles[i], dx, dy, dtheta);
+      else
+        // sample normal distribution
+        particles[i] = particle_sample_normal(particles[i]);
+      // dereference old map, particle_sample_motion copied it already
+      landmark_map_dereference(p.map);
+	} while (!in_arena(p.x, p.y));
   }
 }
 
@@ -193,8 +195,8 @@ void swarm_update_internal(int *distances) {
 void swarm_update(int *distances) {
 #endif
   int i, j, k, l;
-  int swap;
-  double posterior, distance, degrees, theta, x, y, s, c, total, min, p, step;
+  int swap, x, y;
+  double posterior, distance, theta, degrees, s, c, total, min, p, step;
   //  double xyt[3];
   particle temp;
 

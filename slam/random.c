@@ -34,7 +34,7 @@ uint64_t utime() {
 #ifdef LINUX
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  t= tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+  t = tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
 #endif
   return t;
 }

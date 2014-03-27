@@ -6,6 +6,7 @@ particle particle_sample_motion(particle parent, int dx, int dy, int dtheta) {
   p.x = parent.x + dx + rand_normal(parent.x_var);
   p.y = parent.y + dy + rand_normal(parent.y_var);
   p.theta = parent.theta + dtheta + rand_normal(parent.theta_var);
+  p.theta = p.theta % 360;
   p.x_var = parent.x_var;
   p.y_var = parent.y_var;
   p.theta_var = parent.theta_var;
@@ -20,6 +21,7 @@ particle particle_sample_normal(particle parent) {
   p.x = parent.x + rand_normal((rand_limit(10) + 1)*parent.x_var);
   p.y = parent.y + rand_normal((rand_limit(10) + 1)*parent.y_var);
   p.theta = parent.theta + rand_normal((rand_limit(10) + 1)*parent.theta_var);
+  p.theta = p.theta % 360;
   p.x_var = parent.x_var;
   p.y_var = parent.y_var;
   p.theta_var = parent.theta_var;

@@ -17,6 +17,12 @@ __declspec(dllexport) void swarm_update(int*);
 __declspec(dllexport) int swarm_get_best_x();
 __declspec(dllexport) int swarm_get_best_y();
 __declspec(dllexport) int swarm_get_best_theta();
+void swarm_init_internal(int, int, int, int, int);
+void swarm_move_internal(int, int, int);
+void swarm_update_internal(int*);
+int swarm_get_best_x_internal();
+int swarm_get_best_y_internal();
+int swarm_get_best_theta_internal();
 #endif
 #ifdef LINUX
 void swarm_init(int, int, int, int, int);
