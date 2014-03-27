@@ -8,10 +8,10 @@ static uint8_t* map[BUFFER_HISTORY];
 
 static raw_sensor_scan *scans;
 static particle current_particle;
-//static int arena_width = 3960;
-//static int arena_height = 3400;
-static int arena_width = 9000;
-static int arena_height = 6500;
+static int arena_width = 3960;
+static int arena_height = 3400;
+//static int arena_width = 9000;
+//static int arena_height = 6500;
 
 int main (int argc, char **argv) {
   int i, j, iterations;
@@ -27,7 +27,7 @@ int main (int argc, char **argv) {
 
   // swarm_init will set up buffer sizing
   //  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, 7380, 3880, 1500);
-  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, arena_width, arena_height, 3000);
+  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, arena_width, arena_height, 2000);
 
   // allocate buffers
   for (i = 0; i < BUFFER_HISTORY; i++)

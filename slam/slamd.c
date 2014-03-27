@@ -1,8 +1,9 @@
 #include "slamd.h"
 
 int main(int argc, char **argv) {
-  int inputs[5], param_size, return_size;
-  
+  int i, m, param_size, return_size;
+  FILE *record;
+
   // set up shared memory
   param_sem = CreateSemaphore(NULL, 0, 1, param_sem_name);
   return_sem = CreateSemaphore(NULL, 0, 1, return_sem_name);
@@ -23,37 +24,47 @@ int main(int argc, char **argv) {
 
   return_value = (int*)MapViewOfFile(return_handle, FILE_MAP_WRITE, 0, 0, return_size);
   assert(return_value != NULL);
-	
-  while (1) {
-	  WaitForSingleObject(param_sem, INFINITE);
-	  switch (params[0]) {
-	  case SLAMD_INIT:
-		  printf("calling swarm_init(%i, %i, %i, %i, %i)\n", params[1], params[2], params[3], params[4], params[5]);
-		  swarm_init_internal(params[1], params[2], params[3], params[4], params[5]);
-		  break;
-	  case SLAMD_MOVE:
-		  printf("calling swarm_move(%i, %i, %i)\n", params[1], params[2], params[3]);
-		  swarm_move_internal(params[1], params[2], params[3]);
-		  break;
-	  case SLAMD_UPDATE:
-		  printf("calling swarm_update(%i, %i, %i, %i, %i, .... )\n", params[1], params[2], params[3], params[4], params[5]);
-		  swarm_update_internal(params + 1);
-		  break;
-	  case SLAMD_X:
-		  *return_value = swarm_get_best_x_internal();
-		  printf("x value: %i\n", *return_value);
-		  break;
-	  case SLAMD_Y:
-		  *return_value = swarm_get_best_y_internal();
-		  printf("y value: %i\n", *return_value);
-		  break;
-	  case SLAMD_THETA:
-		  *return_value = swarm_get_best_theta_internal();
-		  printf("theta value: %i\n", *return_value);
-		  break;
-	  }
 
-	  ReleaseSemaphore(return_sem, 1, NULL);
+  m = 0;
+  while (1) {
+    WaitForSingleObject(param_sem, INFINITE);
+    record = fopen("slamd_record.csv", "a");
+    switch (params[0]) {
+    case SLAMD_INIT:
+      fprintf(record, "init\n");
+      m = params[1];
+      printf("calling swarm_init(%i, %i, %i, %i, %i)\n", params[1], params[2], params[3], params[4], params[5]);
+      swarm_init_internal(params[1], params[2], params[3], params[4], params[5]);
+      break;
+    case SLAMD_MOVE:
+      printf("calling swarm_move(%i, %i, %i)\n", params[1], params[2], params[3]);
+      swarm_move_internal(params[1], params[2], params[3]);
+      break;
+    case SLAMD_UPDATE:
+      printf("calling swarm_update(%i, %i, %i, %i, %i, .... )\n", params[1], params[2], params[3], params[4], params[5]);
+      swarm_update_internal(params + 1);
+      break;
+    case SLAMD_X:
+      *return_value = swarm_get_best_x_internal();
+      printf("x value: %i\n", *return_value);
+      break;
+    case SLAMD_Y:
+      *return_value = swarm_get_best_y_internal();
+      printf("y value: %i\n", *return_value);
+      break;
+    case SLAMD_THETA:
+      *return_value = swarm_get_best_theta_internal();
+      printf("theta value: %i\n", *return_value);
+      break;
+    }
+
+    // write to file
+    for (i = 0; i < m; i++)
+      fprintf(record, "%i,", params[i]);
+    fprintf(record, "%i\n", params[m]);
+    fclose(record);
+
+    ReleaseSemaphore(return_sem, 1, NULL);
   }
 
   return 0;
