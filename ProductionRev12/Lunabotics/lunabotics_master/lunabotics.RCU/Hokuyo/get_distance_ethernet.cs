@@ -17,7 +17,7 @@ namespace lunabotics.RCU.Hokuyo
     class get_distance_ethernet
     {
 
-        public int[] EthernetScan(NetworkStream stream)
+        public int[] EthernetScan()
         {
             const int start_step = 0;
             const int end_step = 1080;
@@ -29,6 +29,14 @@ namespace lunabotics.RCU.Hokuyo
 
             try
             {
+
+                string ip_address = "192.168.1.8";
+                int port_number = 10940;
+
+                TcpClient urg = new TcpClient();
+                urg.Connect(ip_address, port_number);
+                NetworkStream stream = urg.GetStream();
+
                 write(stream, SCIP_Writer.SCIP2());
                 read_line(stream);  // ignore echo back
                 write(stream, SCIP_Writer.MD(start_step, end_step));
@@ -53,6 +61,12 @@ namespace lunabotics.RCU.Hokuyo
                     //    Console.WriteLine(distances[j].ToString());
                     //}
                 }
+
+                write(stream, SCIP_Writer.QT());    // stop measurement mode
+                read_line(stream); // ignore echo back
+                stream.Close();
+                urg.Close();
+
             }
             catch (Exception ex)
             {
@@ -119,21 +133,6 @@ namespace lunabotics.RCU.Hokuyo
             {
                 return false;
             }
-        }
-
-        /* Doesn't really seem necessary - put code in autonomyhandler instead.
-        public TcpClient init()
-        {
-            TcpClient urg = new TcpClient();
-            return urg;
-        }*/
-
-        public void quit(NetworkStream stream, TcpClient urg)
-        {
-            write(stream, SCIP_Writer.QT());    // stop measurement mode
-            read_line(stream); // ignore echo back
-            stream.Close();
-            urg.Close();
         }
     }
 }

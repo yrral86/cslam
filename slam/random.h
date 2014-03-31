@@ -11,8 +11,10 @@
 #include <sys/time.h>
 #endif
 
-#include "ziggurat.h"
+//#include "ziggurat.h"
+#include "boxmuller.h"
 
+float ranf();
 int rand_limit(int);
 double rand_normal(int);
 void rand_normal_init();

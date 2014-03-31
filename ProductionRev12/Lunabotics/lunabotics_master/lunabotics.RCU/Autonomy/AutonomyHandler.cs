@@ -64,10 +64,10 @@ namespace lunabotics.RCU.Autonomy
         private State state;
 
         private get_distance_ethernet utm = new get_distance_ethernet();
-        string ip_address = "192.168.1.8";
-        int port_number = 10940;
-        NetworkStream stream;
-        TcpClient urg = new TcpClient();
+        //string ip_address = "192.168.1.8";
+        //int port_number = 10940;
+        //NetworkStream stream;
+        //TcpClient urg = new TcpClient();
         
         private Stopwatch stopwatch;
         private System.Timers.Timer timer;
@@ -158,9 +158,9 @@ namespace lunabotics.RCU.Autonomy
 
         public void Start()
         {
-            //hokuyo initialization
-            urg.Connect(ip_address, port_number);
-            stream = urg.GetStream();
+            ////hokuyo initialization
+            //urg.Connect(ip_address, port_number);
+            //stream = urg.GetStream();
             
             // Reset stopwatch
             stopwatch.Restart();
@@ -175,8 +175,8 @@ namespace lunabotics.RCU.Autonomy
 
         public void Stop()
         {
-            //close hokuyo
-            utm.quit(stream, urg); 
+            ////close hokuyo
+            //utm.quit(stream, urg); 
             // Set flags
             started = false;
             state = State.Manual;
@@ -221,12 +221,12 @@ namespace lunabotics.RCU.Autonomy
                             StartingAutonomy();
                             //Initialize Particle Filter
                             Swarm.swarm_init(1081, 270, 7380, 3880, 1940);
+                            //Swarm.swarm_init(1081, 270, 7380, 1200, 460);
                             //Loop to try and converge particles
                             for (int j = 0; j < 10; j++)
                             {
-                                EthernetSensorData = utm.EthernetScan(stream);
+                                EthernetSensorData = utm.EthernetScan();
                                 Swarm.swarm_move(0, 0, 0);
-                                Console.WriteLine("asdf");
                                 Swarm.swarm_update(EthernetSensorData);
                             }
                             state = State.TemporaryTesting;
@@ -436,15 +436,15 @@ namespace lunabotics.RCU.Autonomy
         public void ParticleFiltering(int stepsR, int stepsL)
         {
             //Scan Hokuyo
-            EthernetSensorData = utm.EthernetScan(stream);
+            EthernetSensorData = utm.EthernetScan();
             //Estimate Current Pose
             changePose = Kinematics.UpdatePose(stepsR, stepsL, currentPose);
             //Particle filtering
             Swarm.swarm_move((int)changePose[Pose.Xpos], (int)changePose[Pose.Ypos], (int)changePose[Pose.Heading]);
             Swarm.swarm_update(EthernetSensorData);
-            for (int j = 0; j < 10; j++)
+            for (int j = 0; j < 5; j++)
             {
-                EthernetSensorData = utm.EthernetScan(stream);
+                EthernetSensorData = utm.EthernetScan();
                 Swarm.swarm_move(0, 0, 0);
                 Swarm.swarm_update(EthernetSensorData);
             }

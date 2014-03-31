@@ -8,7 +8,6 @@ static particle best_particle;
 static int iterations = 0;
 static int m, sensor_degrees, long_side, short_side, start;
 static double spacing;
-FILE *tempdebug_file;
 
 #ifndef LINUX
 __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
@@ -17,7 +16,6 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   STARTUPINFO si;
   PROCESS_INFORMATION pi;
 
-  tempdebug_file = fopen("tempdebug_swarm.txt", "a"); //tempdebug
   m = m_in;
   sensor_degrees = degrees_in;
   long_side = long_side_in;
@@ -60,43 +58,25 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   params[5] = start_in;  
 
   //CreateProcess(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-  fprintf(tempdebug_file, "swarm_init before release\n"); //tempdebug
   ReleaseSemaphore(param_sem, 1, NULL);
-  fprintf(tempdebug_file, "swarm_init after release\n"); //tempdebug
   WaitForSingleObject(return_sem, INFINITE);
-
-  fclose(tempdebug_file); //tempdebug
 }
 
 __declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
-	FILE *debug_file = fopen("debug_swarm_move.txt", "w");
-	tempdebug_file = fopen("tempdebug_swarm.txt", "a"); //tempdebug
 	params[0] = SLAMD_MOVE;
 	params[1] = dx;
 	params[2] = dy;
 	params[3] = dtheta;
-	fprintf(debug_file, "before shm: %i, %i, %i\n", params[1], params[2], params[3]);
 
-	fprintf(tempdebug_file, "swarm_move before release\n"); //tempdebug
 	ReleaseSemaphore(param_sem, 1, NULL);
-	fprintf(tempdebug_file, "swarm_move after release\n"); //tempdebug
 	WaitForSingleObject(return_sem, INFINITE);
-	fprintf(tempdebug_file, "swarm_move after wait\n"); //tempdebug
-	fclose(debug_file);
-	fclose(tempdebug_file); //tempdebug
 }
 
 __declspec(dllexport) void swarm_update(int *distances) {
-	FILE *debug_file = fopen("debug_swarm_update.txt", "w");
-	tempdebug_file = fopen("tempdebug_swarm.txt", "a"); //tempdebug
 	params[0] = SLAMD_UPDATE;
 	memcpy(params + 1, distances, m*sizeof(int));
-	fprintf(tempdebug_file, "swarm_update before release\n"); //tempdebug
 	ReleaseSemaphore(param_sem, 1, NULL);
-	fprintf(tempdebug_file, "swarm_update after release\n"); //tempdebug
 	WaitForSingleObject(return_sem, INFINITE);
-	fclose(debug_file);
-	fclose(tempdebug_file); //tempdebug
 }
 
 __declspec(dllexport) int swarm_get_best_x() {
@@ -146,6 +126,8 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   start = start_in;
   spacing = sensor_degrees/(double)(m);
 
+  rand_normal_init();
+
   buffer_set_arena_size(long_side, short_side);
 
   initial_map.map = landmark_map_copy(NULL);
@@ -186,27 +168,26 @@ void swarm_move_internal(int dx, int dy, int dtheta) {
 #ifdef LINUX
 void swarm_move(int dx, int dy, int dtheta) {
 #endif
-  int i;
+  int i, j = 0;
   particle p;
-  tempdebug_file = fopen("tempdebug_swarm.txt", "a");
   // add motion (nothing for now, relying on high variance and lots of particles)
   for (i = 0; i < PARTICLE_COUNT; i++) {
     p = particles[i];
 	do {
-		fprintf(tempdebug_file, "Swarm_move_internal %d\n", i);
+		j++;
       // ignore kinematics 40% of the time
-      if ((rand() / (double)RAND_MAX) < 0.6)
+      if ((rand() / (double)RAND_MAX) < 0.6) {
         // sample motion distribution
         particles[i] = particle_sample_motion(particles[i], dx, dy, dtheta);
-      else
+	  } else {
         // sample normal distribution
         particles[i] = particle_sample_normal(particles[i]);
+	  }
       // dereference old map, particle_sample_motion copied it already
       landmark_map_dereference(p.map);
 	} while (!in_arena(particles[i].x, particles[i].y));
 	
   }
-  fclose(tempdebug_file);
 }
 
 #ifndef LINUX
