@@ -165,15 +165,12 @@ namespace lunabotics.RCU.Autonomy
             // Reset stopwatch
             stopwatch.Restart();
             // Set state
-            state = State.TemporaryTesting;
+            state = State.InitializeAutonomy;
             // Set flag
             started = true;
             // Set zone
             expectedZone = Zone.Start;
-            //Initialize position - temporary 
-            StartingAutonomy();
-            //Initialize Particle Filter
-            Swarm.swarm_init(1081, 270, 7380, 3880, 1940);
+            
         }
 
         public void Stop()
@@ -219,6 +216,22 @@ namespace lunabotics.RCU.Autonomy
                             outputState[Comms.CommandEncoding.CommandFields.RangeFinderServo] = 90;
                             break;
 
+                        case State.InitializeAutonomy:
+                            //Initialize position - temporary 
+                            StartingAutonomy();
+                            //Initialize Particle Filter
+                            Swarm.swarm_init(1081, 270, 7380, 3880, 1940);
+                            //Loop to try and converge particles
+                            for (int j = 0; j < 10; j++)
+                            {
+                                EthernetSensorData = utm.EthernetScan(stream);
+                                Swarm.swarm_move(0, 0, 0);
+                                Console.WriteLine("asdf");
+                                Swarm.swarm_update(EthernetSensorData);
+                            }
+                            state = State.TemporaryTesting;
+                            break;
+
                         case State.TemporaryTesting:
                             /*
 
@@ -234,6 +247,7 @@ namespace lunabotics.RCU.Autonomy
                             Thread.Sleep(4000);
 
                             */
+                            
                             while (currentPose[Pose.Xpos] < 5440)
                             {
                                 MoveForward(300);
@@ -245,6 +259,7 @@ namespace lunabotics.RCU.Autonomy
                             break;
 
                         case State.Mining:
+
                             tankTurnLeft(1200);
                             Thread.Sleep(200000);
                             state = State.SafeShutdown;
@@ -252,6 +267,7 @@ namespace lunabotics.RCU.Autonomy
 
                         case State.SafeShutdown:
 
+                            Stop();
                             break;
 
                         default:
@@ -334,19 +350,7 @@ namespace lunabotics.RCU.Autonomy
             outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
             outputState = MergeStates(outputState, staticOutput);
             OnAutonomyUpdated(new AutonomyArgs(outputState));
-            //Thread.Sleep(200);
-            //Scan Hokuyo
-            EthernetSensorData = utm.EthernetScan(stream);
-            //Estimate Current Pose
-            changePose = Kinematics.UpdatePose(steps, steps, currentPose);
-            //Particle filtering
-            Swarm.swarm_move((int)changePose[Pose.Xpos], (int)changePose[Pose.Ypos], (int)changePose[Pose.Heading]);
-            Swarm.swarm_update(EthernetSensorData);
-            //Update Current Pose to Particle filter outputs
-            currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
-            currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
-            currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
-            System.Diagnostics.Debug.WriteLine("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX POSITION " + currentPose[Pose.Xpos]);
+            ParticleFiltering(steps, steps);
             //Reset Hall count for next motor command
             ResetCounters();
         }
@@ -375,18 +379,7 @@ namespace lunabotics.RCU.Autonomy
             outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
             outputState = MergeStates(outputState, staticOutput);
             OnAutonomyUpdated(new AutonomyArgs(outputState));
-            //Scan Hokuyo
-            EthernetSensorData = utm.EthernetScan(stream);
-            //Estimate Current Pose
-            changePose = Kinematics.UpdatePose(steps, steps, currentPose);
-            //Particle filtering
-            Swarm.swarm_move((int)changePose[Pose.Xpos], (int)changePose[Pose.Ypos], (int)changePose[Pose.Heading]);
-            Swarm.swarm_update(EthernetSensorData);
-            //Update Current Pose to Particle filter outputs
-            currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
-            currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
-            currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
-            //Reset Hall count for next motor command
+            ParticleFiltering(steps, steps);
             //Reset Hall count for next motor command
             ResetCounters();
         }
@@ -410,17 +403,7 @@ namespace lunabotics.RCU.Autonomy
             outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
             outputState = MergeStates(outputState, staticOutput);
             OnAutonomyUpdated(new AutonomyArgs(outputState));
-            //Scan Hokuyo
-            EthernetSensorData = utm.EthernetScan(stream);
-            //Estimate Current Pose
-            changePose = Kinematics.UpdatePose(steps, steps, currentPose);
-            //Particle filtering
-            Swarm.swarm_move((int)changePose[Pose.Xpos], (int)changePose[Pose.Ypos], (int)changePose[Pose.Heading]);
-            Swarm.swarm_update(EthernetSensorData);
-            //Update Current Pose to Particle filter outputs
-            currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
-            currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
-            currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
+            ParticleFiltering(steps, steps);
             //Reset Hall count for next motor command
             ResetCounters();
         }
@@ -445,21 +428,31 @@ namespace lunabotics.RCU.Autonomy
             outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
             outputState = MergeStates(outputState, staticOutput);
             OnAutonomyUpdated(new AutonomyArgs(outputState));
-            //Scan Hokuyo
-            EthernetSensorData = utm.EthernetScan(stream);
-            //Estimate Current Pose
-            changePose = Kinematics.UpdatePose(steps, steps, currentPose);
-            //Particle filtering
-            Swarm.swarm_move((int)changePose[Pose.Xpos], (int)changePose[Pose.Ypos], (int)changePose[Pose.Heading]);
-            Swarm.swarm_update(EthernetSensorData);
-            //Update Current Pose to Particle filter outputs
-            currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
-            currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
-            currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
+            ParticleFiltering(steps, steps);
             //Reset Hall count for next motor command
             ResetCounters();
         }
 
+        public void ParticleFiltering(int stepsR, int stepsL)
+        {
+            //Scan Hokuyo
+            EthernetSensorData = utm.EthernetScan(stream);
+            //Estimate Current Pose
+            changePose = Kinematics.UpdatePose(stepsR, stepsL, currentPose);
+            //Particle filtering
+            Swarm.swarm_move((int)changePose[Pose.Xpos], (int)changePose[Pose.Ypos], (int)changePose[Pose.Heading]);
+            Swarm.swarm_update(EthernetSensorData);
+            for (int j = 0; j < 10; j++)
+            {
+                EthernetSensorData = utm.EthernetScan(stream);
+                Swarm.swarm_move(0, 0, 0);
+                Swarm.swarm_update(EthernetSensorData);
+            }
+            //Update Current Pose to Particle filter outputs
+            currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
+            currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
+            currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
+        }
 
         //Call each time to reset the Hall Count for all of the Roboteqs in config
         public void ResetCounters()

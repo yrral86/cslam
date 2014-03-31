@@ -65,16 +65,16 @@ namespace lunabotics.RCU.Models
             if (Math.Abs(LeftRightDistance) < 0.01)
             {
                 updatedPose[Pose.Heading] = LastPose[Pose.Heading]; //if driving straight, no heading change
-                updatedPose[Pose.Xpos] = (int)(LastPose[Pose.Xpos] + RobotCenterDeltaS * Math.Cos(updatedPose[Pose.Heading]));
-                updatedPose[Pose.Ypos] = (int)(LastPose[Pose.Ypos] + RobotCenterDeltaS * Math.Sin(updatedPose[Pose.Heading]));
+                updatedPose[Pose.Xpos] = (int)(LastPose[Pose.Xpos] + RobotCenterDeltaS * Math.Cos(updatedPose[Pose.Heading]*Math.PI/180));
+                updatedPose[Pose.Ypos] = (int)(LastPose[Pose.Ypos] + RobotCenterDeltaS * Math.Sin(updatedPose[Pose.Heading]*Math.PI/180));
             }
             else //not driving straight
             {
                 double ICR = (WheelTrack * RobotCenterDeltaS) / LeftRightDistance;
                 double HeadingChange = LeftRightDistance / WheelTrack;
-                updatedPose[Pose.Heading] = LastPose[Pose.Heading] + HeadingChange;
-                updatedPose[Pose.Xpos] = (int)(LastPose[Pose.Xpos] + ICR * Math.Sin(updatedPose[Pose.Heading]) - ICR * Math.Sin(LastPose[Pose.Heading]));
-                updatedPose[Pose.Ypos] = (int)(LastPose[Pose.Ypos] - ICR * Math.Cos(updatedPose[Pose.Heading]) + ICR * Math.Cos(LastPose[Pose.Heading]));
+                updatedPose[Pose.Heading] = LastPose[Pose.Heading] + HeadingChange*180/Math.PI;
+                updatedPose[Pose.Xpos] = (int)(LastPose[Pose.Xpos] + ICR * Math.Sin(updatedPose[Pose.Heading]*Math.PI/180) - ICR * Math.Sin(LastPose[Pose.Heading]*Math.PI/180));
+                updatedPose[Pose.Ypos] = (int)(LastPose[Pose.Ypos] - ICR * Math.Cos(updatedPose[Pose.Heading]*Math.PI/180) + ICR * Math.Cos(LastPose[Pose.Heading]*Math.PI/180));
             }
 
             deltaPose[Pose.Heading] = updatedPose[Pose.Heading] - LastPose[Pose.Heading];

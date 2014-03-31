@@ -3,9 +3,10 @@
 
 //#include "arena.h"
 
-#define PARTICLE_COUNT 2000
+#define PARTICLE_COUNT 1000
 #define INITIAL_POSITION_VARIANCE 250
 #define INITIAL_ANGLE_VARIANCE 15
+
 
 #define BUFFER_FACTOR 10
 #define BORDER_WIDTH 100
