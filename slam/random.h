@@ -11,7 +11,6 @@
 #include <sys/time.h>
 #endif
 
-//#include "ziggurat.h"
 #include "boxmuller.h"
 
 float ranf();

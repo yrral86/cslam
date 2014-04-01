@@ -135,19 +135,6 @@ int main (int argc, char **argv) {
   return 0;
 }
 
-// records into current map (map[0])
-void record_distance(int angle_index, double distance) {
-  // forward is now 0 degrees, left -, right +
-  // TODO: _ETH
-  double degrees = -120 + angle_index*SENSOR_SPACING_USB;
-  double theta, dx, dy;
-  theta = (degrees + current_particle.theta)*M_PI/180;
-  dx = distance*cos(theta) + current_particle.x;
-  dy = distance*sin(theta) + current_particle.y;
-
-  record_map_position(0, dx, dy, 255);
-}
-
 void record_map_position(int index, int x, int y, uint8_t value) {
   if (in_arena(x, y))
     map[index][buffer_index_from_x_y(x, y)] = value;

@@ -1,5 +1,6 @@
 CFLAGS = -lglut -lm -lGLU -lGL -lpthread -g -pthread -DLINUX -Wall
 OBJS = \
+	boxmuller \
 	buffer \
 	landmark \
 	lazygl \
@@ -10,10 +11,10 @@ OBJS = \
 	scip/scipUtil \
 	scip/scip1 \
 	scip/scip2 \
-	swarm \
-	ziggurat
+	swarm
 
 OBJ_FILES = 	\
+		boxmuller.o \
 		buffer.o \
 		landmark.o \
 		lazygl.o \
@@ -24,14 +25,14 @@ OBJ_FILES = 	\
 		scip/scipUtil.o \
 		scip/scip1.o \
 		scip/scip2.o \
-		swarm.o \
-		ziggurat.o
+		swarm.o
 
 all:
 	for i in $(OBJS); do \
 		(gcc -c -o $$i.o $$i.c $(CFLAGS)); \
 	done
 	gcc -o slam slam.c $(OBJ_FILES) urg_driver/*.o $(CFLAGS)
+	gcc -o replay replay.c $(OBJ_FILES) urg_driver/*.o $(CFLAGS)
 
 clean:
-	rm -f *~ $(OBJ_FILES) slam
+	rm -f *~ $(OBJ_FILES) slam replay

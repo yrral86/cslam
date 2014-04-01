@@ -9,6 +9,8 @@ landmark_map* landmark_map_copy(landmark_map *parent) {
     head = parent;
     landmark_map_reference(head);
   }
+  assert(head != NULL);
+  assert(head->map != NULL);
   return head;
 }
 

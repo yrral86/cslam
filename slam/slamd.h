@@ -8,8 +8,6 @@
 
 #include "swarm.h"
 
-typedef enum {SLAMD_INIT, SLAMD_MOVE, SLAMD_UPDATE, SLAMD_X, SLAMD_Y, SLAMD_THETA} slamd_method;
-
 static LPCWSTR param_shm_name = L"slamd_parameters";
 static LPCWSTR return_shm_name = L"slamd_return";
 static LPCWSTR param_sem_name = L"slamd_parameters_sem";
@@ -24,5 +22,12 @@ static int *params;
 static int *return_value;
 
 #endif
+
+typedef enum {SLAMD_INIT = 0,
+	      SLAMD_MOVE = 1,
+	      SLAMD_UPDATE = 2,
+	      SLAMD_X = 3,
+	      SLAMD_Y = 4,
+	      SLAMD_THETA = 5} slamd_method;
 
 #endif

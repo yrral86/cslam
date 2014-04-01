@@ -1,10 +1,10 @@
 #include "random.h"
 #include <stdio.h>
 
-static float fn[128];
-static uint32_t kn[128];
+//static float fn[128];
+//static uint32_t kn[128];
 static uint32_t seed;
-static float wn[128];
+//static float wn[128];
 
 int rand_limit(int limit) {
   int r, d = RAND_MAX / limit;
