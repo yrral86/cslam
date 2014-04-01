@@ -220,15 +220,20 @@ namespace lunabotics.RCU.Autonomy
                             //Initialize position - temporary 
                             StartingAutonomy();
                             //Initialize Particle Filter
-                            Swarm.swarm_init(1081, 270, 7380, 3880, 1940);
+                           // Swarm.swarm_init(1081, 270, 7380, 3880, 1940);
+                            Swarm.swarm_init(721, 180, 7380, 3880, 1940);
                             //Swarm.swarm_init(1081, 270, 7380, 1200, 460);
                             //Loop to try and converge particles
-                            for (int j = 0; j < 10; j++)
+                            //for (int j = 0; j < 30; j++)
                             {
                                 EthernetSensorData = utm.EthernetScan();
                                 Swarm.swarm_move(0, 0, 0);
                                 Swarm.swarm_update(EthernetSensorData);
-                            }
+                                }
+                            Swarm.swarm_get_best_x();
+                            Swarm.swarm_get_best_y();
+                            Swarm.swarm_get_best_theta();
+                            
                             state = State.TemporaryTesting;
                             break;
 
@@ -248,10 +253,10 @@ namespace lunabotics.RCU.Autonomy
 
                             */
                             
-                            while (currentPose[Pose.Xpos] < 5440)
+                            while (currentPose[Pose.Xpos] < 5040)
                             {
                                 MoveForward(300);
-                                Thread.Sleep(500);
+                                Thread.Sleep(100);
                                 
                             }
 
@@ -261,7 +266,17 @@ namespace lunabotics.RCU.Autonomy
                         case State.Mining:
 
                             tankTurnLeft(1200);
-                            Thread.Sleep(200000);
+                            Thread.Sleep(100);
+                             while (currentPose[Pose.Ypos] < 2000)
+                            {
+                                MoveForward(300);
+                                Thread.Sleep(100);
+                               
+                            }
+
+                            tankTurnLeft(2400);
+
+
                             state = State.SafeShutdown;
                             break;
 

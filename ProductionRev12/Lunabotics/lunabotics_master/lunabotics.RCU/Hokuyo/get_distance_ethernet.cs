@@ -19,8 +19,11 @@ namespace lunabotics.RCU.Hokuyo
 
         public int[] EthernetScan()
         {
-            const int start_step = 0;
-            const int end_step = 1080;
+//            const int start_step = 0;
+//            const int end_step = 1080;
+            const int start_step = 180;
+            const int end_step = 900;
+
 
             //List to hold all 1080 distance values
             List<int> distances = new List<int>();
