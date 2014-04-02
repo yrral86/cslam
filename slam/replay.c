@@ -12,15 +12,14 @@ static particle current_particle;
 
 int main (int argc, char **argv) {
   // sensor_scans + function indicator + return
-  int i, iterations, parsed_line[1083];
-  FILE *data_file, *out_file;
+  int i, iterations, parsed_line[723];
+  FILE *data_file;
   ssize_t read;
   char *int_string;
   char *line = NULL;
   size_t length  = 0;
 
   data_file = fopen("slamd_record.csv", "r");
-  out_file = fopen("slamd_record_copy.csv", "w");
   assert(data_file != NULL);
 
   iterations = 0;
@@ -30,16 +29,12 @@ int main (int argc, char **argv) {
     if (strncmp(int_string, "init", 4) == 0)
       continue;
     sscanf(int_string, "%d", parsed_line);
-    for (i = 1; i < 1082; i++) {
+    for (i = 1; i < 722; i++) {
       int_string = strtok(NULL, ",");
       sscanf(int_string, "%d", parsed_line + i);
     }
     int_string = strtok(NULL, ",");
     sscanf(int_string, "%d\n", parsed_line + i);
-
-    for (i = 0; i < 1082; i++)
-      fprintf(out_file, "%d,", parsed_line[i]);
-    fprintf(out_file, "%d\n", parsed_line[i]);
 
     switch(parsed_line[0]) {
     case SLAMD_INIT:
@@ -102,7 +97,6 @@ int main (int argc, char **argv) {
   }
 
   fclose(data_file);
-  fclose(out_file);
 
   free(line);
 
@@ -119,6 +113,10 @@ void update_display() {
   current_particle.x = swarm_get_best_x();
   current_particle.y = swarm_get_best_y();
   current_particle.theta = swarm_get_best_theta();
+
+  printf("x, y, theta = (%d, %d, %d)\n", current_particle.x,
+	 current_particle.x,
+	 current_particle.theta);
 
   // copy best map to buffer
   swarm_get_best_buffer(map[0]);
