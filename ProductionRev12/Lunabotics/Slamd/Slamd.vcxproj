@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\slam\boxmuller.h" />
     <ClInclude Include="..\..\..\slam\buffer.h" />
     <ClInclude Include="..\..\..\slam\const.h" />
     <ClInclude Include="..\..\..\slam\jacobi_polar.h" />
@@ -23,6 +24,7 @@
     <ClInclude Include="..\..\..\slam\ziggurat.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\slam\boxmuller.c" />
     <ClCompile Include="..\..\..\slam\buffer.c" />
     <ClCompile Include="..\..\..\slam\jacobi_polar.c" />
     <ClCompile Include="..\..\..\slam\landmark.c" />
@@ -42,7 +44,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v100</PlatformToolset>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>

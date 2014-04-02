@@ -42,6 +42,9 @@
     <ClInclude Include="..\..\..\..\slam\ziggurat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\slam\boxmuller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\slam\buffer.c">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\slam\ziggurat.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\slam\boxmuller.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
