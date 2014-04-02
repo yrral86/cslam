@@ -151,9 +151,10 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   x = start/2;
   for (i = 0; i < PARTICLE_COUNT; i++) {
     y = short_side/4;
-    if (rand_limit(2))
-      y *= 3;
-    theta = rand_limit(360) - 180;
+    //    if (rand_limit(2))
+    y *= 3;
+      //    theta = rand_limit(360) - 180;
+    theta = 180 + (rand_limit(20) - 10);
     particles[i] = particle_init(x, y, theta);
     particles[i].map = initial_map.map;
     landmark_map_reference(particles[i].map);
