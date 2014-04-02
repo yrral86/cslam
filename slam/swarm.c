@@ -273,7 +273,7 @@ void swarm_update(int *distances) {
     for (j = 0; j < m; j++) {
       distance = distances[j];
       // forward is now 0 degrees, left -, right +
-      degrees = -sensor_degrees/2.0 + j*spacing;
+      degrees = -1*(-sensor_degrees/2.0 + j*spacing);
       theta = (degrees + particles[i].theta)*M_PI/180;
       s = sin(theta);
       c = cos(theta);
@@ -391,7 +391,7 @@ int swarm_get_best_y_internal() {
 #ifdef LINUX
 int swarm_get_best_y() {
 #endif
-  return best_particle.y;
+  return short_side - best_particle.y;
 }
 
 #ifndef LINUX
@@ -400,7 +400,7 @@ int swarm_get_best_theta_internal() {
 #ifdef LINUX
 int swarm_get_best_theta() {
 #endif
-  return best_particle.theta;
+  return best_particle.theta + 180;
 }
 
 void swarm_get_best_buffer(uint8_t *buffer) {

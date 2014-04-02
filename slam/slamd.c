@@ -12,8 +12,8 @@ int main(int argc, char **argv) {
 
   // parameter space size is (sensor readings + 1) * sizeof(int)
   // first int specifies which function, remainder are params
-  // TODO: fix constant 1081
-  param_size = (1081 + 1)*sizeof(int);
+  // TODO: fix constant 1081/721
+  param_size = (721 + 1)*sizeof(int);
   param_handle = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, param_size, param_shm_name);
 
   // return space size is sizeof(int)
