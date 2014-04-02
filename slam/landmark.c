@@ -39,8 +39,6 @@ landmark_map* landmark_map_init(int size) {
   node->references = 1;
   node->map = malloc(sizeof(landmark)*size);
   for (i = 0; i < size; i++) {
-    node->map[i].x = x_from_buffer_index(i);
-    node->map[i].y = y_from_buffer_index(i);
     node->map[i].seen = 0;
     node->map[i].unseen = 0;
   }
