@@ -48,7 +48,7 @@ int main (int argc, char **argv) {
 
       glutInit(&argc, argv);
       // pass size of buffer, then window size
-      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), buffer_get_width(), buffer_get_height());
+      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), buffer_get_width()/2, buffer_get_height()/2);
 
       break;
     case SLAMD_MOVE:

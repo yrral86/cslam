@@ -401,7 +401,7 @@ int swarm_get_best_theta_internal() {
 #ifdef LINUX
 int swarm_get_best_theta() {
 #endif
-  return best_particle.theta + 180;
+  return -1*(best_particle.theta + 180) % 360;
 }
 
 void swarm_get_best_buffer(uint8_t *buffer) {
