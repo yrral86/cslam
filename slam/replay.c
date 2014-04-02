@@ -69,30 +69,6 @@ int main (int argc, char **argv) {
       break;
     }
 
-    /*
-    swarm_move(0, 0, 0);
-
-    // wait for sensor
-    assert(pthread_join(sensor_thread, NULL) == 0);
-
-    // get samples
-    for (j = 0; j < sample_count; j++) {
-      scans[j] = sensor_fetch_index(j);
-    }
-
-    // start a scan
-    sensor_thread = sensor_read_raw_n_thread(sample_count);
-
-    // give the swarm the new scans and the historical map
-    swarm_update(scans[0].distances);
-
-    // update historical map
-    // and display map
-    //    bzero(map[2], buffer_get_size()*sizeof(uint8_t));
-    // attenuate current map
-    //    buffer_attenuate(map[0], 0.75);
-
-      */
     iterations++;
   }
 
@@ -125,26 +101,32 @@ void update_display() {
   t = current_particle.theta*M_PI/180;
   s = sin(t);
   c = cos(t);
-  for (i = -50; i < 51; i++)
-    for (j = -50; j < 51; j++ ) {
+  for (j = -50; j < 51; j++ ) {
+    int lim = 51;
+    if (j == 0) lim = 71;
+    for (i = -50; i < lim; i++) {
       record_map_position(0, current_particle.x + i*c - j*s,
 			  current_particle.y + i*s + j*c, 255);
       record_map_position(2, current_particle.x + i*c - j*s,
 			  current_particle.y + i*s + j*c, 255);
     }
+  }
 
   // draw
   display();
 
   // clear position
-  for (i = -50; i < 51; i++)
-    for (j = -50; j < 51; j++ ) {
+  for (j = -50; j < 51; j++ ) {
+    int lim = 51;
+    if (j == 0) lim = 71;
+    for (i = -50; i < lim; i++) {
       record_map_position(0, current_particle.x + i*c - j*s,
 			  current_particle.y + i*s + j*c, 0);
       if (!x_y_protected(current_particle.x + i*c - j*s, current_particle.y + i*s + j*c))
 	record_map_position(2, current_particle.x + i*c - j*s,
 			    current_particle.y + i*s + j*c, 0);
     }
+  }
 
   glutMainLoopEvent();
 }
