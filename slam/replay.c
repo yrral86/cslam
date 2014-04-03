@@ -48,7 +48,7 @@ int main (int argc, char **argv) {
 
       glutInit(&argc, argv);
       // pass size of buffer, then window size
-      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), buffer_get_width()/2, buffer_get_height()/2);
+      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 0.75*buffer_get_width(), 0.75*buffer_get_height());
 
       break;
     case SLAMD_MOVE:
@@ -91,7 +91,7 @@ void update_display() {
   current_particle.theta = swarm_get_best_theta();
 
   printf("x, y, theta = (%d, %d, %d)\n", current_particle.x,
-	 current_particle.x,
+	 current_particle.y,
 	 current_particle.theta);
 
   // copy best map to buffer

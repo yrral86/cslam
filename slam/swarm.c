@@ -169,25 +169,28 @@ void swarm_move_internal(int dx, int dy, int dtheta) {
 #ifdef LINUX
 void swarm_move(int dx, int dy, int dtheta) {
 #endif
-  int i, j = 0;
+  int i, tries;
   particle p;
   // add motion (nothing for now, relying on high variance and lots of particles)
   for (i = 0; i < PARTICLE_COUNT; i++) {
     p = particles[i];
-	do {
-		j++;
+    tries = 0;
+    do {
       // ignore kinematics 40% of the time
       if ((rand() / (double)RAND_MAX) < 0.6) {
         // sample motion distribution
-        particles[i] = particle_sample_motion(particles[i], dx, dy, dtheta);
-	  } else {
+        particles[i] = particle_sample_motion(p, dx, dy, dtheta);
+      } else {
         // sample normal distribution
-        particles[i] = particle_sample_normal(particles[i]);
-	  }
-      // dereference old map, particle_sample_motion copied it already
+        particles[i] = particle_sample_normal(p);
+      }
+      // dereference old map, particle_sample_* copied it already
       landmark_map_dereference(p.map);
-	} while (!in_arena(particles[i].x, particles[i].y));
-	
+      tries++;
+    } while (!in_arena(particles[i].x, particles[i].y) && tries < 5);
+    // if we failed repeatedly, reuse previous pose
+    if (tries >= 5)
+      particles[i] = p;
   }
 }
 
