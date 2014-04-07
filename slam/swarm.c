@@ -286,15 +286,16 @@ void swarm_update(int *distances) {
     for (j = 0; j < m; j++) {
       distance = distances[j];
       // forward is now 0 degrees, left -, right +
-      degrees = -1*(-sensor_degrees/2.0 + j*spacing);
-      theta = (degrees + particles[i].theta)*M_PI/180;
+      //      degrees = -1*(-sensor_degrees/2.0 + j*spacing);
+      degrees = -sensor_degrees/2.0 + j*spacing;
+      theta = (degrees - particles[i].theta)*M_PI/180;
       s = sin(theta);
       c = cos(theta);
 
       // check and record unseen every 1000 mm
       for (l = 0; l < distance; l += 1000) {
 	x = l*c + particles[i].x;
-	y = l*s + particles[i].y;
+	y = l*s + short_side - particles[i].y;
 
 	// make sure it is in bounds
 	if (in_arena(x, y)) {
@@ -306,7 +307,7 @@ void swarm_update(int *distances) {
 
       // check and record seen
       x = distance*c + particles[i].x;
-      y = distance*s + particles[i].y;
+      y = distance*s + short_side - particles[i].y;
 
       // make sure it is in bounds
       if (in_arena(x, y)) {
