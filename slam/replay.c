@@ -38,9 +38,7 @@ int main (int argc, char **argv) {
 
     switch(parsed_line[0]) {
     case SLAMD_INIT:
-      printf("before init\n");
       swarm_init(parsed_line[1], parsed_line[2], parsed_line[3], parsed_line[4], parsed_line[5]);
-      printf("after init\n");
 
       // allocate buffers
       for (i = 0; i < BUFFER_HISTORY; i++)
@@ -52,16 +50,11 @@ int main (int argc, char **argv) {
 
       break;
     case SLAMD_MOVE:
-      printf("before move\n");
       swarm_move(parsed_line[1], parsed_line[2], parsed_line[3]);
-      printf("after move\n");
       break;
     case SLAMD_UPDATE:
-      printf("before update\n");
       swarm_update(parsed_line + 1);
-      printf("after update/before display\n");
       update_display();
-      printf("after display\n");
       break;
     case SLAMD_X:
     case SLAMD_Y:
