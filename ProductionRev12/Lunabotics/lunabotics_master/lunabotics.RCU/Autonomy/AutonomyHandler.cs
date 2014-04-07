@@ -221,7 +221,7 @@ namespace lunabotics.RCU.Autonomy
                             StartingAutonomy();
                             //Initialize Particle Filter
                            // Swarm.swarm_init(1081, 270, 7380, 3880, 1940);
-                            Swarm.swarm_init(721, 180, 7380, 3880, 1940);
+                            Swarm.swarm_init(721, 180, 7400, 4100, 1940);
                             //Swarm.swarm_init(1081, 270, 7380, 1200, 460);
                             //Loop to try and converge particles
                             for (int j = 0; j < 5; j++)

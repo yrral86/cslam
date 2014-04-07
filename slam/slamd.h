@@ -28,6 +28,7 @@ typedef enum {SLAMD_INIT = 0,
 	      SLAMD_UPDATE = 2,
 	      SLAMD_X = 3,
 	      SLAMD_Y = 4,
-	      SLAMD_THETA = 5} slamd_method;
+	      SLAMD_THETA = 5,
+              SLAMD_MAP = 6} slamd_method;
 
 #endif

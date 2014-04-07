@@ -12,7 +12,7 @@ static particle current_particle;
 
 int main (int argc, char **argv) {
   // sensor_scans + function indicator + return
-  int i, iterations, parsed_line[723];
+  int i, iterations, scan_count, parsed_line[723];
   FILE *data_file;
   ssize_t read;
   char *int_string;
@@ -23,6 +23,7 @@ int main (int argc, char **argv) {
   assert(data_file != NULL);
 
   iterations = 0;
+  scan_count = 0;
 
   while((read = getline(&line, &length, data_file)) != -1) {
     int_string = strtok(line, ",");
@@ -54,6 +55,11 @@ int main (int argc, char **argv) {
       break;
     case SLAMD_UPDATE:
       swarm_update(parsed_line + 1);
+      scan_count++;
+      if (scan_count == 5) {
+	swarm_map(parsed_line + 1);
+	scan_count = 0;
+      }
       update_display();
       break;
     case SLAMD_X:
@@ -89,6 +95,7 @@ void update_display() {
 
   // copy best map to buffer
   swarm_get_best_buffer(map[0]);
+  swarm_get_map_buffer(map[2]);
 
   // draw position
   t = current_particle.theta*M_PI/180;

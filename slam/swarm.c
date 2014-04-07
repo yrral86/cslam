@@ -5,6 +5,7 @@
 static particle particles[PARTICLE_COUNT];
 static particle previous_particles[PARTICLE_COUNT];
 static particle best_particle;
+static landmark_map *map;
 static int iterations = 0;
 static int m, sensor_degrees, long_side, short_side, start;
 static double spacing;
@@ -79,6 +80,13 @@ __declspec(dllexport) void swarm_update(int *distances) {
 	WaitForSingleObject(return_sem, INFINITE);
 }
 
+__declspec(dllexport) void swarm_map(int *distances) {
+	params[0] = SLAMD_MAP;
+	memcpy(params + 1, distances, m*sizeof(int));
+	ReleaseSemaphore(param_sem, 1, NULL);
+	WaitForSingleObject(return_sem, INFINITE);
+}
+
 __declspec(dllexport) int swarm_get_best_x() {
 	params[0] = SLAMD_X;
 	ReleaseSemaphore(param_sem, 1, NULL);
@@ -131,6 +139,7 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   buffer_set_arena_size(long_side, short_side);
 
   initial_map.map = landmark_map_copy(NULL);
+  map = landmark_map_copy(NULL);
 
   // draw initial border
   for (k = 0; k < long_side; k += BUFFER_FACTOR)
@@ -381,6 +390,47 @@ void swarm_update(int *distances) {
 }
 
 #ifndef LINUX
+void swarm_map_internal(int *distances) {
+#endif
+#ifdef LINUX
+void swarm_map(int *distances) {
+#endif
+  int j, l, x, y, k;
+  double distance, degrees, theta, s, c;
+
+  for (j = 0; j < m; j++) {
+    distance = distances[j];
+    // forward is now 0 degrees, left -, right +
+    degrees = -sensor_degrees/2.0 + j*spacing;
+    theta = (degrees - best_particle.theta)*M_PI/180;
+    s = sin(theta);
+    c = cos(theta);
+
+    // check and record unseen every 10 mm
+    for (l = 0; l < distance; l += 10) {
+      x = l*c + best_particle.x;
+      y = l*s + short_side - best_particle.y;
+
+      // make sure it is in bounds
+      if (in_arena(x, y)) {
+	k = buffer_index_from_x_y(x, y);
+	landmark_set_unseen(map, k);
+      }
+    }
+    
+    // check and record seen
+    x = distance*c + best_particle.x;
+    y = distance*s + short_side - best_particle.y;
+
+    // make sure it is in bounds
+    if (in_arena(x, y)) {
+      k = buffer_index_from_x_y(x, y);
+      landmark_set_seen(map, k);
+    }
+  }
+}
+
+#ifndef LINUX
 int swarm_get_best_x_internal() {
 #endif
 #ifdef LINUX
@@ -409,6 +459,10 @@ int swarm_get_best_theta() {
 
 void swarm_get_best_buffer(uint8_t *buffer) {
   landmark_write_map(best_particle.map, buffer);
+}
+
+void swarm_get_map_buffer(uint8_t *buffer) {
+  landmark_write_map(map, buffer);
 }
 
 int in_arena(int x, int y) {
