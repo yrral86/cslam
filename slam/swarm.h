@@ -14,7 +14,7 @@
 __declspec(dllexport) void swarm_init(int, int, int, int, int);
 __declspec(dllexport) void swarm_move(int, int, int);
 __declspec(dllexport) void swarm_update(int*);
-__declspec(dllexport) void swarm_map(int*)
+__declspec(dllexport) void swarm_map(int*);
 __declspec(dllexport) int swarm_get_best_x();
 __declspec(dllexport) int swarm_get_best_y();
 __declspec(dllexport) int swarm_get_best_theta();
