@@ -36,6 +36,8 @@ int swarm_get_best_y();
 int swarm_get_best_theta();
 #endif
 void swarm_get_best_buffer(uint8_t*);
+void swarm_get_map_buffer(uint8_t*);
+landmark_map swarm_get_map();
 int in_arena(int, int);
 
 #endif

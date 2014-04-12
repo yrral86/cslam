@@ -124,9 +124,11 @@ void swarm_init_internal(int m_in, int degrees_in, int long_side_in, int short_s
 #ifdef LINUX
 void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
 #endif
-  int i, j, k;
+  int i, j, k, s;
   int x, y, theta;
   particle initial_map;
+  char *str, *tok;
+  FILE *map_file;
   m = m_in;
   sensor_degrees = degrees_in;
   long_side = long_side_in;
@@ -147,14 +149,47 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
       landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(k, j), 10000);
       landmark_set_seen_value(initial_map.map,
 			      buffer_index_from_x_y(k, short_side - 1 - j), 10000);
+      //      landmark_set_seen_value(map, buffer_index_from_x_y(k, j), 100);
+      //      landmark_set_seen_value(map,
+      //      			      buffer_index_from_x_y(k, short_side - 1 - j), 100);
     }
 
   for (k = 0; k < short_side; k += BUFFER_FACTOR)
     for (j = 0; j < BORDER_WIDTH; j += BUFFER_FACTOR) {
-      landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(j, k), 10000);
-      landmark_set_seen_value(initial_map.map,
-			      buffer_index_from_x_y(long_side - 1 - j, k), 10000);
+            landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(j, k), 10000);
+            landmark_set_seen_value(initial_map.map,
+      			      buffer_index_from_x_y(long_side - 1 - j, k), 10000);
+      //      landmark_set_seen_value(map, buffer_index_from_x_y(j, k), 100);
+      //      landmark_set_seen_value(map,
+      //      			      buffer_index_from_x_y(long_side - 1 - j, k), 100);
     }
+
+  // load map
+  map_file = fopen("slamd_map.csv", "r");
+  assert(map_file != NULL);
+
+  s = buffer_get_size();
+  // 22 = 10 characters for 32 unsigned bits * 2 + 2 commas
+  str = malloc(sizeof(char)*s*22);
+
+  fgets(str, sizeof(char)*s*22, map_file);
+
+  fclose(map_file);
+
+  i = 0;
+  tok = strtok(str, ",");
+  do {
+    if (i % 2 == 0) {
+      sscanf(tok, "%u", &(map->map[i/2].seen));
+      //      initial_map.map->map[i/2].seen = map->map[i/2].seen;
+    } else {
+      sscanf(tok, "%u", &(map->map[i/2].unseen));
+      //      initial_map.map->map[i/2].unseen = map->map[i/2].unseen;
+    }
+    i++;
+  } while ((tok = strtok(NULL, ",")) != NULL);
+
+  free(str);
 
   // initialize first round of particles
   x = start/2;
@@ -464,6 +499,10 @@ void swarm_get_best_buffer(uint8_t *buffer) {
 
 void swarm_get_map_buffer(uint8_t *buffer) {
   landmark_write_map(map, buffer);
+}
+
+landmark_map swarm_get_map() {
+  return *map;
 }
 
 int in_arena(int x, int y) {

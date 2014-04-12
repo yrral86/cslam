@@ -75,9 +75,59 @@ int main (int argc, char **argv) {
 
   free(line);
 
-  glutMainLoop();
+  save_map();
+
+  //  glutMainLoop();
 
   return 0;
+}
+
+void save_map() {
+  int i, s;
+  landmark_map map;
+  FILE *map_file = fopen("slamd_map.csv", "w");
+  assert(map_file != NULL);
+
+  map = swarm_get_map();
+
+  // write swarm map to a file
+  s = buffer_get_size();
+  for (i = 0; i < s - 1; i++) {
+    fprintf(map_file, "%u,%u,", map.map[i].seen, map.map[i].unseen);
+  }
+  fprintf(map_file, "%u,%u", map.map[i].seen, map.map[i].unseen);
+
+  fclose(map_file);
+}
+
+landmark_map load_map() {
+  int i, s;
+  landmark_map map;
+  char *str, *tok;
+  FILE *map_file = fopen("slamd_map.csv", "r");
+  assert(map_file != NULL);
+
+  s = buffer_get_size();
+  // 22 = 10 characters for 32 unsigned bits * 2 + 2 commas
+  str = malloc(sizeof(char)*s*22);
+
+  fgets(str, sizeof(char)*s*22, map_file);
+
+  fclose(map_file);
+
+  map.map = malloc(sizeof(landmark_map)*s);
+
+  i = 0;
+  while ((tok = strtok(str, ",")) != NULL) {
+    if (i % 2 == 0)
+      sscanf(tok, "%u", &(map.map[i/2].seen));
+    else
+      sscanf(tok, "%u", &(map.map[i/2].unseen));
+  }
+
+  free(str);
+
+  return map;
 }
 
 void update_display() {
