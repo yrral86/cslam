@@ -1,8 +1,8 @@
-\paragraph{Localization Daemon}
+\subsubsection{Localization Daemon}
 Because sensor data can be noisy, kinematics models will fail to fully account for wheel slippage, and getting lost is not an option, a particle filter is used in order to refine the pose of the vehicle after every movement.
-\subparagraph{Initialization}
+\paragraph{Initialization}
 The initial particle swarm is defined according to the rules of the competition.  Since the filter's pose is relative to the sensor position, which is mounted at the rear of the robot, the robot being centered on one of two particular positions with a random orientation means we start off with particles distributed about two circles.  Each particle will have specific orientations depending on its position on the circle.
-\subparagraph{Evaluation/Resampling}
+\paragraph{Evaluation/Resampling}
 The particle filter then proceeds by first evaluating each particle's fitness.  It does this by comparing the LIDAR range data to the known map of the arena, assuming the pose of the given particle.  The fitness of all particles is normalized to create probabilities.  Next, the particles are ordered by probability and resampled.  Those particles with higher probabilities will be chosen more often than those with lower probabilities.  The highest probability particle is saved and returned to the AutonomyHandler as the current pose.
-\subparagraph{Motion}
+\paragraph{Motion}
 After the AutonomyHandler uses the current pose to make a decision and move the vehicle, it first gives the localization daemon a motion vector.  This vector specifies the expected change in x, y, and theta for the MVV, as calculated from the kinematics model.  Since this model will likely have accuracy issues due to wheel slippage and imperfect hall effect sensor data, not all particles have the motion vector applied.  All particles receive a small normally distributed random perturbation for each of x, y, and theta.  Those particles that did not have the motion vector applied are given a larger perturbation.  In this fashion, the swarm covers all the potential positions of the miner and is once again ready for evaluation and resampling.
