@@ -7,7 +7,7 @@
 // 3, one for current, one for history, one for display
 #define BUFFER_HISTORY 3
 static uint8_t* map[BUFFER_HISTORY];
-
+static int current_command;
 static particle current_particle;
 
 int main (int argc, char **argv) {
@@ -37,7 +37,9 @@ int main (int argc, char **argv) {
     int_string = strtok(NULL, ",");
     sscanf(int_string, "%d\n", parsed_line + i);
 
-    switch(parsed_line[0]) {
+    current_command = parsed_line[0];
+
+    switch(current_command) {
     case SLAMD_INIT:
       swarm_init(parsed_line[1], parsed_line[2], parsed_line[3], parsed_line[4], parsed_line[5]);
 
@@ -47,8 +49,10 @@ int main (int argc, char **argv) {
 
       glutInit(&argc, argv);
       // pass size of buffer, then window size
-      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 1.25*buffer_get_width(), 1.25*buffer_get_height());
+      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 1*buffer_get_width(), 1*buffer_get_height());
 
+      update_display();
+      sleep(5);
       break;
     case SLAMD_MOVE:
       swarm_move(parsed_line[1], parsed_line[2], parsed_line[3]);
@@ -59,7 +63,7 @@ int main (int argc, char **argv) {
       swarm_update(parsed_line + 1);
       scan_count++;
       if (scan_count == 5) {
-	swarm_map(parsed_line + 1);
+	//	swarm_map(parsed_line + 1);
 	scan_count = 0;
       }
       update_display();
@@ -90,14 +94,14 @@ void update_display() {
   
   swarm_get_all_particles(&p);
 
-  printf("x, y, theta = (%d, %d, %d)\n", p[0].x,
-	 p[0].y,
-	 p[0].theta);
-
   // copy best map to buffer
   swarm_get_best_buffer(map[0]);
   // copy best map to buffer
   swarm_get_best_buffer(map[2]);
+  if (current_command == SLAMD_UPDATE)
+    printf("x, y, theta = (%d, %d, %d)\n", p[0].x,
+	   p[0].y,
+	   p[0].theta);
 
   for (k = 0; k < PARTICLE_COUNT; k++) {
     // update localization
@@ -113,7 +117,7 @@ void update_display() {
       for (i = -20; i < lim; i++) {
 	record_map_position(0, current_particle.x + i*c - j*s,
 			    current_particle.y + i*s + j*c, 255);
-	if (k == 0)
+	if (k == 0 && current_command == SLAMD_UPDATE)
 	  record_map_position(2, current_particle.x + i*c - j*s,
 			      current_particle.y + i*s + j*c, 255);
       }
@@ -138,7 +142,7 @@ void update_display() {
 	if (!x_y_protected(current_particle.x + i*c - j*s, current_particle.y + i*s + j*c))
 	  record_map_position(0, current_particle.x + i*c - j*s,
 			      current_particle.y + i*s + j*c, 0);
-	if (k == 0 && !x_y_protected(current_particle.x + i*c - j*s, current_particle.y + i*s + j*c))
+	if (k == 0 && current_command == SLAMD_UPDATE && !x_y_protected(current_particle.x + i*c - j*s, current_particle.y + i*s + j*c))
 	  record_map_position(2, current_particle.x + i*c - j*s,
 			      current_particle.y + i*s + j*c, 0);
       }
