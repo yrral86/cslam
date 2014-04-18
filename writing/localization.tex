@@ -4,7 +4,7 @@ Because sensor data can be noisy, kinematics models will fail to fully account f
 Inside the particle filter, the pose is defined as the sensor position.  The initial particle swarm is distributed to match the rules of the competition as shown in figure \ref{fig:swarm-init}.  In order to cover all possible starting positions, the initial particles must be distributed around two circles, one for each potential mining vehicle location.  After choosing a random vehicle location and orientation for a particular particle, the distance between the center of the MMV and sensor is used to determine the particle location.
 \begin{figure}[H]
 \includegraphics[width=\linewidth]{swarm-init.png}
-\caption{Initial swarm distribution}
+\caption[Swarm Initialization]{Initial swarm distribution}
 \label{fig:swarm-init}
 \end{figure}
 \paragraph{Motion}
@@ -14,6 +14,6 @@ After the swarm is updated using the latest motion vector, the particle filter t
 \begin{figure}[H]
 \includegraphics[width=0.5\linewidth]{swarm-first-move.png}\includegraphics[width=0.5\linewidth]{swarm-first-update.png}
 \includegraphics[width=0.5\linewidth]{swarm-second-move.png}\includegraphics[width=0.5\linewidth]{swarm-second-update.png}
-\caption{Two steps of the move/update loop (left image in each row is the swarm after the move command, right image is the filtered swarm after the sensor update)}
+\caption[Swarm Move/Update]{Two steps of the move/update loop (left image in each row is the swarm after the move command, right image is the filtered swarm after the sensor update)}
 \label{fig:swarm-loop}
 \end{figure}
