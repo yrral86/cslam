@@ -25,6 +25,18 @@ int main (int argc, char **argv) {
   iterations = 0;
   scan_count = 0;
 
+  swarm_init(721, 180, 7400, 4100, 1940);
+  // allocate buffers
+  for (i = 0; i < BUFFER_HISTORY; i++)
+    map[i] = buffer_allocate();
+
+  glutInit(&argc, argv);
+  // pass size of buffer, then window size
+  initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 2.25*buffer_get_width(), 2.25*buffer_get_height());
+
+  update_display();
+
+  /*
   while((read = getline(&line, &length, data_file)) != -1) {
     int_string = strtok(line, ",");
     if (strncmp(int_string, "init", 4) == 0)
@@ -70,6 +82,7 @@ int main (int argc, char **argv) {
 
     iterations++;
   }
+  */
 
   fclose(data_file);
 
@@ -81,51 +94,71 @@ int main (int argc, char **argv) {
 }
 
 void update_display() {
-  int i, j;
+  int i, j, k;
   double s, c, t;
+  particle *p;
+  
+  swarm_get_all_particles(&p);
 
+  for (k = 0; k < PARTICLE_COUNT; k++) {
+    /*
   // update localization
   current_particle.x = swarm_get_best_x();
   current_particle.y = swarm_get_best_y();
   current_particle.theta = swarm_get_best_theta();
+    */
+  // update localization
+    current_particle = p[k];
 
-  printf("x, y, theta = (%d, %d, %d)\n", current_particle.x,
-	 current_particle.y,
-	 current_particle.theta);
+    /*    printf("x, y, theta = (%d, %d, %d)\n", current_particle.x,
+	   current_particle.y,
+	   current_particle.theta);
+    */
 
+    /*
   // copy best map to buffer
   swarm_get_best_buffer(map[0]);
   swarm_get_map_buffer(map[2]);
+    */
 
   // draw position
   t = current_particle.theta*M_PI/180;
   s = sin(t);
   c = cos(t);
-  for (j = -50; j < 51; j++ ) {
-    int lim = 51;
-    if (j == 0) lim = 71;
-    for (i = -50; i < lim; i++) {
+  for (j = -20; j < 21; j++ ) {
+    int lim = 21;
+    if (j == 0) lim = 21;
+    for (i = -20; i < lim; i++) {
       record_map_position(0, current_particle.x + i*c - j*s,
 			  current_particle.y + i*s + j*c, 255);
       record_map_position(2, current_particle.x + i*c - j*s,
-			  current_particle.y + i*s + j*c, 255);
+	       	  current_particle.y + i*s + j*c, 255);
     }
   }
 
+  }
   // draw
   display();
 
-  // clear position
-  for (j = -50; j < 51; j++ ) {
-    int lim = 51;
-    if (j == 0) lim = 71;
-    for (i = -50; i < lim; i++) {
+  for (k = 0 ; k < PARTICLE_COUNT; k++) {
+    current_particle = p[k];
+
+  t = current_particle.theta*M_PI/180;
+  s = sin(t);
+  c = cos(t);
+
+  // clear positions
+  for (j = -20; j < 21; j++ ) {
+    int lim = 21;
+    if (j == 0) lim = 21;
+    for (i = -20; i < lim; i++) {
       record_map_position(0, current_particle.x + i*c - j*s,
 			  current_particle.y + i*s + j*c, 0);
       if (!x_y_protected(current_particle.x + i*c - j*s, current_particle.y + i*s + j*c))
 	record_map_position(2, current_particle.x + i*c - j*s,
 			    current_particle.y + i*s + j*c, 0);
     }
+  }
   }
 
   glutMainLoopEvent();

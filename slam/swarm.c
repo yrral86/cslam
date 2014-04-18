@@ -9,6 +9,7 @@ static landmark_map *map;
 static int iterations = 0;
 static int m, sensor_degrees, long_side, short_side, start;
 static double spacing;
+static int sensor_radius = 500;
 
 #ifndef LINUX
 __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
@@ -127,6 +128,7 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   int i, j, k;
   int x, y, theta;
   particle initial_map;
+  double t;
   m = m_in;
   sensor_degrees = degrees_in;
   long_side = long_side_in;
@@ -160,11 +162,11 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   x = start/2;
   for (i = 0; i < PARTICLE_COUNT; i++) {
     y = short_side/4;
-    //    if (rand_limit(2))
-    y *= 3;
-      //    theta = rand_limit(360) - 180;
-    theta = 180 + (rand_limit(20) - 10);
-    particles[i] = particle_init(x, y, theta);
+    if (rand_limit(2))
+      y *= 3;
+    theta = rand_limit(360) - 180;
+    t = theta*M_PI/180;
+    particles[i] = particle_init(x + sensor_radius*cos(t), y + sensor_radius*sin(t), theta);
     particles[i].map = initial_map.map;
     landmark_map_reference(particles[i].map);
   }
@@ -464,6 +466,10 @@ void swarm_get_best_buffer(uint8_t *buffer) {
 
 void swarm_get_map_buffer(uint8_t *buffer) {
   landmark_write_map(map, buffer);
+}
+
+void swarm_get_all_particles(particle **p) {
+  *p = particles;
 }
 
 int in_arena(int x, int y) {
