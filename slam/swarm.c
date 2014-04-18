@@ -171,6 +171,8 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
     landmark_map_reference(particles[i].map);
   }
 
+  best_particle = particles[0];
+
   landmark_map_dereference(initial_map.map);
 }
 

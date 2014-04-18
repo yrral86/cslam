@@ -1,10 +1,11 @@
 \subsubsection{Localization Daemon}
 Because sensor data can be noisy, kinematics models will fail to fully account for wheel slippage, and getting lost is not an option, a particle filter is used in order to refine the pose of the vehicle after every movement.
 \paragraph{Initialization}
-The initial particle swarm is distributed to match the rules of the competition.  Inside the particle filter, the pose is defined as the sensor position.  In order to cover all possible starting positions, the initial particles must be distributed around two circles, one for each potential mining vehicle location.  After choosing a random vehicle location and orientation for a particular particle, the distance between the center of the MMV and sensor is used to determine the particle location.
+Inside the particle filter, the pose is defined as the sensor position.  The initial particle swarm is distributed to match the rules of the competition as shown in figure \ref{fig:swarm-init}.  In order to cover all possible starting positions, the initial particles must be distributed around two circles, one for each potential mining vehicle location.  After choosing a random vehicle location and orientation for a particular particle, the distance between the center of the MMV and sensor is used to determine the particle location.
 \begin{figure}[H]
 \includegraphics[width=\linewidth]{swarm-init.png}
 \caption{Initial swarm distribution}
+\label{fig:swarm-init}
 \end{figure}
 \paragraph{Evaluation/Resampling}
 The particle filter then proceeds by first evaluating each particle's fitness.  It does this by comparing the LIDAR range data to the known map of the arena, assuming the pose of the given particle.  The fitness of all particles is normalized to create probabilities.  Next, the particles are ordered by probability and resampled.  Those particles with higher probabilities will be chosen more often than those with lower probabilities.  The highest probability particle is saved and returned to the AutonomyHandler as the current pose.
