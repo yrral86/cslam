@@ -7,7 +7,7 @@ static particle previous_particles[PARTICLE_COUNT];
 static particle best_particle;
 static landmark_map *map;
 static int iterations = 0;
-static int m, sensor_degrees, long_side, short_side, start;
+static int m, sensor_degrees, long_side, short_side, start, radius;
 static double spacing;
 
 #ifndef LINUX
@@ -135,6 +135,8 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   short_side = short_side_in;
   start = start_in;
   spacing = sensor_degrees/(double)(m);
+  // distance from center to sensor
+  radius = 500;
 
   rand_normal_init();
 
@@ -149,8 +151,8 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
       landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(k, j), 10000);
       landmark_set_seen_value(initial_map.map,
 			      buffer_index_from_x_y(k, short_side - 1 - j), 10000);
-      //      landmark_set_seen_value(map, buffer_index_from_x_y(k, j), 100);
-      //      landmark_set_seen_value(map,
+      //            landmark_set_seen_value(map, buffer_index_from_x_y(k, j), 100);
+      //            landmark_set_seen_value(map,
       //      			      buffer_index_from_x_y(k, short_side - 1 - j), 100);
     }
 
@@ -159,9 +161,9 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
             landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(j, k), 10000);
             landmark_set_seen_value(initial_map.map,
       			      buffer_index_from_x_y(long_side - 1 - j, k), 10000);
-      //      landmark_set_seen_value(map, buffer_index_from_x_y(j, k), 100);
-      //      landmark_set_seen_value(map,
-      //      			      buffer_index_from_x_y(long_side - 1 - j, k), 100);
+	    //            landmark_set_seen_value(map, buffer_index_from_x_y(j, k), 100);
+	    //            landmark_set_seen_value(map,
+	    //            			      buffer_index_from_x_y(long_side - 1 - j, k), 100);
     }
 
   // load map
@@ -214,6 +216,14 @@ void swarm_move_internal(int dx, int dy, int dtheta) {
 void swarm_move(int dx, int dy, int dtheta) {
 #endif
   int i, tries;
+  double t_old, t_new;
+  t_old = best_particle.theta*M_PI/180;
+  t_new = (best_particle.theta + dtheta)*M_PI/180;
+
+  // adjust dx/dy for theta using radius
+  dx += radius*cos(t_old) - radius*sin(t_new);
+  dy += radius*sin(t_old) - radius*cos(t_new);
+
   particle p;
   // add motion (nothing for now, relying on high variance and lots of particles)
   for (i = 0; i < PARTICLE_COUNT; i++) {
@@ -472,7 +482,7 @@ int swarm_get_best_x_internal() {
 #ifdef LINUX
 int swarm_get_best_x() {
 #endif
-  return best_particle.x;
+  return best_particle.x + radius*cos(best_particle.theta*M_PI/180);
 }
 
 #ifndef LINUX
@@ -481,7 +491,7 @@ int swarm_get_best_y_internal() {
 #ifdef LINUX
 int swarm_get_best_y() {
 #endif
-  return short_side - best_particle.y;
+  return short_side - (best_particle.y + radius*sin(best_particle.theta*M_PI/180));
 }
 
 #ifndef LINUX
