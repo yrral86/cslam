@@ -1,2 +1,19 @@
-\section{Localization}
-The localization algorithm localizes the vehicle in the arena.
+\subsubsection{Localization Daemon}
+Because sensor data can be noisy, kinematics models will fail to fully account for wheel slippage, and getting lost is not an option, a particle filter is used in order to refine the pose of the vehicle after every movement.
+\paragraph{Initialization}
+Inside the particle filter, the pose is defined as the sensor position.  The initial particle swarm is distributed to match the rules of the competition as shown in figure \ref{fig:swarm-init}.  In order to cover all possible starting positions, the initial particles must be distributed around two circles, one for each potential mining vehicle location.  After choosing a random vehicle location and orientation for a particular particle, the distance between the center of the MMV and sensor is used to determine the particle location.
+\begin{figure}[H]
+\includegraphics[width=\linewidth]{swarm-init.png}
+\caption[Swarm Initialization]{Initial swarm distribution}
+\label{fig:swarm-init}
+\end{figure}
+\paragraph{Motion}
+After the AutonomyHandler uses the current pose to make a decision and move the vehicle, it first gives the localization daemon a motion vector.  This vector specifies the expected change in $x$, $y$, and $\theta$ for the MMV, as calculated from the kinematics model.  Since this model will likely have accuracy issues due to wheel slippage and imperfect Hall effect sensor data, not all particles have the motion vector applied.  All particles receive a normally distributed random perturbation for each of $x$, $y$, and $\theta$.  Those particles that did not have the motion vector applied are given a larger perturbation.  A smaller perturbation is applied to those particles who are moved according to the motion vector.  In this fashion, the swarm covers all the potential positions of the miner and is now ready for evaluation and resampling.  The left side of figure \ref{fig:swarm-loop} shows the state of the swarm after the application of the motion vector.
+\paragraph{Evaluation/Resampling}
+After the swarm is updated using the latest motion vector, the particle filter then proceeds by evaluating each particle's fitness.  It does this by comparing the LIDAR range data to the known map of the arena, assuming the pose of the given particle.  The fitness of all particles is normalized to create probabilities.  Next, the particles are ordered by probability and resampled.  Those particles with higher probabilities will be chosen more often than those with lower probabilities.  The right side of figure \ref{fig:swarm-loop} shows the state of the swarm after it has been resampled.  At this point, it only contains particles that closely match the sensor data.  The highest probability particle is saved and returned to the AutonomyHandler as the current pose.
+\begin{figure}[H]
+\includegraphics[width=0.5\linewidth]{swarm-first-move.png}\includegraphics[width=0.5\linewidth]{swarm-first-update.png}
+\includegraphics[width=0.5\linewidth]{swarm-second-move.png}\includegraphics[width=0.5\linewidth]{swarm-second-update.png}
+\caption[Swarm Move/Update]{Two steps of the move/update loop (left image in each row is the swarm after the move command, right image is the filtered swarm after the sensor update)}
+\label{fig:swarm-loop}
+\end{figure}

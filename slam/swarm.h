@@ -38,6 +38,7 @@ int swarm_get_best_theta();
 void swarm_get_best_buffer(uint8_t*);
 void swarm_get_map_buffer(uint8_t*);
 landmark_map swarm_get_map();
+void swarm_get_all_particles(particle**);
 int in_arena(int, int);
 
 #endif

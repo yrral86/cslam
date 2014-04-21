@@ -23,6 +23,6 @@ void display() {
   glWindowPos2i(0, 0);
   glDrawPixels(buffer_width, buffer_height, GL_LUMINANCE, GL_UNSIGNED_BYTE, buffer1);
   glWindowPos2i(0, window_height);
-  glDrawPixels(buffer_width, buffer_height, GL_LUMINANCE, GL_UNSIGNED_BYTE, buffer2);
+  glDrawPixels(buffer_width, buffer_height, GL_LUMINANCE, GL_UNSIGNED_BYTE, buffer2);  
   glutSwapBuffers();
 }

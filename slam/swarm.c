@@ -7,8 +7,10 @@ static particle previous_particles[PARTICLE_COUNT];
 static particle best_particle;
 static landmark_map *map;
 static int iterations = 0;
-static int m, sensor_degrees, long_side, short_side, start, radius;
+static int m, sensor_degrees, long_side, short_side, start;
 static double spacing;
+// 500 mm
+static int sensor_radius = 500;
 
 #ifndef LINUX
 __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
@@ -129,14 +131,13 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   particle initial_map;
   char *str, *tok;
   FILE *map_file;
+  double t;
   m = m_in;
   sensor_degrees = degrees_in;
   long_side = long_side_in;
   short_side = short_side_in;
   start = start_in;
   spacing = sensor_degrees/(double)(m);
-  // distance from center to sensor
-  radius = 500;
 
   rand_normal_init();
 
@@ -151,9 +152,9 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
       landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(k, j), 10000);
       landmark_set_seen_value(initial_map.map,
 			      buffer_index_from_x_y(k, short_side - 1 - j), 10000);
-      //            landmark_set_seen_value(map, buffer_index_from_x_y(k, j), 100);
-      //            landmark_set_seen_value(map,
-      //      			      buffer_index_from_x_y(k, short_side - 1 - j), 100);
+      landmark_set_seen_value(map, buffer_index_from_x_y(k, j), 100);
+      landmark_set_seen_value(map,
+			      buffer_index_from_x_y(k, short_side - 1 - j), 100);
     }
 
   for (k = 0; k < short_side; k += BUFFER_FACTOR)
@@ -161,11 +162,12 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
             landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(j, k), 10000);
             landmark_set_seen_value(initial_map.map,
       			      buffer_index_from_x_y(long_side - 1 - j, k), 10000);
-	    //            landmark_set_seen_value(map, buffer_index_from_x_y(j, k), 100);
-	    //            landmark_set_seen_value(map,
-	    //            			      buffer_index_from_x_y(long_side - 1 - j, k), 100);
+	    landmark_set_seen_value(map, buffer_index_from_x_y(j, k), 100);
+	    landmark_set_seen_value(map,
+				    buffer_index_from_x_y(long_side - 1 - j, k), 100);
     }
 
+  /*
   // load map
   map_file = fopen("slamd_map.csv", "r");
   assert(map_file != NULL);
@@ -192,19 +194,22 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   } while ((tok = strtok(NULL, ",")) != NULL);
 
   free(str);
+  */
 
   // initialize first round of particles
   x = start/2;
   for (i = 0; i < PARTICLE_COUNT; i++) {
     y = short_side/4;
-    //    if (rand_limit(2))
-    y *= 3;
-      //    theta = rand_limit(360) - 180;
-    theta = 180 + (rand_limit(20) - 10);
-    particles[i] = particle_init(x, y, theta);
+    if (rand_limit(2))
+      y *= 3;
+    theta = rand_limit(360) - 180;
+    t = theta*M_PI/180;
+    particles[i] = particle_init(x + sensor_radius*cos(t), y + sensor_radius*sin(t), theta);
     particles[i].map = initial_map.map;
     landmark_map_reference(particles[i].map);
   }
+
+  best_particle = particles[0];
 
   landmark_map_dereference(initial_map.map);
 }
@@ -220,9 +225,9 @@ void swarm_move(int dx, int dy, int dtheta) {
   t_old = best_particle.theta*M_PI/180;
   t_new = (best_particle.theta + dtheta)*M_PI/180;
 
-  // adjust dx/dy for theta using radius
-  dx += radius*cos(t_old) - radius*sin(t_new);
-  dy += radius*sin(t_old) - radius*cos(t_new);
+  // adjust dx/dy for dtheta using radius and old theta
+  dx += sensor_radius*(cos(t_new) - cos(t_old));
+  dy += sensor_radius*(sin(t_new) - sin(t_old));
 
   particle p;
   // add motion (nothing for now, relying on high variance and lots of particles)
@@ -482,7 +487,7 @@ int swarm_get_best_x_internal() {
 #ifdef LINUX
 int swarm_get_best_x() {
 #endif
-  return best_particle.x + radius*cos(best_particle.theta*M_PI/180);
+  return best_particle.x + sensor_radius*cos(best_particle.theta*M_PI/180);
 }
 
 #ifndef LINUX
@@ -491,7 +496,7 @@ int swarm_get_best_y_internal() {
 #ifdef LINUX
 int swarm_get_best_y() {
 #endif
-  return short_side - (best_particle.y + radius*sin(best_particle.theta*M_PI/180));
+  return short_side - (best_particle.y + sensor_radius*sin(best_particle.theta*M_PI/180));
 }
 
 #ifndef LINUX
@@ -513,6 +518,10 @@ void swarm_get_map_buffer(uint8_t *buffer) {
 
 landmark_map swarm_get_map() {
   return *map;
+}
+
+void swarm_get_all_particles(particle **p) {
+  *p = particles;
 }
 
 int in_arena(int x, int y) {

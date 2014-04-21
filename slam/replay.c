@@ -7,7 +7,7 @@
 // 3, one for current, one for history, one for display
 #define BUFFER_HISTORY 3
 static uint8_t* map[BUFFER_HISTORY];
-
+static int current_command;
 static particle current_particle;
 
 int main (int argc, char **argv) {
@@ -37,7 +37,9 @@ int main (int argc, char **argv) {
     int_string = strtok(NULL, ",");
     sscanf(int_string, "%d\n", parsed_line + i);
 
-    switch(parsed_line[0]) {
+    current_command = parsed_line[0];
+
+    switch(current_command) {
     case SLAMD_INIT:
       swarm_init(parsed_line[1], parsed_line[2], parsed_line[3], parsed_line[4], parsed_line[5]);
 
@@ -49,15 +51,17 @@ int main (int argc, char **argv) {
       // pass size of buffer, then window size
       initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 0.75*buffer_get_width(), 0.75*buffer_get_height());
 
+      update_display();
       break;
     case SLAMD_MOVE:
       swarm_move(parsed_line[1], parsed_line[2], parsed_line[3]);
+      update_display();
       break;
     case SLAMD_UPDATE:
       swarm_update(parsed_line + 1);
       scan_count++;
       if (scan_count == 5) {
-	swarm_map(parsed_line + 1);
+	//	swarm_map(parsed_line + 1);
 	scan_count = 0;
       }
       update_display();
@@ -131,50 +135,64 @@ landmark_map load_map() {
 }
 
 void update_display() {
-  int i, j;
+  int i, j, k;
   double s, c, t;
-
-  // update localization
-  current_particle.x = swarm_get_best_x();
-  current_particle.y = swarm_get_best_y();
-  current_particle.theta = swarm_get_best_theta();
-
-  printf("x, y, theta = (%d, %d, %d)\n", current_particle.x,
-	 current_particle.y,
-	 current_particle.theta);
+  particle *p;
+  
+  swarm_get_all_particles(&p);
 
   // copy best map to buffer
   swarm_get_best_buffer(map[0]);
-  swarm_get_map_buffer(map[2]);
+  // copy best map to buffer
+  swarm_get_best_buffer(map[2]);
+  if (current_command == SLAMD_UPDATE)
+    printf("x, y, theta = (%d, %d, %d)\n", p[0].x,
+	   p[0].y,
+	   p[0].theta);
 
-  // draw position
-  t = current_particle.theta*M_PI/180;
-  s = sin(t);
-  c = cos(t);
-  for (j = -50; j < 51; j++ ) {
-    int lim = 51;
-    if (j == 0) lim = 71;
-    for (i = -50; i < lim; i++) {
-      record_map_position(0, current_particle.x + i*c - j*s,
-			  current_particle.y + i*s + j*c, 255);
-      record_map_position(2, current_particle.x + i*c - j*s,
-			  current_particle.y + i*s + j*c, 255);
+  for (k = 0; k < PARTICLE_COUNT; k++) {
+    // update localization
+    current_particle = p[k];
+
+    // draw position
+    t = current_particle.theta*M_PI/180;
+    s = sin(t);
+    c = cos(t);
+    for (j = -20; j < 21; j++ ) {
+      int lim = 21;
+      if (j == 0) lim = 21;
+      for (i = -20; i < lim; i++) {
+	record_map_position(0, current_particle.x + i*c - j*s,
+			    current_particle.y + i*s + j*c, 255);
+	if (k == 0 && current_command == SLAMD_UPDATE)
+	  record_map_position(2, current_particle.x + i*c - j*s,
+			      current_particle.y + i*s + j*c, 255);
+      }
     }
   }
 
   // draw
   display();
 
-  // clear position
-  for (j = -50; j < 51; j++ ) {
-    int lim = 51;
-    if (j == 0) lim = 71;
-    for (i = -50; i < lim; i++) {
-      record_map_position(0, current_particle.x + i*c - j*s,
-			  current_particle.y + i*s + j*c, 0);
-      if (!x_y_protected(current_particle.x + i*c - j*s, current_particle.y + i*s + j*c))
-	record_map_position(2, current_particle.x + i*c - j*s,
-			    current_particle.y + i*s + j*c, 0);
+  for (k = 0 ; k < PARTICLE_COUNT; k++) {
+    current_particle = p[k];
+
+    t = current_particle.theta*M_PI/180;
+    s = sin(t);
+    c = cos(t);
+
+    // clear positions
+    for (j = -20; j < 21; j++ ) {
+      int lim = 21;
+      if (j == 0) lim = 21;
+      for (i = -20; i < lim; i++) {
+	if (!x_y_protected(current_particle.x + i*c - j*s, current_particle.y + i*s + j*c))
+	  record_map_position(0, current_particle.x + i*c - j*s,
+			      current_particle.y + i*s + j*c, 0);
+	if (k == 0 && current_command == SLAMD_UPDATE && !x_y_protected(current_particle.x + i*c - j*s, current_particle.y + i*s + j*c))
+	  record_map_position(2, current_particle.x + i*c - j*s,
+			      current_particle.y + i*s + j*c, 0);
+      }
     }
   }
 

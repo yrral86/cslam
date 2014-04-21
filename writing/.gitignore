@@ -2,4 +2,6 @@
 *.log
 *.pdf
 *.toc
+*.lof
 *~
+*.bak
