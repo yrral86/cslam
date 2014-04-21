@@ -49,7 +49,8 @@ int main (int argc, char **argv) {
 
       glutInit(&argc, argv);
       // pass size of buffer, then window size
-      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 0.75*buffer_get_width(), 0.75*buffer_get_height());
+      //      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 0.75*buffer_get_width(), 0.75*buffer_get_height());
+      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 1*buffer_get_width(), 1*buffer_get_height());
 
       update_display();
       break;
@@ -143,30 +144,31 @@ void update_display() {
 
   // copy best map to buffer
   swarm_get_best_buffer(map[0]);
-  // copy best map to buffer
-  swarm_get_best_buffer(map[2]);
+  // copy map to buffer
+  swarm_get_map_buffer(map[2]);
   if (current_command == SLAMD_UPDATE)
-    printf("x, y, theta = (%d, %d, %d)\n", p[0].x,
-	   p[0].y,
-	   p[0].theta);
+    printf("x, y, theta = (%d, %d, %d)\n", swarm_get_best_x(),
+	   swarm_get_best_y(),
+	   swarm_get_best_theta());
 
-  for (k = 0; k < PARTICLE_COUNT; k++) {
+  //  for (k = 0; k < PARTICLE_COUNT; k++) {
+  for (k = 0; k < 1; k++) {
     // update localization
     current_particle = p[k];
 
     // draw position
-    t = current_particle.theta*M_PI/180;
+    t = swarm_get_theta(k)*M_PI/180;
     s = sin(t);
     c = cos(t);
     for (j = -20; j < 21; j++ ) {
       int lim = 21;
-      if (j == 0) lim = 21;
+      if (j == 0) lim = 41;
       for (i = -20; i < lim; i++) {
-	record_map_position(0, current_particle.x + i*c - j*s,
-			    current_particle.y + i*s + j*c, 255);
-	if (k == 0 && current_command == SLAMD_UPDATE)
-	  record_map_position(2, current_particle.x + i*c - j*s,
-			      current_particle.y + i*s + j*c, 255);
+	record_map_position(0, swarm_get_x(k) + i*c - j*s,
+			    swarm_get_y(k) + i*s + j*c, 255);
+	if (k == 0)// && current_command == SLAMD_UPDATE)
+	  record_map_position(2, swarm_get_best_x() + i*c - j*s,
+			      swarm_get_best_y() + i*s + j*c, 255);
       }
     }
   }
@@ -174,24 +176,25 @@ void update_display() {
   // draw
   display();
 
-  for (k = 0 ; k < PARTICLE_COUNT; k++) {
+  //  for (k = 0 ; k < PARTICLE_COUNT; k++) {
+  for (k = 0 ; k < 1; k++) {
     current_particle = p[k];
 
-    t = current_particle.theta*M_PI/180;
+    t = swarm_get_theta(k)*M_PI/180;
     s = sin(t);
     c = cos(t);
 
     // clear positions
     for (j = -20; j < 21; j++ ) {
       int lim = 21;
-      if (j == 0) lim = 21;
+      if (j == 0) lim = 41;
       for (i = -20; i < lim; i++) {
-	if (!x_y_protected(current_particle.x + i*c - j*s, current_particle.y + i*s + j*c))
-	  record_map_position(0, current_particle.x + i*c - j*s,
-			      current_particle.y + i*s + j*c, 0);
-	if (k == 0 && current_command == SLAMD_UPDATE && !x_y_protected(current_particle.x + i*c - j*s, current_particle.y + i*s + j*c))
-	  record_map_position(2, current_particle.x + i*c - j*s,
-			      current_particle.y + i*s + j*c, 0);
+	if (!x_y_protected(swarm_get_x(k) + i*c - j*s, swarm_get_y(k) + i*s + j*c))
+	  record_map_position(0, swarm_get_x(k) + i*c - j*s,
+			      swarm_get_y(k) + i*s + j*c, 0);
+	if (k == 0 /*&& current_command == SLAMD_UPDATE*/ && !x_y_protected(swarm_get_best_x() + i*c - j*s, swarm_get_best_y() + i*s + j*c))
+	  record_map_position(2, swarm_get_best_x() + i*c - j*s,
+			      swarm_get_best_y() + i*s + j*c, 0);
       }
     }
   }

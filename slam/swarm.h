@@ -35,6 +35,9 @@ int swarm_get_best_x();
 int swarm_get_best_y();
 int swarm_get_best_theta();
 #endif
+int swarm_get_x(int);
+int swarm_get_y(int);
+int swarm_get_theta(int);
 void swarm_get_best_buffer(uint8_t*);
 void swarm_get_map_buffer(uint8_t*);
 landmark_map swarm_get_map();

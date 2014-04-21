@@ -152,9 +152,9 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
       landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(k, j), 10000);
       landmark_set_seen_value(initial_map.map,
 			      buffer_index_from_x_y(k, short_side - 1 - j), 10000);
-      landmark_set_seen_value(map, buffer_index_from_x_y(k, j), 100);
-      landmark_set_seen_value(map,
-			      buffer_index_from_x_y(k, short_side - 1 - j), 100);
+      //      landmark_set_seen_value(map, buffer_index_from_x_y(k, j), 100);
+      //      landmark_set_seen_value(map,
+      //			      buffer_index_from_x_y(k, short_side - 1 - j), 100);
     }
 
   for (k = 0; k < short_side; k += BUFFER_FACTOR)
@@ -162,12 +162,11 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
             landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(j, k), 10000);
             landmark_set_seen_value(initial_map.map,
       			      buffer_index_from_x_y(long_side - 1 - j, k), 10000);
-	    landmark_set_seen_value(map, buffer_index_from_x_y(j, k), 100);
-	    landmark_set_seen_value(map,
-				    buffer_index_from_x_y(long_side - 1 - j, k), 100);
+	    //	    landmark_set_seen_value(map, buffer_index_from_x_y(j, k), 100);
+	    //	    landmark_set_seen_value(map,
+	    //				    buffer_index_from_x_y(long_side - 1 - j, k), 100);
     }
 
-  /*
   // load map
   map_file = fopen("slamd_map.csv", "r");
   assert(map_file != NULL);
@@ -194,7 +193,6 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   } while ((tok = strtok(NULL, ",")) != NULL);
 
   free(str);
-  */
 
   // initialize first round of particles
   x = start/2;
@@ -235,8 +233,8 @@ void swarm_move(int dx, int dy, int dtheta) {
     p = particles[i];
     tries = 0;
     do {
-      // ignore kinematics 40% of the time
-      if ((rand() / (double)RAND_MAX) < 0.6) {
+      // ignore kinematics 20% of the time
+      if ((rand() / (double)RAND_MAX) < 0.8) {
         // sample motion distribution
         particles[i] = particle_sample_motion(p, dx, dy, dtheta);
       } else {
@@ -487,7 +485,7 @@ int swarm_get_best_x_internal() {
 #ifdef LINUX
 int swarm_get_best_x() {
 #endif
-  return best_particle.x + sensor_radius*cos(best_particle.theta*M_PI/180);
+  return best_particle.x - sensor_radius*cos(best_particle.theta*M_PI/180);
 }
 
 #ifndef LINUX
@@ -496,7 +494,7 @@ int swarm_get_best_y_internal() {
 #ifdef LINUX
 int swarm_get_best_y() {
 #endif
-  return short_side - (best_particle.y + sensor_radius*sin(best_particle.theta*M_PI/180));
+  return short_side - (best_particle.y - sensor_radius*sin(best_particle.theta*M_PI/180));
 }
 
 #ifndef LINUX
@@ -506,6 +504,18 @@ int swarm_get_best_theta_internal() {
 int swarm_get_best_theta() {
 #endif
   return -1*(best_particle.theta + 180) % 360;
+}
+
+int swarm_get_x(int i) {
+  return particles[i].x - sensor_radius*cos(particles[i].theta*M_PI/180);
+}
+
+int swarm_get_y(int i) {
+  return short_side - (particles[i].y - sensor_radius*sin(particles[i].theta*M_PI/180));
+}
+
+int swarm_get_theta(int i) {
+  return -1*(particles[i].theta + 180) % 360;
 }
 
 void swarm_get_best_buffer(uint8_t *buffer) {
