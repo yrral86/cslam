@@ -51,18 +51,15 @@ int main (int argc, char **argv) {
       // pass size of buffer, then window size
       //      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 0.75*buffer_get_width(), 0.75*buffer_get_height());
       initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 1*buffer_get_width(), 1*buffer_get_height());
-
-      update_display();
       break;
     case SLAMD_MOVE:
       swarm_move(parsed_line[1], parsed_line[2], parsed_line[3]);
-      update_display();
       break;
     case SLAMD_UPDATE:
       swarm_update(parsed_line + 1);
       scan_count++;
       if (scan_count == 5) {
-	//	swarm_map(parsed_line + 1);
+	swarm_map(parsed_line + 1);
 	scan_count = 0;
       }
       update_display();
