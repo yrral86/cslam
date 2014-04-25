@@ -9,8 +9,8 @@ static landmark_map *map;
 static int iterations = 0;
 static int m, sensor_degrees, long_side, short_side, start;
 static double spacing;
-// 500 mm
-static int sensor_radius = 500;
+// 600 mm
+static int sensor_radius = 600;
 
 #ifndef LINUX
 __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
@@ -152,9 +152,9 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
       landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(k, j), 10000);
       landmark_set_seen_value(initial_map.map,
 			      buffer_index_from_x_y(k, short_side - 1 - j), 10000);
-      landmark_set_seen_value(map, buffer_index_from_x_y(k, j), 100);
-      landmark_set_seen_value(map,
-			      buffer_index_from_x_y(k, short_side - 1 - j), 100);
+      //      landmark_set_seen_value(map, buffer_index_from_x_y(k, j), 1000);
+      //      landmark_set_seen_value(map,
+      //      			      buffer_index_from_x_y(k, short_side - 1 - j), 1000);
     }
 
   for (k = 0; k < short_side; k += BUFFER_FACTOR)
@@ -162,11 +162,11 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
             landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(j, k), 10000);
             landmark_set_seen_value(initial_map.map,
       			      buffer_index_from_x_y(long_side - 1 - j, k), 10000);
-	    landmark_set_seen_value(map, buffer_index_from_x_y(j, k), 100);
-	    landmark_set_seen_value(map,
-				    buffer_index_from_x_y(long_side - 1 - j, k), 100);
+	    //	    landmark_set_seen_value(map, buffer_index_from_x_y(j, k), 1000);
+	    //	    landmark_set_seen_value(map,
+	    //				    buffer_index_from_x_y(long_side - 1 - j, k), 1000);
     }
-  /*
+
   // load map
   map_file = fopen("slamd_map.csv", "r");
   assert(map_file != NULL);
@@ -193,7 +193,7 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   } while ((tok = strtok(NULL, ",")) != NULL);
 
   free(str);
-*/
+
   // initialize first round of particles
   x = start/2;
   for (i = 0; i < PARTICLE_COUNT; i++) {

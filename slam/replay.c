@@ -50,7 +50,7 @@ int main (int argc, char **argv) {
       glutInit(&argc, argv);
       // pass size of buffer, then window size
       //      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 0.75*buffer_get_width(), 0.75*buffer_get_height());
-      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 1*buffer_get_width(), 1*buffer_get_height());
+      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 1.75*buffer_get_width(), 1.75*buffer_get_height());
       break;
     case SLAMD_MOVE:
       swarm_move(parsed_line[1], parsed_line[2], parsed_line[3]);
