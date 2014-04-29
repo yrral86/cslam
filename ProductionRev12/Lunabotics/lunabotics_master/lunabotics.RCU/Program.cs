@@ -102,8 +102,8 @@ namespace lunabotics.RCU
             {
                 if (configuration == null)
                     throw new Exception("None or invalid configuration specified");
-
-                mode = Mode.Autonomous;
+                //Change for Autonomy
+                mode = Mode.Manual;
                 feedback = new TelemetryFeedback();
                 stopwatch = new Stopwatch();
 

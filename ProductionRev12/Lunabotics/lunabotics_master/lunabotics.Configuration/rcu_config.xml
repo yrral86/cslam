@@ -9,15 +9,15 @@
       <Name>RoboteQ_1</Name>
       <OutputSettings>
         <RoboteqOutputSettings>
-          <Device>FrontLeftWheel</Device>
-          <Invert>true</Invert>
+          <Device>FrontRightWheel</Device>
+          <Invert>false</Invert>
           <Channel>Motor1</Channel>
         </RoboteqOutputSettings>
         <RoboteqOutputSettings>
-          <Device>FrontRightWheel</Device>
+          <Device>RearRightWheel</Device>
           <Invert>false</Invert>
           <Channel>Motor2</Channel>
-        </RoboteqOutputSettings>
+        </RoboteqOutputSettings>C:\Users\Admin\Documents\WVU-Lunabotics\ProductionRev12\Lunabotics\lunabotics_master\lunabotics.Configuration\rcu_config.xml
       </OutputSettings>
       <InputSettings>
         <TelemetryString>?V_?A_?AI_?CB</TelemetryString>
@@ -74,20 +74,19 @@
         </TelemetryMappings>
       </InputSettings>
     </RoboteqConfiguration>
-    <!--
     <RoboteqConfiguration>
       <COM_Port>COM4</COM_Port>
       <Timeout>250</Timeout>
       <Name>RoboteQ_2</Name>
       <OutputSettings>
         <RoboteqOutputSettings>
-          <Device>RearLeftWheel</Device>
+          <Device>FrontLeftWheel</Device>
           <Invert>true</Invert>
           <Channel>Motor1</Channel>
         </RoboteqOutputSettings>
         <RoboteqOutputSettings>
-          <Device>RearRightWheel</Device>
-          <Invert>false</Invert>
+          <Device>RearLeftWheel</Device>
+          <Invert>true</Invert>
           <Channel>Motor2</Channel>
         </RoboteqOutputSettings>
       </OutputSettings>
@@ -134,7 +133,7 @@
       </InputSettings>
     </RoboteqConfiguration>
     <RoboteqConfiguration>
-      <COM_Port>COM1</COM_Port>
+      <COM_Port>COM5</COM_Port>
       <Timeout>250</Timeout>
       <Name>RoboteQ_3</Name>
       <OutputSettings>
@@ -192,7 +191,7 @@
       </InputSettings>
     </RoboteqConfiguration>
     <RoboteqConfiguration>
-      <COM_Port>COM2</COM_Port>
+      <COM_Port>COM6</COM_Port>
       <Timeout>250</Timeout>
       <Name>RoboteQ_4</Name>
       <OutputSettings>
@@ -258,7 +257,6 @@
         </TelemetryMappings>
       </InputSettings>
     </RoboteqConfiguration>
-    -->
   </RoboteqConfigurations>
   <FrontCameraConfiguration>
     <DeviceName>@device:pnp:\\?\usb#vid_046d&amp;pid_0829&amp;mi_00#7&amp;842c165&amp;0&amp;0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global</DeviceName>
