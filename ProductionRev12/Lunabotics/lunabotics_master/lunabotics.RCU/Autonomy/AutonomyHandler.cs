@@ -220,9 +220,7 @@ namespace lunabotics.RCU.Autonomy
                             //Initialize position - temporary 
                             StartingAutonomy();
                             //Initialize Particle Filter
-                           // Swarm.swarm_init(1081, 270, 7380, 3880, 1940);
-                            Swarm.swarm_init(721, 180, 7400, 4100, 1940);
-                            //Swarm.swarm_init(1081, 270, 7380, 1200, 460);
+                            Swarm.swarm_init(721, 180, 7600, 4300, 1940);
                             //Loop to try and converge particles
                             for (int j = 0; j < 5; j++)
                             {
@@ -253,10 +251,10 @@ namespace lunabotics.RCU.Autonomy
 
                             */
                             
-                            while (currentPose[Pose.Xpos] < 4500)
+                            while (currentPose[Pose.Xpos] < 5100)
                             {
-                                MoveForward(600);
-                                Thread.Sleep(100);
+                                MoveForward(300);
+//                                Thread.Sleep(100);
                                 
                             }
 
@@ -266,37 +264,60 @@ namespace lunabotics.RCU.Autonomy
                             while (currentPose[Pose.Heading] < 90 && currentPose[Pose.Heading] < -270)
                             {
                                 tankTurnLeft(300);
-                                Thread.Sleep(100);
+//                                Thread.Sleep(100);
                             }
                             while (currentPose[Pose.Heading] > 90 || currentPose[Pose.Heading] > -270)
                             {
                                 tankTurnRight(30);
-                                Thread.Sleep(100);
+//                                Thread.Sleep(100);
                             }
-                            while (currentPose[Pose.Ypos] < 2200)
+                            while (currentPose[Pose.Ypos] < 2800)
                             {
                                 MoveForward(300);
-                                Thread.Sleep(100);
+//                                Thread.Sleep(100);
                             }
                             while (currentPose[Pose.Heading] < 180 && currentPose[Pose.Heading] < -180)
                             {
                                 tankTurnLeft(300);
-                                Thread.Sleep(100);
+//                                Thread.Sleep(100);
                             }
                             while (currentPose[Pose.Heading] > 180 || currentPose[Pose.Heading] > -180)
                             {
                                 tankTurnRight(30);
-                                Thread.Sleep(100);
+//                                Thread.Sleep(100);
                             }
-                            while (currentPose[Pose.Xpos] > 2500)
+                            while (currentPose[Pose.Xpos] > 1900)
                             {
                                 MoveForward(300);
-                                Thread.Sleep(100);
+//                                Thread.Sleep(100);
+                            }
+                            while (currentPose[Pose.Heading] < 270 && currentPose[Pose.Heading] < -90)
+                            {
+                                tankTurnLeft(300);
+//                                Thread.Sleep(100);
+                            }
+                            while (currentPose[Pose.Heading] > 270 || currentPose[Pose.Heading] > -90)
+                            {
+                                tankTurnRight(30);
+//                                Thread.Sleep(100);
+                            }
+			    while (currentPose[Pose.Ypos] > 1200)
+			    {
+				moveForward(300);
+//				Thread.Sleep(100);
+			    }
+                            while (currentPose[Pose.Heading] < 0 && currentPose[Pose.Heading] < 360)
+                            {
+                                tankTurnLeft(300);
+//                                Thread.Sleep(100);
+                            }
+                            while (currentPose[Pose.Heading] > 0 || currentPose[Pose.Heading] > 360)
+                            {
+                                tankTurnRight(30);
+//                                Thread.Sleep(100);
                             }
 
-                            tankTurnLeft(600);
-
-                            state = State.SafeShutdown;
+                            state = State.TemporaryTesting;
                             break;
 
                         case State.SafeShutdown:
