@@ -220,6 +220,7 @@ void swarm_move(int dx, int dy, int dtheta) {
 #endif
   int i, tries;
   double t_old, t_new;
+  particle p;
   t_old = best_particle.theta*M_PI/180;
   t_new = (best_particle.theta + dtheta)*M_PI/180;
 
@@ -227,7 +228,6 @@ void swarm_move(int dx, int dy, int dtheta) {
   dx += sensor_radius*(cos(t_new) - cos(t_old));
   dy += sensor_radius*(sin(t_new) - sin(t_old));
 
-  particle p;
   // add motion (nothing for now, relying on high variance and lots of particles)
   for (i = 0; i < PARTICLE_COUNT; i++) {
     p = particles[i];

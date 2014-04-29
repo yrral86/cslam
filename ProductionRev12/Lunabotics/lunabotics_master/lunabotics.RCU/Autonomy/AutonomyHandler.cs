@@ -303,7 +303,7 @@ namespace lunabotics.RCU.Autonomy
                             }
 			    while (currentPose[Pose.Ypos] > 1200)
 			    {
-				moveForward(300);
+				MoveForward(300);
 //				Thread.Sleep(100);
 			    }
                             while (currentPose[Pose.Heading] < 0 && currentPose[Pose.Heading] < 360)
