@@ -166,7 +166,7 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
 	    //	    landmark_set_seen_value(map,
 	    //				    buffer_index_from_x_y(long_side - 1 - j, k), 1000);
     }
-
+  /*
   // load map
   map_file = fopen("slamd_map.csv", "r");
   assert(map_file != NULL);
@@ -193,7 +193,7 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   } while ((tok = strtok(NULL, ",")) != NULL);
 
   free(str);
-
+  */
   // initialize first round of particles
   x = start/2;
   for (i = 0; i < PARTICLE_COUNT; i++) {
