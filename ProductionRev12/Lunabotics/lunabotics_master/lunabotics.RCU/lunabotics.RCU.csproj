@@ -57,9 +57,6 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Autonomy\Algorithms\Deposition.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Autonomy\Algorithms\MiningAlgorithm.cs" />
     <Compile Include="Autonomy\Algorithms\PotentialFieldAlgorithm.cs" />
     <Compile Include="Autonomy\AutonomyHandler.cs">

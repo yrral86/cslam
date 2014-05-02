@@ -10,7 +10,7 @@ namespace lunabotics.RCU.Models
     {
         public static double MaximumWheelVelocity = 2.827; // rad/s
         public static double MaximumRotationalVelocity = 1.713; // rad/s
-        public static double MaximumTranslationalVelocity = 55.66; // m/s
+        public static double MaximumTranslationalVelocity = 55.66; // mm/s
         public static double WheelRadius = 195; // mm
         public static double WheelTrack = 650; // mm
         public static double HallCountPerRev = 1200;
@@ -29,14 +29,69 @@ namespace lunabotics.RCU.Models
             int leftCommand = (int)((omegaLeft / MaximumWheelVelocity) * 1000.0d);
             int rightCommand = (int)((omegaRight / MaximumWheelVelocity) * 1000.0d);
 
-            //Console.WriteLine("Command: " + leftCommand + ", " + rightCommand);
+            //Console.WriteLine("Command: L" + leftCommand + ", R" + rightCommand);
 
             // Set output
             Dictionary<Devices, int> output = new Dictionary<Devices, int>();
-            output[Devices.FrontLeftWheel] = leftCommand * 100;
-            output[Devices.RearLeftWheel] = leftCommand * 100;
-            output[Devices.FrontRightWheel] = rightCommand * 100;
-            output[Devices.RearRightWheel] = rightCommand * 100;
+            output[Devices.FrontLeftWheel] = leftCommand * 10;
+            output[Devices.RearLeftWheel] = leftCommand * 10;
+            output[Devices.FrontRightWheel] = rightCommand * 10;
+            output[Devices.RearRightWheel] = rightCommand * 10;
+
+            return output;
+        }
+
+        public static Dictionary<Devices, int> ManualWheelStates(double translationalVelocity, double rotationalVelocity)
+        {
+            int leftCommand = 0;
+            int rightCommand = 0;
+            int X = (int) rotationalVelocity;
+            int aX = Math.Abs(X);
+            int Y = (int) translationalVelocity;
+            int aY = Math.Abs(Y);
+            //Console.WriteLine("Command from Controller Y" + Y.ToString() + ", X" + X.ToString());
+            // Forward and Backward
+            if (aX <= 400 && aY >= 200)
+            {
+                leftCommand = Y;
+                rightCommand = Y;
+            }
+            //Tank turning
+            else if (aY <= 400 && aX >= 200)
+            {
+                leftCommand = X;
+                rightCommand = -X;
+            }
+            //Slight turns
+            else if (aX > 400 && aY > 400)
+            {
+                if (Y > 0 && X > 0)
+                {
+                    leftCommand = Y;
+                    rightCommand = Y - X / 2;
+                } 
+                else if (Y < 0 && X > 0)
+                {
+                    leftCommand = Y - X / 2;
+                    rightCommand = Y;
+                }
+                else if (Y > 0 && X < 0)
+                {
+                    leftCommand = Y + X / 2;
+                    rightCommand = Y;
+                }
+                else if (Y < 0 && X < 0)
+                {
+                    leftCommand = Y;
+                    rightCommand = Y + X / 2;
+                }
+
+            }
+            Dictionary<Devices, int> output = new Dictionary<Devices, int>();
+            output[Devices.FrontLeftWheel] = leftCommand;
+            output[Devices.RearLeftWheel] = leftCommand;
+            output[Devices.FrontRightWheel] = rightCommand;
+            output[Devices.RearRightWheel] = rightCommand;
 
             return output;
         }

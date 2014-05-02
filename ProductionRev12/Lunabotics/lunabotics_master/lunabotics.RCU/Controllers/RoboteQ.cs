@@ -107,7 +107,7 @@ namespace lunabotics.RCU.Controllers
                 if (!serial_port.IsOpen) //try to recover serial port if it has become disconnected
                     serial_port.Open();
                 //Motor speed write to RoboteQ
-                serial_port.Write("!CB 1 1_!CB 2 1 \r");
+                serial_port.Write("!CB 1 0_!CB 2 0 \r");
             }
         }
 
@@ -198,7 +198,7 @@ namespace lunabotics.RCU.Controllers
             RoboteqOutputSettings outputSettings;
             if (channel_map.TryGetValue(channel, out outputSettings)) //check if this roboteq has config for this channel
             {
-                if (state.TryGetValue(outputSettings.Device, out val)) //see if the state contains updated value
+                if (state.TryGetValue(outputSettings.Device, out val)) //see if the state contains `d value
                 {
                     if (outputSettings.Invert)
                         val *= -1;
@@ -368,6 +368,8 @@ namespace lunabotics.RCU.Controllers
 
                 //Motor speed write to RoboteQ
                 serial_port.Write("!M " + motor1Value.ToString() + " " + motor2Value.ToString() + "\r");
+                //Console.WriteLine(motor1Value.ToString() + " " + motor2Value.ToString() + "\r");
+                //Thread.Sleep(1000);
             }
         }
 

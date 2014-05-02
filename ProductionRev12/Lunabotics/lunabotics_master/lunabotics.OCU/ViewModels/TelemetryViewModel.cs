@@ -509,19 +509,13 @@ namespace lunabotics.OCU.ViewModels
 
                 
                 
-                // Tilt Telemetry //
-                TiltX = e.Telemetry.TiltX;
-                TiltY = e.Telemetry.TiltY;
-                
                 // Localization //
                 X = e.Telemetry.X;
                 Y = e.Telemetry.Y;
                 Phi = e.Telemetry.Psi;
                 State = e.Telemetry.State;
 
-                // Rear Proximity Sensors //
-                
-                
+                // Rear Proximity Sensors // 
                 RearProximityLeft = e.Telemetry.RearProximityLeft;
                 RearProximityRight = e.Telemetry.RearProximityRight;
 
@@ -532,30 +526,30 @@ namespace lunabotics.OCU.ViewModels
                 // Collection Bin States // 
                 BinLeftMotorAmps = e.Telemetry.BinLeftMotorAmps; // From 'driver' perspective
                 BinRightMotorAmps = e.Telemetry.BinRightMotorAmps;
-                BinLowerSwitchDepressed = e.Telemetry.BinLowerSwitchDepressed;
-                BinUpperSwitchDepressed = e.Telemetry.BinUpperSwitchDepressed;                 
+                //BinLowerSwitchDepressed = e.Telemetry.BinLowerSwitchDepressed;
+                //BinUpperSwitchDepressed = e.Telemetry.BinUpperSwitchDepressed;                 
                  
                                 
 
-                //process range finder
-                //System.Diagnostics.Debug.WriteLine("Rear RF Data Length: " + e.Telemetry.RearRangeFinderDataLength);
-                if (e.Telemetry.RearRangeFinderDataLength != 0)
-                {
-                    double angle = Properties.RangeFinderSettings.Default.RearStartAngle;
-                    Models.ObservableNotifiableCollection<Models.Point> newPoints = new Models.ObservableNotifiableCollection<Models.Point>();
+                ////process range finder
+                ////System.Diagnostics.Debug.WriteLine("Rear RF Data Length: " + e.Telemetry.RearRangeFinderDataLength);
+                //if (e.Telemetry.RearRangeFinderDataLength != 0)
+                //{
+                //    double angle = Properties.RangeFinderSettings.Default.RearStartAngle;
+                //    Models.ObservableNotifiableCollection<Models.Point> newPoints = new Models.ObservableNotifiableCollection<Models.Point>();
 
-                    for (int i = 0; i < e.Telemetry.RearRangeFinderDataLength && i < Properties.RangeFinderSettings.Default.RearDataLength; ++i, angle += Properties.RangeFinderSettings.Default.RearStepAngle)
-                    {
-                        double dist = Math.Min(1000, e.Telemetry.RearRangeFinderData[i]);
-                        newPoints.Add(new Models.Point()
-                        {
-                            X = dist * Math.Cos(angle * Math.PI / 180),
-                            Y = dist * Math.Sin(angle * Math.PI / 180)
-                        });
-                    }
+                //    for (int i = 0; i < e.Telemetry.RearRangeFinderDataLength && i < Properties.RangeFinderSettings.Default.RearDataLength; ++i, angle += Properties.RangeFinderSettings.Default.RearStepAngle)
+                //    {
+                //        double dist = Math.Min(1000, e.Telemetry.RearRangeFinderData[i]);
+                //        newPoints.Add(new Models.Point()
+                //        {
+                //            X = dist * Math.Cos(angle * Math.PI / 180),
+                //            Y = dist * Math.Sin(angle * Math.PI / 180)
+                //        });
+                //    }
 
-                    App.Current.Dispatcher.Invoke((Action)(() => { RearRFPoints = newPoints; }), new TimeSpan(0,0,1));
-                }
+                //    App.Current.Dispatcher.Invoke((Action)(() => { RearRFPoints = newPoints; }), new TimeSpan(0,0,1));
+                //}
             }
             catch (Exception ex)
             {

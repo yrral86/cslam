@@ -33,31 +33,23 @@ namespace lunabotics.Configuration
         CleanPowerBatteryAmps,
 
         // Digging
-        ScoopPitchRawValue,
-        ArmAngleRawValue,
+        LeftScoopActuatorFeedback,
+        RightScoopActuatorFeedback,
+        ScoopArmAngleRaw,
         ArmLowerLimitSwitch,
         ArmUpperLimitSwitch,
-        ArmMotorAmps,
 
         // Dumping
-        BinLeftMotorAmps,
-        BinRightMotorAmps,
-        BinLowerLimitSwitch,
-        BinUpperLimitSwitch,
-
-        // Tilt sensor
-        TiltX,
-        TiltY,
+        BucketAngle,
 
         // Rear proximity sensors
-        RearProximityLeft,
-        RearProximityRight,
+        RearLeftIR,
+        RearRightIR,
 
         // Localization
         LocalizationX,
         LocalizationY,
         LocalizationPsi,        
-        LocalizationConfidence,
 
         // Autonomy
         LocalizationState,

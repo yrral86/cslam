@@ -63,12 +63,6 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="D:\Muff Mining Vehicle\rcu_config.xml">
-      <SubType>Designer</SubType>
-      <Link>rcu_config.xml</Link>
-    </Content>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

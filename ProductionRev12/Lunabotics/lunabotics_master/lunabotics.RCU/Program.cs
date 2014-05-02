@@ -113,8 +113,8 @@ namespace lunabotics.RCU
                 // Load RoboteQs
                 if (useRoboteQs)
                 {
-                    foreach (var roboteq_config in configuration.RoboteqConfigurations)
-                        roboteqs.Add(new Controllers.RoboteQ(roboteq_config));
+                    foreach (var RoboteqConfiguration in configuration.RoboteqConfigurations)
+                        roboteqs.Add(new Controllers.RoboteQ(RoboteqConfiguration));
 
                     foreach (Controllers.RoboteQ roboteq in roboteqs)
                     {
@@ -280,97 +280,97 @@ namespace lunabotics.RCU
                         case Mode.Autonomous:
                             // Do nothing
                             break;
-                        case Mode.BinLowerMacro:
-                            if (!feedback.BinLowerSwitchDepressed)
-                            {
-                                // Check limit switch
-                                state[CommandFields.LeftBucketActuator] = -1000;
-                                state[CommandFields.RightBucketActuator] = -1000;
-                            }
-                            else
-                            {
-                                mode = Mode.Manual;
-                            }
+                        //case Mode.BinLowerMacro:
+                        //    if (!feedback.BinLowerSwitchDepressed)
+                        //    {
+                        //        // Check limit switch
+                        //        state[CommandFields.LeftBucketActuator] = -1000;
+                        //        state[CommandFields.RightBucketActuator] = -1000;
+                        //    }
+                        //    else
+                        //    {
+                        //        mode = Mode.Manual;
+                        //    }
 
-                            // Enqueue current state from controller
-                            stateQueue.Enqueue(state);
+                        //    // Enqueue current state from controller
+                        //    stateQueue.Enqueue(state);
 
-                            break;
-                        case Mode.BinRaiseMacro:
-                            if (!feedback.BinUpperSwitchDepressed)
-                            {
-                                // Check limit switch
-                                state[CommandFields.LeftBucketActuator] = 1000;
-                                state[CommandFields.RightBucketActuator] = 1000;
-                            }
-                            else
-                            {
-                                mode = Mode.Manual;
-                            }
+                        //    break;
+                        //case Mode.BinRaiseMacro:
+                        //    if (!feedback.BinUpperSwitchDepressed)
+                        //    {
+                        //        // Check limit switch
+                        //        state[CommandFields.LeftBucketActuator] = 1000;
+                        //        state[CommandFields.RightBucketActuator] = 1000;
+                        //    }
+                        //    else
+                        //    {
+                        //        mode = Mode.Manual;
+                        //    }
 
-                            // Enqueue current state from controller
-                            stateQueue.Enqueue(state);
-                            break;
-                        case Mode.CollectScoopMacro:
-                            if (!feedback.BinUpperSwitchDepressed)
-                            {
-                                // Move actuators in and raise scoop
-                                state[CommandFields.BucketPitch] = -1000;
-                                state[CommandFields.BucketPivot] = 1000;
-                                stopwatch.Restart();
-                            }
-                            else if (stopwatch.ElapsedMilliseconds < 700)
-                            {
-                                state[CommandFields.TranslationalVelocity] = 1000;
-                            }
-                            else
-                            {
-                                mode = Mode.Manual;
-                            }
+                        //    // Enqueue current state from controller
+                        //    stateQueue.Enqueue(state);
+                        //    break;
+                        //case Mode.CollectScoopMacro:
+                        //    if (!feedback.BinUpperSwitchDepressed)
+                        //    {
+                        //        // Move actuators in and raise scoop
+                        //        state[CommandFields.BucketPitch] = -1000;
+                        //        state[CommandFields.BucketPivot] = 1000;
+                        //        stopwatch.Restart();
+                        //    }
+                        //    else if (stopwatch.ElapsedMilliseconds < 700)
+                        //    {
+                        //        state[CommandFields.TranslationalVelocity] = 1000;
+                        //    }
+                        //    else
+                        //    {
+                        //        mode = Mode.Manual;
+                        //    }
 
-                            // Enqueue current state from controller
-                            stateQueue.Enqueue(state);
-                            break;
-                        case Mode.DockRobotMacro:
-                            // Calcuate orientation error
-                            double orientationError = feedback.RearProximityLeft - feedback.RearProximityRight;
+                        //    // Enqueue current state from controller
+                        //    stateQueue.Enqueue(state);
+                        //    break;
+                        //case Mode.DockRobotMacro:
+                        //    // Calcuate orientation error
+                        //    double orientationError = feedback.RearProximityLeft - feedback.RearProximityRight;
 
-                            // Check orientation, TODO: un-hard-code
-                            if (orientationError > 30)
-                            {
-                                double gain = 1.0; // TODO: tune this
+                        //    // Check orientation, TODO: un-hard-code
+                        //    if (orientationError > 30)
+                        //    {
+                        //        double gain = 1.0; // TODO: tune this
 
-                                state[CommandFields.RotationalVelocity] = (short)(orientationError * gain);
-                                state[CommandFields.TranslationalVelocity] = 0;
-                            }
-                            else
-                            {
-                                // Calculate average distance
-                                double distanceError = (feedback.RearProximityLeft + feedback.RearProximityRight) / 2.0d;
+                        //        state[CommandFields.RotationalVelocity] = (short)(orientationError * gain);
+                        //        state[CommandFields.TranslationalVelocity] = 0;
+                        //    }
+                        //    else
+                        //    {
+                        //        // Calculate average distance
+                        //        double distanceError = (feedback.RearProximityLeft + feedback.RearProximityRight) / 2.0d;
 
-                                // Check distance error, TODO
-                                if (distanceError > 15)
-                                {
-                                    // Backup slowly
-                                    state[CommandFields.RotationalVelocity] = 0;
-                                    state[CommandFields.TranslationalVelocity] = -500;
-                                }
-                                else
-                                {
-                                    // Close enough, move scoop all the way down
-                                    state[CommandFields.BucketPivot] = -1000;
-                                    // Check for done
-                                    if (feedback.BinLowerSwitchDepressed)
-                                    {
-                                        // All done
-                                        mode = Mode.Manual;
-                                    }
-                                }
-                            }
+                        //        // Check distance error, TODO
+                        //        if (distanceError > 15)
+                        //        {
+                        //            // Backup slowly
+                        //            state[CommandFields.RotationalVelocity] = 0;
+                        //            state[CommandFields.TranslationalVelocity] = -500;
+                        //        }
+                        //        else
+                        //        {
+                        //            // Close enough, move scoop all the way down
+                        //            state[CommandFields.BucketPivot] = -1000;
+                        //            // Check for done
+                        //            if (feedback.BinLowerSwitchDepressed)
+                        //            {
+                        //                // All done
+                        //                mode = Mode.Manual;
+                        //            }
+                        //        }
+                        //    }
 
-                            // Enqueue current state from controller
-                            stateQueue.Enqueue(state);
-                            break;
+                        //    // Enqueue current state from controller
+                        //    stateQueue.Enqueue(state);
+                        //    break;
                         default:
 
                             break;
@@ -401,18 +401,27 @@ namespace lunabotics.RCU
                     //first, retrieve wheel states
                     if (robotState.ContainsKey(CommandFields.TranslationalVelocity) && robotState.ContainsKey(CommandFields.RotationalVelocity))
                     {
-                        // Get velocities
-                        double translationalVelocity = Kinematics.GetTranslationalVelocity(robotState[Comms.CommandEncoding.CommandFields.TranslationalVelocity]);
-                        double rotationalVelocity = Kinematics.GetRotationalVelocity(robotState[Comms.CommandEncoding.CommandFields.RotationalVelocity]);
+                        
+                        // Calculate kinematics for Autonomy
+                        if (mode == Mode.Autonomous)
+                        {
+                            // Get velocities
+                            double translationalVelocity = Kinematics.GetTranslationalVelocity(robotState[Comms.CommandEncoding.CommandFields.TranslationalVelocity]);
+                            double rotationalVelocity = Kinematics.GetRotationalVelocity(robotState[Comms.CommandEncoding.CommandFields.RotationalVelocity]);
 
-                        // Calculate kinematics
-                        deviceStates = MergeStates(deviceStates, Kinematics.GetWheelStates(
-                            translationalVelocity, rotationalVelocity));
+                            deviceStates = MergeStates(deviceStates, Kinematics.GetWheelStates(
+                                translationalVelocity, rotationalVelocity));
+                        }
+                        else
+                        {
+                            // Get X and Y stick values
+                            double translationalVelocity = robotState[Comms.CommandEncoding.CommandFields.TranslationalVelocity];
+                            double rotationalVelocity = robotState[Comms.CommandEncoding.CommandFields.RotationalVelocity];
+
+                            deviceStates = MergeStates(deviceStates, Kinematics.ManualWheelStates(
+                                translationalVelocity, rotationalVelocity));
+                        }
                     }
-
-                    // Get servo command
-                    if (robotState.ContainsKey(CommandFields.RangeFinderServo))
-                        deviceStates[Devices.RangeFinderServo] = robotState[CommandFields.RangeFinderServo];
 
                     //TEMPORARY KLUDGE:
                     if (robotState.ContainsKey(CommandFields.BucketPitch))
@@ -425,8 +434,11 @@ namespace lunabotics.RCU
                         deviceStates[Devices.RightBucketActuator] = robotState[Comms.CommandEncoding.CommandFields.RightBucketActuator];
 
                     foreach (Controllers.RoboteQ roboteq in roboteqs)
+                    {
+                        //Console.WriteLine("Command before SetVal " + deviceStates[Devices.FrontLeftWheel] + ", " + deviceStates[Devices.FrontRightWheel]);
                         roboteq.SetValues(deviceStates);
-                    
+                        //Thread.Sleep(1000);
+                    }
                     //if (frontCam != null)
                     //    if (robotState.ContainsKey(Comms.CommandEncoding.CommandFields.FrontCameraState))
                     //        frontCam.UpdateState(Comms.States.VideoState.DecodeVideoState(robotState[CommandFields.FrontCameraState]));

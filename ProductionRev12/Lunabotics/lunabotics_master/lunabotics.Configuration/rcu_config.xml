@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <RCUConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <CommandPort>10000</CommandPort>
-  <OCU_IP_Address>192.168.1.100</OCU_IP_Address>
+  <OCU_IP_Address>127.0.0.1</OCU_IP_Address>
   <RoboteqConfigurations>
     <RoboteqConfiguration>
       <COM_Port>COM3</COM_Port>
@@ -17,7 +17,7 @@
           <Device>RearRightWheel</Device>
           <Invert>false</Invert>
           <Channel>Motor2</Channel>
-        </RoboteqOutputSettings>C:\Users\Admin\Documents\WVU-Lunabotics\ProductionRev12\Lunabotics\lunabotics_master\lunabotics.Configuration\rcu_config.xml
+        </RoboteqOutputSettings>
       </OutputSettings>
       <InputSettings>
         <TelemetryString>?V_?A_?AI_?CB</TelemetryString>
@@ -172,6 +172,7 @@
                 <Index>1</Index>
                 <Telemetry>RoboteQ_3_MotorAmpsCh2</Telemetry>
               </TelemetryIndexMapping>
+              <!--
               <TelemetryIndexMapping>
                 <Index>1</Index>
                 <Telemetry>BeltMotorAmps</Telemetry>
@@ -185,6 +186,7 @@
                 <Index>0</Index>
                 <Telemetry>BucketPivotRawValue</Telemetry>
               </TelemetryIndexMapping>
+              -->
             </IndexMappings>
           </TelemetryMapping>
         </TelemetryMappings>
@@ -232,6 +234,7 @@
               </TelemetryIndexMapping>
             </IndexMappings>
           </TelemetryMapping>
+          <!--
           <TelemetryMapping>
             <TypeLabel>AI</TypeLabel>
             <IndexMappings>
@@ -254,6 +257,7 @@
               </TelemetryIndexMapping>
             </IndexMappings>
           </TelemetryMapping>
+          -->
         </TelemetryMappings>
       </InputSettings>
     </RoboteqConfiguration>
