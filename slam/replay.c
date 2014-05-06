@@ -12,7 +12,7 @@ static particle current_particle;
 
 int main (int argc, char **argv) {
   // sensor_scans + function indicator + return
-  int i, iterations, scan_count, parsed_line[723];
+  int i, init, iterations, scan_count, parsed_line[723];
   FILE *data_file;
   ssize_t read;
   char *int_string;
@@ -24,6 +24,7 @@ int main (int argc, char **argv) {
 
   iterations = 0;
   scan_count = 0;
+  init = 1;
 
   while((read = getline(&line, &length, data_file)) != -1) {
     int_string = strtok(line, ",");
@@ -58,7 +59,8 @@ int main (int argc, char **argv) {
     case SLAMD_UPDATE:
       swarm_update(parsed_line + 1);
       scan_count++;
-      if (scan_count == 5) {
+      if ((scan_count == 5 && init == 1) || scan_count == 6) {
+	if (init == 1) init = 0;
 	swarm_map(parsed_line + 1);
 	scan_count = 0;
       }

@@ -14,7 +14,7 @@ int rand_limit(int limit) {
 }
 
 double rand_normal(int variance) {
-  return box_muller(0, sqrt((double)variance));
+  return box_muller(0, (double)variance);
 }
 
 void rand_normal_init() {
