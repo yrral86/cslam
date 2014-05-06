@@ -504,7 +504,10 @@ int swarm_get_best_theta_internal() {
 #ifdef LINUX
 int swarm_get_best_theta() {
 #endif
-  return -1*(best_particle.theta + 180) % 360;
+  int t =-1*(best_particle.theta + 180) % 360;
+  if (t < -180) t += 360;
+  else if (t > 180) t -= 360;
+  return t;
 }
 
 int swarm_get_x(int i) {
