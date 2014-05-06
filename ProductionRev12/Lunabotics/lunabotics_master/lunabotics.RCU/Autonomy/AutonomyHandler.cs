@@ -161,7 +161,7 @@ namespace lunabotics.RCU.Autonomy
             ////hokuyo initialization
             //urg.Connect(ip_address, port_number);
             //stream = urg.GetStream();
-            
+            Console.WriteLine("Autonomy.Start()");
             // Reset stopwatch
             stopwatch.Restart();
             // Set state
@@ -219,10 +219,11 @@ namespace lunabotics.RCU.Autonomy
                             break;
 
                         case State.InitializeAutonomy:
+                            
                             //Initialize position - temporary 
                             StartingAutonomy();
                             //Initialize Particle Filter
-                            Swarm.swarm_init(721, 180, 7600, 4300, 1940);
+                            Swarm.swarm_init(721, 180, 7300, 4100, 1940);
                             /*MoveForward(1200);
                             Thread.Sleep(100);
                             tankTurnLeft(300);
@@ -232,8 +233,8 @@ namespace lunabotics.RCU.Autonomy
                             MoveReverse(300);
                             state = State.SafeShutdown;
                             break;*/
-
-                            turnToThetaZero();
+                            
+                            //turnToThetaZero();
                         
                         //Loop to try and converge particles
                             for (int j = 0; j < 5; j++)
@@ -245,8 +246,10 @@ namespace lunabotics.RCU.Autonomy
                             Swarm.swarm_get_best_x();
                             Swarm.swarm_get_best_y();
                             Swarm.swarm_get_best_theta();
-                            
-                            state = State.TemporaryTesting;
+                                
+                            turnToGivenHeading(90);
+                            //tankTurnLeft(450);
+                            state = State.Manual;
                             break;
 
                         case State.TemporaryTesting:
@@ -276,14 +279,14 @@ namespace lunabotics.RCU.Autonomy
                             break;
                         case State.Mining:
                             Console.WriteLine("before loop: heading: " + currentPose[Pose.Heading].ToString());
-                            while (currentPose[Pose.Heading] < 90 && currentPose[Pose.Heading] < -270)
+                            while (currentPose[Pose.Heading] < 85 && currentPose[Pose.Heading] < -275)
                             {
                                 tankTurnLeft(300);
                                 Console.WriteLine("in loop: heading: " + currentPose[Pose.Heading].ToString());
                                 Thread.Sleep(100);
                             }
                             Console.WriteLine("after loop: heading: " + currentPose[Pose.Heading].ToString());
-                            while (currentPose[Pose.Heading] > 90 || currentPose[Pose.Heading] > -270)
+                            while (currentPose[Pose.Heading] > 85 || currentPose[Pose.Heading] > -275)
                             {
                                 tankTurnRight(30);
                                 Thread.Sleep(100);
@@ -293,12 +296,12 @@ namespace lunabotics.RCU.Autonomy
                                 MoveForward(300);
                                 Thread.Sleep(100);
                             }
-                            while (currentPose[Pose.Heading] < 180 && currentPose[Pose.Heading] < -180)
+                            while (currentPose[Pose.Heading] < 175 && currentPose[Pose.Heading] < -185)
                             {
                                 tankTurnLeft(300);
                                 Thread.Sleep(100);
                             }
-                            while (currentPose[Pose.Heading] > 180 || currentPose[Pose.Heading] > -180)
+                            while (currentPose[Pose.Heading] > 175 || currentPose[Pose.Heading] > -185)
                             {
                                 tankTurnRight(30);
                                 Thread.Sleep(100);
@@ -308,12 +311,12 @@ namespace lunabotics.RCU.Autonomy
                                 MoveForward(300);
                                 Thread.Sleep(100);
                             }
-                            while (currentPose[Pose.Heading] < 270 && currentPose[Pose.Heading] < -90)
+                            while (currentPose[Pose.Heading] < 265 && currentPose[Pose.Heading] < -95)
                             {
                                 tankTurnLeft(300);
                                 Thread.Sleep(100);
                             }
-                            while (currentPose[Pose.Heading] > 270 || currentPose[Pose.Heading] > -90)
+                            while (currentPose[Pose.Heading] > 265 || currentPose[Pose.Heading] > -95)
                             {
                                 tankTurnRight(30);
                                 Thread.Sleep(100);
@@ -323,12 +326,12 @@ namespace lunabotics.RCU.Autonomy
 				MoveForward(300);
 				Thread.Sleep(100);
 			    }
-                            while (currentPose[Pose.Heading] < 0 && currentPose[Pose.Heading] < 360)
+                            while (currentPose[Pose.Heading] < -5 && currentPose[Pose.Heading] < 355)
                             {
                                 tankTurnLeft(300);
                                 Thread.Sleep(100);
                             }
-                            while (currentPose[Pose.Heading] > 0 || currentPose[Pose.Heading] > 360)
+                            while (currentPose[Pose.Heading] > -5 || currentPose[Pose.Heading] > 355)
                             {
                                 tankTurnRight(30);
                                 Thread.Sleep(100);
@@ -517,7 +520,7 @@ namespace lunabotics.RCU.Autonomy
             //Particle filtering
             Swarm.swarm_move((int)changePose[Pose.Xpos], (int)changePose[Pose.Ypos], (int)changePose[Pose.Heading]);
             Swarm.swarm_update(EthernetSensorData);
-            for (int j = 0; j < 5; j++)
+            for (int j = 0; j < 2; j++)
             {
                 EthernetSensorData = utm.EthernetScan();
                 Swarm.swarm_move(0, 0, 0);
@@ -557,6 +560,43 @@ namespace lunabotics.RCU.Autonomy
             OnAutonomyUpdated(new AutonomyArgs(outputState));
         }
 
+        public void turnToGivenHeading(double desiredTheta)
+        {
+            int angleError;
+            int spd = 5;
+            while ((Math.Abs(desiredTheta - currentPose[Pose.Heading]) > 5))
+            {
+                angleError = (int)Math.Round(desiredTheta - currentPose[Pose.Heading]);
+            //Correct Left
+            if (angleError > 0 && Math.Abs(angleError) < 180)
+            {
+                Console.WriteLine("Case 1, turning left " + angleError *spd + " steps");
+                tankTurnLeft(angleError * spd);
+            }
+            //Correct Right
+            else if (angleError > 0 && Math.Abs(angleError) >= 180)
+            {
+                Console.WriteLine("Case 2, turning right " + (180 - Math.Abs(angleError)) * spd + " steps");
+
+                tankTurnRight((180 - Math.Abs(angleError)) * spd);
+            }
+            //Correct Left    
+            else if (angleError < 0 && Math.Abs(angleError) < 180)
+            {
+                Console.WriteLine("Case 3, turning right " + angleError * spd + " steps");
+
+                tankTurnRight(angleError * spd);
+            }
+            //Correct Right
+            else if (angleError < 0 && Math.Abs(angleError) >= 180)
+            {
+                Console.WriteLine("Case 4, turning left " + (180 - Math.Abs(angleError)) * spd + " steps");
+                tankTurnLeft((180 - Math.Abs(angleError)) * spd);
+            }
+            Thread.Sleep(100);
+            }
+
+        }
         #endregion
 
 

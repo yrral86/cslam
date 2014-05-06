@@ -290,17 +290,19 @@ namespace lunabotics.RCU.Telemetry
                             break;
 
                         case Configuration.Telemetry.LeftScoopActuatorFeedback:
-                            //TODO: Wrong
-                            //low pass filter
-                            //todo : play with these numbers
-                            rawPitchValue = (int)(rawPitchValue * 0.6 + e.UpdatedTelemetry[telem] * 0.4);
+                            //Scoop Actuator Pot Voltage
+                            //4965 at 0 degrees
+                            //785 at 10 degrees
+                            rawPitchValue = Math.Abs((int)((e.UpdatedTelemetry[telem] - 785) / 418) - 10);
                             break;
                         case Configuration.Telemetry.RightScoopActuatorFeedback:
+                            break;
                         case Configuration.Telemetry.ScoopArmAngleRaw:
-                            //TODO: Wrong
-                            //low pass filter
-                            //todo : play with these numbers
-                            rawPivotValue = (int)(rawPivotValue * 0.7 + e.UpdatedTelemetry[telem] * 0.3);
+                            //Scoop Arm Pot Volatage 
+                            //200 at 145 degrees (top)
+                            //4150 at 0 degrees (bottom)
+                            rawPivotValue = Math.Abs((int)((e.UpdatedTelemetry[telem] - 200)/27.25) - 145);
+                            Console.WriteLine("Arm Angle:" + rawPivotValue);
                             break;
 
                         case Configuration.Telemetry.ArmLowerLimitSwitch:
