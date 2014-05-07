@@ -448,7 +448,7 @@ namespace lunabotics.RCU.Autonomy
             {
                 Console.WriteLine("Case 2, turning right " + (180 - Math.Abs(angleError)) * spd + " steps");
 
-                Move((180 - (int)(Math.Abs(angleError) * spd)), direction.right);
+                Move((int)((180 - Math.Abs(angleError)) * spd), direction.right);
             }
             //Correct Right    
             else if (angleError < 0 && Math.Abs(angleError) < 180)
@@ -461,7 +461,7 @@ namespace lunabotics.RCU.Autonomy
             else if (angleError < 0 && Math.Abs(angleError) >= 180)
             {
                 Console.WriteLine("Case 4, turning left " + (180 - Math.Abs(angleError)) * spd + " steps");
-                Move((180 - (int)(Math.Abs(angleError) * spd)), direction.left);
+                Move((int)((180 - Math.Abs(angleError)) * spd), direction.left);
             }
             Thread.Sleep(100);
             }
