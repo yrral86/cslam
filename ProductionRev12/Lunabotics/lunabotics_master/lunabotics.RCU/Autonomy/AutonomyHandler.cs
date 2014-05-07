@@ -40,6 +40,14 @@ namespace lunabotics.RCU.Autonomy
             Mining,
             Unknown
         }
+
+        public enum direction
+        {
+            forward,
+            right,
+            left,
+            reverse
+        }
         #endregion
 
         #region Events
@@ -53,6 +61,8 @@ namespace lunabotics.RCU.Autonomy
         //Initialize motor powers (Note forward power is negative)
         public short forwardPower = 800;
         public short reversePower = -800;
+        public short rightPower = -400;
+        public short leftPower = 400;
 
         private bool active; // Thread started
         private bool started; // State set to run
@@ -68,7 +78,7 @@ namespace lunabotics.RCU.Autonomy
         //int port_number = 10940;
         //NetworkStream stream;
         //TcpClient urg = new TcpClient();
-        
+
         private Stopwatch stopwatch;
         private System.Timers.Timer timer;
         private Zone expectedZone;
@@ -90,7 +100,7 @@ namespace lunabotics.RCU.Autonomy
             // Create robot
             robot = new Robot(configuration);
 
-            
+
 
             // Create stopwatch
             stopwatch = new Stopwatch();
@@ -107,10 +117,10 @@ namespace lunabotics.RCU.Autonomy
             staticOutput[Comms.CommandEncoding.CommandFields.Mode] = 1;
             staticOutput[Comms.CommandEncoding.CommandFields.FrontCameraState] = 0;
             staticOutput[Comms.CommandEncoding.CommandFields.BucketCameraState] = 0;
-            staticOutput[Comms.CommandEncoding.CommandFields.RearCameraState] = 0;                    
+            staticOutput[Comms.CommandEncoding.CommandFields.RearCameraState] = 0;
         }
         #endregion
-        
+
         #region Methods
         public void Activate()
         {
@@ -172,7 +182,7 @@ namespace lunabotics.RCU.Autonomy
             expectedZone = Zone.Start;
             //Reset Hall Counts From previous runs
             ResetCounters();
-            
+
         }
 
         public void Stop()
@@ -191,7 +201,7 @@ namespace lunabotics.RCU.Autonomy
         void telemetryHandler_TelemetryFeedbackProcessed(object sender, Comms.TelemetryEncoding.TelemetryFeedbackArgs e)
         {
             // Obtain measurements and copy to robot object
-            robot.TelemetryFeedback = (TelemetryFeedback) e.UpdatedState.Clone();
+            robot.TelemetryFeedback = (TelemetryFeedback)e.UpdatedState.Clone();
         }
 
         private void timer_Elapsed(object sender, ElapsedEventArgs e)
@@ -219,123 +229,79 @@ namespace lunabotics.RCU.Autonomy
                             break;
 
                         case State.InitializeAutonomy:
-                            
+
                             //Initialize position - temporary 
                             StartingAutonomy();
                             //Initialize Particle Filter
                             Swarm.swarm_init(721, 180, 7300, 4100, 1940);
-                            /*MoveForward(1200);
-                            Thread.Sleep(100);
-                            tankTurnLeft(300);
-                            Thread.Sleep(100);
-                            tankTurnRight(300);
-                            Thread.Sleep(100);
-                            MoveReverse(300);
-                            state = State.SafeShutdown;
-                            break;*/
-                            
-                            //turnToThetaZero();
-                        
-                        //Loop to try and converge particles
+                            //Move(300, direction.forward);
+                            //Move(300, direction.right);
+                            //Move(300, direction.left);
+                            //Move(300, direction.reverse);
+                            //state = State.Manual;
+                            //break;
+
+                            //Loop to try and converge particles
                             for (int j = 0; j < 5; j++)
                             {
                                 EthernetSensorData = utm.EthernetScan();
                                 Swarm.swarm_move(0, 0, 0);
                                 Swarm.swarm_update(EthernetSensorData);
                             }
-                            Swarm.swarm_get_best_x();
-                            Swarm.swarm_get_best_y();
-                            Swarm.swarm_get_best_theta();
-                                
-                            turnToGivenHeading(90);
+                            currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
+                            currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
+                            currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
+
+                            //turnToGivenHeading(-90);
                             //tankTurnLeft(450);
-                            state = State.Manual;
+                            state = State.TemporaryTesting;
                             break;
 
                         case State.TemporaryTesting:
-                            /*
 
-                            TimeSpan startTime = stopwatch.Elapsed;
-                         
-                            EthernetSensorData = utm.EthernetScan(stream);
-                            for (int j = 0; j < 760; j++)
-                            {
-                                Console.WriteLine(EthernetSensorData[j].ToString());
-                            }
-                       
-                            Console.WriteLine(stopwatch.Elapsed - startTime);
-                            Thread.Sleep(4000);
-
-                            */
-                            
                             while (currentPose[Pose.Xpos] < 5100)
                             {
-                                MoveForward(300);
+                                //MoveForward(300);
+                                Move(300, direction.forward);
                                 Thread.Sleep(100);
-                                
+
                             }
 
                             state = State.Mining;
                             break;
                         case State.Mining:
-                            Console.WriteLine("before loop: heading: " + currentPose[Pose.Heading].ToString());
-                            while (currentPose[Pose.Heading] < 85 && currentPose[Pose.Heading] < -275)
-                            {
-                                tankTurnLeft(300);
-                                Console.WriteLine("in loop: heading: " + currentPose[Pose.Heading].ToString());
-                                Thread.Sleep(100);
-                            }
-                            Console.WriteLine("after loop: heading: " + currentPose[Pose.Heading].ToString());
-                            while (currentPose[Pose.Heading] > 85 || currentPose[Pose.Heading] > -275)
-                            {
-                                tankTurnRight(30);
-                                Thread.Sleep(100);
-                            }
+
+                            turnToGivenHeading(90);
+                            Thread.Sleep(100);
+
                             while (currentPose[Pose.Ypos] < 2800)
                             {
-                                MoveForward(300);
+                                //MoveForward(300);
+                                Move(300, direction.forward);
                                 Thread.Sleep(100);
                             }
-                            while (currentPose[Pose.Heading] < 175 && currentPose[Pose.Heading] < -185)
-                            {
-                                tankTurnLeft(300);
-                                Thread.Sleep(100);
-                            }
-                            while (currentPose[Pose.Heading] > 175 || currentPose[Pose.Heading] > -185)
-                            {
-                                tankTurnRight(30);
-                                Thread.Sleep(100);
-                            }
+
+                            turnToGivenHeading(180);
+                            Thread.Sleep(100);
+
                             while (currentPose[Pose.Xpos] > 1900)
                             {
-                                MoveForward(300);
+                                //MoveForward(300);
+                                Move(300, direction.forward);
                                 Thread.Sleep(100);
                             }
-                            while (currentPose[Pose.Heading] < 265 && currentPose[Pose.Heading] < -95)
+
+                            turnToGivenHeading(-90);
+                            Thread.Sleep(100);
+
+                            while (currentPose[Pose.Ypos] > 1500)
                             {
-                                tankTurnLeft(300);
+                                Move(300, direction.forward);
                                 Thread.Sleep(100);
                             }
-                            while (currentPose[Pose.Heading] > 265 || currentPose[Pose.Heading] > -95)
-                            {
-                                tankTurnRight(30);
-                                Thread.Sleep(100);
-                            }
-			    while (currentPose[Pose.Ypos] > 1500)
-			    {
-				MoveForward(300);
-				Thread.Sleep(100);
-			    }
-                            while (currentPose[Pose.Heading] < -5 && currentPose[Pose.Heading] < 355)
-                            {
-                                tankTurnLeft(300);
-                                Thread.Sleep(100);
-                            }
-                            while (currentPose[Pose.Heading] > -5 || currentPose[Pose.Heading] > 355)
-                            {
-                                tankTurnRight(30);
-                                Thread.Sleep(100);
-                            }
+                            
+                            turnToGivenHeading(0);
+                            Thread.Sleep(100);
 
                             state = State.TemporaryTesting;
                             break;
@@ -348,14 +314,6 @@ namespace lunabotics.RCU.Autonomy
                         default:
                             break;
                     }
-
-                    // Store robot velocities
-                    //*******John - See if this works while it is commented out
-                    //robot.SetVelocities(
-                    //    Kinematics.GetTranslationalVelocity(outputState[CommandFields.TranslationalVelocity]),
-                    //    Kinematics.GetRotationalVelocity(outputState[CommandFields.RotationalVelocity]));
-
-
 
                 }
                 catch (TimeoutException ex)
@@ -372,29 +330,6 @@ namespace lunabotics.RCU.Autonomy
             }
         }
 
-        private void UpdateState()
-        {
-
-        }
-
-        //private void UpdateTelemetry(MonteCarloLocalization localization)
-        //{
-        //    // Update telemetry
-        //    Dictionary<Configuration.Telemetry, int> dictionary = new Dictionary<Configuration.Telemetry, int>();
-        //    //dictionary[Configuration.Telemetry.LocalizationX] = (int)(localization.Tracker.X * 10.0d); // Convert for double to int -> Like RoboteQ
-        //    //dictionary[Configuration.Telemetry.LocalizationY] = (int)(localization.Tracker.Y * 10.0d); // Convert for double to int -> Like RoboteQ
-        //    //dictionary[Configuration.Telemetry.LocalizationPsi] = (int)(localization.Tracker.Angle * 10.0d); // Convert for double to int -> Like RoboteQ
-        //    //dictionary[Configuration.Telemetry.LocalizationConfidence] = (int)(100.0 * localization.Confidence); // 0 = No confidence, 100 = Complete convergence/good confidence
-        //    //dictionary[Configuration.Telemetry.LocalizationState] = (int)state;
-        //    dictionary[Configuration.Telemetry.LocalizationX] = 10;
-        //    dictionary[Configuration.Telemetry.LocalizationY] = 10;
-        //    dictionary[Configuration.Telemetry.LocalizationPsi] = 90;
-        //    dictionary[Configuration.Telemetry.LocalizationConfidence] = 100;
-        //    dictionary[Configuration.Telemetry.LocalizationState] = (int)state;
-
-        //    OnTelemetryUpdated(new TelemetryEventArgs((int)configuration.Interval, dictionary));
-        //}
-
         //Moving from Starting position
         public void StartingAutonomy()
         {
@@ -403,105 +338,33 @@ namespace lunabotics.RCU.Autonomy
             currentPose[Pose.Ypos] = 970; //Initial Y in mm
         }
 
-        //Send Hall count steps
-        public void MoveForward(int steps)
+        public void Move(int steps, direction dir)
         {
-            
+            ResetCounters();
+            short transPower = 0, rotPower = 0;
+            //Set Powers
+            if (dir == direction.forward)
+                transPower = forwardPower;
+            else if (dir == direction.reverse)
+                transPower = reversePower;
+            else if (dir == direction.right)
+                rotPower = rightPower;
+            else if (dir == direction.left)
+                rotPower = leftPower;
+
             while (
-                 Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps || Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2) < steps
-                || Math.Abs(Telemetry.TelemetryHandler.Robo2HallCount1) < steps || Math.Abs(Telemetry.TelemetryHandler.Robo2HallCount2) < steps)
+                 Telemetry.TelemetryHandler.Robo1HallCount1 < steps || Telemetry.TelemetryHandler.Robo2HallCount1 < steps)
             {
-                //Print Hall count for debugging
-                //System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
+
                 //Set Velocity of motor. -Power between -1000 and 0
-                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = forwardPower;
-                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
+                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = transPower;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = rotPower;
                 //Set Output States
                 outputState = MergeStates(outputState, staticOutput);
                 //Make calls to event handler to move motors
                 OnAutonomyUpdated(new AutonomyArgs(outputState));
             }
             //Stop motors
-            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
-            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
-            outputState = MergeStates(outputState, staticOutput);
-            OnAutonomyUpdated(new AutonomyArgs(outputState));
-            //Reset Hall count for next motor command
-            ResetCounters();
-            ParticleFiltering(steps, steps);
-        }
-
-
-        //Send Hall count steps
-        public void MoveReverse(int steps)
-        {
-            
-            while (
-                Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps || Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2) < steps
-                || Math.Abs(Telemetry.TelemetryHandler.Robo2HallCount1) < steps || Math.Abs(Telemetry.TelemetryHandler.Robo2HallCount2) < steps)
-            {
-                //Print Hall count for debugging
-                //System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
-
-                //Set Velocity of motor. Power between 0 and 1000
-                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = reversePower;
-                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
-                //Set Output States
-                outputState = MergeStates(outputState, staticOutput);
-                //Make calls to event handler to move motors
-                OnAutonomyUpdated(new AutonomyArgs(outputState));
-            }
-            //Stop motors
-            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
-            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
-            outputState = MergeStates(outputState, staticOutput);
-            OnAutonomyUpdated(new AutonomyArgs(outputState));
-            //Reset Hall count for next motor command
-            ResetCounters();
-            ParticleFiltering(steps, steps);
-        }
-
-
-        public void tankTurnRight(int steps)
-        {
-
-            while (
-                 Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps || Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2) < steps
-                || Math.Abs(Telemetry.TelemetryHandler.Robo2HallCount1) < steps || Math.Abs(Telemetry.TelemetryHandler.Robo2HallCount2) < steps)
-            {
-                //System.Diagnostics.Debug.WriteLine(Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2));
-                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
-                //Velocity must be Positive for right turn
-                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = forwardPower;
-                outputState = MergeStates(outputState, staticOutput);
-                OnAutonomyUpdated(new AutonomyArgs(outputState));
-            }
-            //Break
-            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
-            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
-            outputState = MergeStates(outputState, staticOutput);
-            OnAutonomyUpdated(new AutonomyArgs(outputState));
-            //Reset Hall count for next motor command
-            ResetCounters();
-            ParticleFiltering(steps, steps);
-        }
-
-
-        public void tankTurnLeft(int steps)
-
-        {
-
-            while (
-                 Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount1) < steps || Math.Abs(Telemetry.TelemetryHandler.Robo1HallCount2) < steps
-                || Math.Abs(Telemetry.TelemetryHandler.Robo2HallCount1) < steps || Math.Abs(Telemetry.TelemetryHandler.Robo2HallCount2) < steps)
-            {
-                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
-                //Velocity must be negative for left turn
-                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = reversePower;
-                outputState = MergeStates(outputState, staticOutput);
-                OnAutonomyUpdated(new AutonomyArgs(outputState));
-            }
-            //Break
             outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
             outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
             outputState = MergeStates(outputState, staticOutput);
@@ -520,7 +383,7 @@ namespace lunabotics.RCU.Autonomy
             //Particle filtering
             Swarm.swarm_move((int)changePose[Pose.Xpos], (int)changePose[Pose.Ypos], (int)changePose[Pose.Heading]);
             Swarm.swarm_update(EthernetSensorData);
-            for (int j = 0; j < 2; j++)
+            for (int j = 0; j < 5; j++)
             {
                 EthernetSensorData = utm.EthernetScan();
                 Swarm.swarm_move(0, 0, 0);
@@ -535,14 +398,20 @@ namespace lunabotics.RCU.Autonomy
         //Call each time to reset the Hall Count for all of the Roboteqs in config
         public void ResetCounters()
         {
-            Thread.Sleep(100);
-            foreach (Controllers.RoboteQ roboteq in lunabotics.RCU.Program.roboteqs)
+
+            //foreach (Controllers.RoboteQ roboteq in lunabotics.RCU.Program.roboteqs)
+            //{
+            //    roboteq.ClearHallSensorCounts();
+            //}
+            for (int i = 0; i < 2; i++)
             {
+                Controllers.RoboteQ roboteq = lunabotics.RCU.Program.roboteqs[i];
                 roboteq.ClearHallSensorCounts();
+                Thread.Sleep(110);
             }
         }
 
-        public void turnToThetaZero() 
+        public void turnToThetaZero()
         {
             EthernetSensorData = utm.EthernetScan();
             while (((EthernetSensorData[0] + EthernetSensorData[720]) > 4000 || (EthernetSensorData[0] + EthernetSensorData[720]) < 3760) && EthernetSensorData[361] > 400)
@@ -563,35 +432,36 @@ namespace lunabotics.RCU.Autonomy
         public void turnToGivenHeading(double desiredTheta)
         {
             int angleError;
-            int spd = 5;
+            double spd = 4.35;
             while ((Math.Abs(desiredTheta - currentPose[Pose.Heading]) > 5))
             {
                 angleError = (int)Math.Round(desiredTheta - currentPose[Pose.Heading]);
+                Console.WriteLine("desired: " + desiredTheta + " current heading: " + currentPose[Pose.Heading] + " error: " + angleError);
             //Correct Left
             if (angleError > 0 && Math.Abs(angleError) < 180)
             {
                 Console.WriteLine("Case 1, turning left " + angleError *spd + " steps");
-                tankTurnLeft(angleError * spd);
+                Move((int)(Math.Abs(angleError) * spd), direction.left);
             }
             //Correct Right
             else if (angleError > 0 && Math.Abs(angleError) >= 180)
             {
                 Console.WriteLine("Case 2, turning right " + (180 - Math.Abs(angleError)) * spd + " steps");
 
-                tankTurnRight((180 - Math.Abs(angleError)) * spd);
+                Move((180 - (int)(Math.Abs(angleError) * spd)), direction.right);
             }
-            //Correct Left    
+            //Correct Right    
             else if (angleError < 0 && Math.Abs(angleError) < 180)
             {
-                Console.WriteLine("Case 3, turning right " + angleError * spd + " steps");
+                Console.WriteLine("Case 3, turning right " + Math.Abs(angleError) * spd + " steps");
 
-                tankTurnRight(angleError * spd);
+                Move((int)(Math.Abs(angleError) * spd), direction.right);
             }
-            //Correct Right
+            //Correct Left
             else if (angleError < 0 && Math.Abs(angleError) >= 180)
             {
                 Console.WriteLine("Case 4, turning left " + (180 - Math.Abs(angleError)) * spd + " steps");
-                tankTurnLeft((180 - Math.Abs(angleError)) * spd);
+                Move((180 - (int)(Math.Abs(angleError) * spd)), direction.left);
             }
             Thread.Sleep(100);
             }

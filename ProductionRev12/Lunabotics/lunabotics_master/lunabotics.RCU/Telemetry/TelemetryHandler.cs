@@ -230,10 +230,11 @@ namespace lunabotics.RCU.Telemetry
                             UpdatePowerUsed(Robo1BatteryVoltage, e.UpdatedTelemetry[telem] / 10.0, e.Interval);
                             break;
                         case Configuration.Telemetry.RoboteQ_1_HallCountCh1:
-                            Robo1HallCount1 = e.UpdatedTelemetry[telem];
+                            Robo1HallCount1 = Math.Abs(e.UpdatedTelemetry[telem]);
+                            
                             break;
                         case Configuration.Telemetry.RoboteQ_1_HallCountCh2:
-                            Robo1HallCount2 = e.UpdatedTelemetry[telem];
+                            Robo1HallCount2 = Math.Abs(e.UpdatedTelemetry[telem]);
                             break;
                         case Configuration.Telemetry.RoboteQ_1_BatteryVoltage:
                             robo1BatteryVoltage = e.UpdatedTelemetry[telem];
@@ -246,10 +247,10 @@ namespace lunabotics.RCU.Telemetry
                             UpdatePowerUsed(Robo2BatteryVoltage, e.UpdatedTelemetry[telem] / 10.0, e.Interval);
                             break;
                         case Configuration.Telemetry.RoboteQ_2_HallCountCh1:
-                            Robo2HallCount1 = e.UpdatedTelemetry[telem];
+                            Robo2HallCount1 = Math.Abs(e.UpdatedTelemetry[telem]);
                             break;
                         case Configuration.Telemetry.RoboteQ_2_HallCountCh2:
-                            Robo2HallCount2 = e.UpdatedTelemetry[telem];
+                            Robo2HallCount2 = Math.Abs(e.UpdatedTelemetry[telem]);
                             break;
                         case Configuration.Telemetry.RoboteQ_2_BatteryVoltage:
                             robo2BatteryVoltage = e.UpdatedTelemetry[telem];
@@ -302,9 +303,9 @@ namespace lunabotics.RCU.Telemetry
                             //200 at 145 degrees (top)
                             //4150 at 0 degrees (bottom)
                             rawPivotValue = Math.Abs((int)((e.UpdatedTelemetry[telem] - 200)/27.25) - 145);
-                            Console.WriteLine("Arm Angle:" + rawPivotValue);
+                            //Console.WriteLine("Arm Angle:" + rawPivotValue);
                             break;
-
+                                
                         case Configuration.Telemetry.ArmLowerLimitSwitch:
                             ScoopLowerLimitSwitch = (e.UpdatedTelemetry[telem] > 0 ? true : false);
                             break;
