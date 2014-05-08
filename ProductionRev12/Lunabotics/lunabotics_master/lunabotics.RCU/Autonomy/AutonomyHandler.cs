@@ -431,37 +431,36 @@ namespace lunabotics.RCU.Autonomy
 
         public void turnToGivenHeading(double desiredTheta)
         {
-            int angleError;
+            int angleError = (int)Math.Round(desiredTheta - currentPose[Pose.Heading]);
             double spd = 4.35;
-            while ((Math.Abs(desiredTheta - currentPose[Pose.Heading]) > 5))
+
+	    if (angleError > 180)
+	       angleError -= 360;
+	    if (angleError < -180)
+	       angleError += 360;
+
+            while ((Math.Abs(angleError) > 5))
             {
                 angleError = (int)Math.Round(desiredTheta - currentPose[Pose.Heading]);
+
+		if (angleError > 180)
+	       	   angleError -= 360;
+	    	if (angleError < -180)
+	       	   angleError += 360;
+
                 Console.WriteLine("desired: " + desiredTheta + " current heading: " + currentPose[Pose.Heading] + " error: " + angleError);
             //Correct Left
-            if (angleError > 0 && Math.Abs(angleError) < 180)
+            if (angleError > 0)
             {
                 Console.WriteLine("Case 1, turning left " + angleError *spd + " steps");
                 Move((int)(Math.Abs(angleError) * spd), direction.left);
             }
-            //Correct Right
-            else if (angleError > 0 && Math.Abs(angleError) >= 180)
-            {
-                Console.WriteLine("Case 2, turning right " + (180 - Math.Abs(angleError)) * spd + " steps");
-
-                Move((int)((180 - Math.Abs(angleError)) * spd), direction.right);
-            }
             //Correct Right    
-            else if (angleError < 0 && Math.Abs(angleError) < 180)
+            else if (angleError < 0)
             {
-                Console.WriteLine("Case 3, turning right " + Math.Abs(angleError) * spd + " steps");
+                Console.WriteLine("Case 2, turning right " + Math.Abs(angleError) * spd + " steps");
 
                 Move((int)(Math.Abs(angleError) * spd), direction.right);
-            }
-            //Correct Left
-            else if (angleError < 0 && Math.Abs(angleError) >= 180)
-            {
-                Console.WriteLine("Case 4, turning left " + (180 - Math.Abs(angleError)) * spd + " steps");
-                Move((int)((180 - Math.Abs(angleError)) * spd), direction.left);
             }
             Thread.Sleep(100);
             }

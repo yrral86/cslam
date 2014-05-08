@@ -15,26 +15,28 @@ static int sensor_radius = 600;
 #ifndef LINUX
 __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
   int param_size, return_size;
-  LPWSTR command = L"Slamd.exe";
+  /*  LPWSTR command = L"Slamd.exe";
   STARTUPINFO si;
   PROCESS_INFORMATION pi;
-
+  */
   m = m_in;
   sensor_degrees = degrees_in;
   long_side = long_side_in;
   short_side = short_side_in;
   start = start_in;
   spacing = sensor_degrees/(double)(m);
-
+  /*
   ZeroMemory(&si, sizeof(si));
   si.cb = sizeof(si);
   ZeroMemory(&pi, sizeof(pi));
-
+  */
   // set up shared memory
   param_sem = CreateSemaphore(NULL, 0, 1, param_sem_name);
   return_sem = CreateSemaphore(NULL, 0, 1, return_sem_name);
+  ready_sem = CreateSemaphore(NULL, 0, 1, ready_sem_name);
   assert(param_sem != NULL);
   assert(return_sem != NULL);
+  assert(ready_sem != NULL);
 
   // parameter space size is (sensor readings + 1) * sizeof(int)
   // first int specifies which function, remainder are params
@@ -63,6 +65,7 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   //CreateProcess(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
   ReleaseSemaphore(param_sem, 1, NULL);
   WaitForSingleObject(return_sem, INFINITE);
+  ReleaseSemaphore(ready_sem, 1, NULL);
 }
 
 __declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
@@ -71,6 +74,7 @@ __declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
 	params[2] = dy;
 	params[3] = dtheta;
 
+	WaitForSingleObject(ready_sem, INFINITE);
 	ReleaseSemaphore(param_sem, 1, NULL);
 	WaitForSingleObject(return_sem, INFINITE);
 }
@@ -258,13 +262,14 @@ void swarm_update_internal(int *distances) {
 #ifdef LINUX
 void swarm_update(int *distances) {
 #endif
-  int i, j, k, l;
+  int i, j, k, l, best_index;
   int swap, x, y;
   double posterior, distance, theta, degrees, s, c, total, min, p, step;
   //  double xyt[3];
   particle temp;
 
   min = 10000.0;
+  best_index = 0;
   // evaulate each direction for each particle
   for (i = 0; i < PARTICLE_COUNT; i++) {
     posterior = 0.0;
@@ -367,9 +372,21 @@ void swarm_update(int *distances) {
     }
 
     particles[i].p += posterior;
-    if (particles[i].p < min)
+    if (particles[i].p < min) {
       min = particles[i].p;
+      best_index = i;
+    }
   }
+
+  // clear old best, save new best, copy the map we are about to dereference
+  if (iterations > 0)
+    landmark_map_dereference(best_particle.map);
+  best_particle = particles[best_index];
+  best_particle.map = landmark_map_copy(best_particle.map);
+
+#ifndef LINUX
+  ReleaseSemaphore(return_sem, 1, NULL);
+#endif
 
   // normalize particle log probabilities, convert to normal probabilities for resampling
   total = 0.0;
@@ -422,12 +439,6 @@ void swarm_update(int *distances) {
     particles[i].map = landmark_map_copy(particles[i].map);
   }
 
-  // clear old best, save new best, copy the map we are about to dereference
-  if (iterations > 0)
-    landmark_map_dereference(best_particle.map);
-  best_particle = previous_particles[0];
-  best_particle.map = landmark_map_copy(best_particle.map);
-
   // dereference previous particle maps
   for (i = 0; i < PARTICLE_COUNT; i++)
     landmark_map_dereference(previous_particles[i].map);
@@ -437,6 +448,10 @@ void swarm_update(int *distances) {
     particles[i].p = -log(particles[i].p);
 
   iterations++;
+
+#ifndef LINUX
+  ReleaseSemaphore(ready_sem, 1, NULL);
+#endif
 }
 
 #ifndef LINUX
@@ -505,7 +520,7 @@ int swarm_get_best_theta_internal() {
 int swarm_get_best_theta() {
 #endif
   int t =-1*(best_particle.theta + 180) % 360;
-  if (t < -180) t += 360;
+  if (t <= -180) t += 360;
   else if (t > 180) t -= 360;
   return t;
 }

@@ -12,9 +12,11 @@ static LPCWSTR param_shm_name = L"slamd_parameters";
 static LPCWSTR return_shm_name = L"slamd_return";
 static LPCWSTR param_sem_name = L"slamd_parameters_sem";
 static LPCWSTR return_sem_name = L"slamd_return_sem";
+static LPCWSTR ready_sem_name = L"slamd_ready_sem";
 
 static HANDLE param_sem;
 static HANDLE return_sem;
+static HANDLE ready_sem;
 static HANDLE param_handle;
 static HANDLE return_handle;
 
