@@ -231,7 +231,6 @@ namespace lunabotics.RCU.Telemetry
                             break;
                         case Configuration.Telemetry.RoboteQ_1_HallCountCh1:
                             Robo1HallCount1 = Math.Abs(e.UpdatedTelemetry[telem]);
-                            
                             break;
                         case Configuration.Telemetry.RoboteQ_1_HallCountCh2:
                             Robo1HallCount2 = Math.Abs(e.UpdatedTelemetry[telem]);
