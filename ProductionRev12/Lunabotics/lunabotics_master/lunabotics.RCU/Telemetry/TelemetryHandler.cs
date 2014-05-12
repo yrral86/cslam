@@ -24,6 +24,7 @@ namespace lunabotics.RCU.Telemetry
         public event EventHandler<TelemetryFeedbackArgs> TelemetryFeedbackProcessed;
 
         private static readonly double MS_IN_HOUR = 3600000;
+
         private static readonly double WATT_SCALAR = 100000;
 
         private Configuration.TelemetryConfiguration configuration;
@@ -48,8 +49,10 @@ namespace lunabotics.RCU.Telemetry
         private int robo3BatteryVoltage = 0;
         private int robo4BatteryVoltage = 0;
 
-        private int rawPitchValue = 0;
-        private int rawPivotValue = 0;
+        private int robo1Mot1Amps = 0;
+        private int robo1Mot2Amps = 0;
+        private int robo2Mot1Amps = 0;
+        private int robo2Mot2Amps = 0;
 
         //stored as (int)(Amps*10)
         private int bucketLeftAmps;
@@ -69,10 +72,11 @@ namespace lunabotics.RCU.Telemetry
         private bool ScoopUpperLimitSwitch = false;
 
         private double ScoopArmAmps = 0;
+        private double ScoopPitch = 0;
         private double ScoopArmAngle = 0;
         private double BucketAngle = 0;
-        private double LeftScoopActuatorFeedback = 0;
-        private double RightScoopActuatorFeedback = 0;
+        //private double LeftScoopActuatorFeedback = 0;
+        //private double RightScoopActuatorFeedback = 0;
 
 
         public TelemetryHandler(Configuration.TelemetryConfiguration config, string ocu_ip_address)
@@ -117,16 +121,21 @@ namespace lunabotics.RCU.Telemetry
                         CleanBatteryVoltage = this.CleanBatteryVoltage,
                         PowerUsed = this.PowerUsed,
 
+                        //Motor Amps
+                        RightFrontMotorAmps = this.Robo1Mot1Amps,
+                        RightRearMotorAmps = this.Robo1Mot2Amps,
+                        LeftFrontMotorAmps = this.Robo2Mot1Amps,
+                        LeftRearMotorAmps = this.Robo2Mot2Amps,
+
                         // Mining
                         ArmMotorAmps = this.ScoopArmAmps,
-                        ScoopPitchAngle = this.ScoopPitchAngle,
+                        ScoopPitchAngle = this.ScoopPitch,
                         ArmSwingAngle = this.ScoopArmAngle,
                         ScoopLowerLimitSwitchDepressed = this.ScoopLowerLimitSwitch,
                         ScoopUpperLimitSwitchDepressed = this.ScoopUpperLimitSwitch,
 
                         // Deposition
-                        BinLeftMotorAmps = this.bucketLeftAmps, 
-                        BinRightMotorAmps = this.bucketRightAmps,
+                        BucketPivotAngle = this.BucketPivotAngle,
 
                         // Sensory
                         RearProximityLeft = this.rearProximityLeft,
@@ -224,10 +233,12 @@ namespace lunabotics.RCU.Telemetry
                     switch (telem)
                     {
                         case Configuration.Telemetry.RoboteQ_1_MotorAmpsCh1:
-                            UpdatePowerUsed(Robo1BatteryVoltage, e.UpdatedTelemetry[telem] / 10.0, e.Interval);
+                            robo1Mot1Amps = e.UpdatedTelemetry[telem];
+                            UpdatePowerUsed(Robo1BatteryVoltage, robo1Mot1Amps / 10.0, e.Interval);
                             break;
                         case Configuration.Telemetry.RoboteQ_1_MotorAmpsCh2:
-                            UpdatePowerUsed(Robo1BatteryVoltage, e.UpdatedTelemetry[telem] / 10.0, e.Interval);
+                            robo1Mot2Amps = e.UpdatedTelemetry[telem];
+                            UpdatePowerUsed(Robo1BatteryVoltage, robo1Mot2Amps / 10.0, e.Interval);
                             break;
                         case Configuration.Telemetry.RoboteQ_1_HallCountCh1:
                             Robo1HallCount1 = Math.Abs(e.UpdatedTelemetry[telem]);
@@ -238,12 +249,13 @@ namespace lunabotics.RCU.Telemetry
                         case Configuration.Telemetry.RoboteQ_1_BatteryVoltage:
                             robo1BatteryVoltage = e.UpdatedTelemetry[telem];
                             break;
-
                         case Configuration.Telemetry.RoboteQ_2_MotorAmpsCh1:
-                            UpdatePowerUsed(Robo1BatteryVoltage, e.UpdatedTelemetry[telem] / 10.0, e.Interval);
+                            robo2Mot1Amps = e.UpdatedTelemetry[telem];
+                            UpdatePowerUsed(Robo2BatteryVoltage, robo2Mot1Amps / 10.0, e.Interval);
                             break;
                         case Configuration.Telemetry.RoboteQ_2_MotorAmpsCh2:
-                            UpdatePowerUsed(Robo2BatteryVoltage, e.UpdatedTelemetry[telem] / 10.0, e.Interval);
+                            robo2Mot2Amps = e.UpdatedTelemetry[telem];
+                            UpdatePowerUsed(Robo2BatteryVoltage, robo2Mot2Amps / 10.0, e.Interval);
                             break;
                         case Configuration.Telemetry.RoboteQ_2_HallCountCh1:
                             Robo2HallCount1 = Math.Abs(e.UpdatedTelemetry[telem]);
@@ -286,14 +298,14 @@ namespace lunabotics.RCU.Telemetry
                             break;
                         case Configuration.Telemetry.CleanPowerBatteryVoltage:
                             //scaling by ten and storing as integer
-                            cleanBatteryVoltage = (int)(configuration.CleanPowerVoltageConversion.Convert(e.UpdatedTelemetry[telem]) * 10);
+                            cleanBatteryVoltage = (int)((e.UpdatedTelemetry[telem]/128.5) * 10);
                             break;
 
                         case Configuration.Telemetry.LeftScoopActuatorFeedback:
                             //Scoop Actuator Pot Voltage
                             //4965 at 0 degrees
                             //785 at 10 degrees
-                            rawPitchValue = Math.Abs((int)((e.UpdatedTelemetry[telem] - 785) / 418) - 10);
+                            ScoopPitch = Math.Abs((int)((e.UpdatedTelemetry[telem] - 785) / 418) - 10);
                             break;
                         case Configuration.Telemetry.RightScoopActuatorFeedback:
                             break;
@@ -301,10 +313,14 @@ namespace lunabotics.RCU.Telemetry
                             //Scoop Arm Pot Volatage 
                             //200 at 145 degrees (top)
                             //4150 at 0 degrees (bottom)
-                            rawPivotValue = Math.Abs((int)((e.UpdatedTelemetry[telem] - 200)/27.25) - 145);
-                            //Console.WriteLine("Arm Angle:" + rawPivotValue);
+                            ScoopArmAngle = Math.Abs((int)((e.UpdatedTelemetry[telem] - 405) / 28) - 145);
                             break;
-                                
+                        case Configuration.Telemetry.BucketAngleRaw:
+                            //Bucket Angle Pot Voltage
+                            //1350 at 0 degrees (bottom)
+                            //2360 at 90 degrees (top)
+                            BucketAngle = (int)((e.UpdatedTelemetry[telem] - 1350) / 13.7);
+                            break;
                         case Configuration.Telemetry.ArmLowerLimitSwitch:
                             ScoopLowerLimitSwitch = (e.UpdatedTelemetry[telem] > 0 ? true : false);
                             break;
@@ -313,10 +329,10 @@ namespace lunabotics.RCU.Telemetry
                             ScoopUpperLimitSwitch = (e.UpdatedTelemetry[telem] > 0 ? true : false);
                             break;
                         case Configuration.Telemetry.RearRightIR:
-                            rearProximityLeft = e.UpdatedTelemetry[telem];
+                            rearProximityRight = Math.Min(80, (6787 / (e.UpdatedTelemetry[telem] - 3)) - 4);
                             break;
                         case Configuration.Telemetry.RearLeftIR:
-                            rearProximityRight = e.UpdatedTelemetry[telem];
+                            rearProximityLeft = Math.Min(80, (6787 / (e.UpdatedTelemetry[telem] - 3)) - 4);
                             break;
                         default:
                             break;
@@ -386,14 +402,51 @@ namespace lunabotics.RCU.Telemetry
             }
         }
 
+        public double Robo1Mot1Amps
+        {
+            get
+            {
+                return robo1Mot1Amps;
+            }
+        }
+
+        public double Robo1Mot2Amps
+        {
+            get
+            {
+                return robo1Mot2Amps;
+            }
+        }
+
+        public double Robo2Mot1Amps
+        {
+            get
+            {
+                return robo2Mot1Amps;
+            }
+        }
+
+        public double Robo2Mot2Amps
+        {
+            get
+            {
+                return robo2Mot2Amps;
+            }
+        }
+
         public double BucketPivotAngle
         {
-            get { return configuration.PivotConversion.Convert(rawPivotValue); }
+            get { return BucketAngle; }
         }
 
         public double ScoopPitchAngle
         {
-            get { return configuration.PitchConversion.Convert(rawPitchValue); }
+            get { return ScoopPitch; }
+        }
+
+        public double ScoopPivotAngle
+        {
+            get { return ScoopArmAngle; }
         }
 
         public double X

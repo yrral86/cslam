@@ -40,7 +40,7 @@ namespace lunabotics.Configuration
         ArmUpperLimitSwitch,
 
         // Dumping
-        BucketAngle,
+        BucketAngleRaw,
 
         // Rear proximity sensors
         RearLeftIR,

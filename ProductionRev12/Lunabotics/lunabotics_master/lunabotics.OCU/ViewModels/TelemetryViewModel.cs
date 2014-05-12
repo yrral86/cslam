@@ -18,18 +18,18 @@ namespace lunabotics.OCU.ViewModels
         private int lastSecond = -1;
         private double dbVoltageSum = 0, cbVoltageSum = 0;
         private int dbVoltageCount = 0, cbVoltageCount = 0;
-        private double beltMotorAmps = 0;
+        private double leftFrontAmps = 0, leftRearAmps = 0, rightFrontAmps = 0, rightRearAmps = 0;
 
         //Jason Added 5-19-13-9:44
-        private double tiltX = 0, tiltY = 0;
-        private double binLeftMotorAmps = 0, binRightMotorAmps = 0;
+        private double bucketAngle = 0;
         private bool binLowerSwitchDepressed = false, binUpperSwitchDepressed = false;
-        private double x = 0, y = 0, phi = 0, confidence = 0;
-        private int state = 0;
-        private double rearProximityLeft = 0, rearProximityRight = 0,proximityBarLeft=0,proximityBarRight=0;
+        private double x = 0, y = 0, theta = 0;
 
-        private double pivotAngle = 0, pitchAngle = 0;
-        private bool bucketUpperLimitSwitch = false, bucketLowerLimitSwitch = false;
+        private int state = 0;
+        private double rearProximityLeft = 0, rearProximityRight = 0, proximityBarLeft = 0, proximityBarRight = 0;
+
+        private double pivotAngle = 0, pitchAngle = 0, armMotorAmps = 0;
+        private bool scoopUpperLimitSwitch = false, scoopLowerLimitSwitch = false;
 
         private Models.TelemetryReceiver telemetryReceiver;
         private bool isActive = false;
@@ -142,70 +142,54 @@ namespace lunabotics.OCU.ViewModels
         }
 
 
-
-        public double BeltMotorAmps
+        public double RightFrontMotorAmps
         {
-            get { return beltMotorAmps; }
+            get { return rightFrontAmps; }
             set
             {
-                if (beltMotorAmps != value)
+                if (rightFrontAmps != value)
                 {
-                    beltMotorAmps = value;
-                    OnPropertyChanged("BeltMotorAmps");
+                    rightFrontAmps = value;
+                    OnPropertyChanged("RightFrontMotorAmps");
                 }
             }
         }
 
-        public double TiltX
+        public double RightRearMotorAmps
         {
-            get { return tiltX; }
+            get { return rightRearAmps; }
             set
             {
-                if (tiltX != value)
+                if (rightRearAmps != value)
                 {
-                    tiltX= value;
-                    OnPropertyChanged("TiltX");
+                   rightRearAmps = value;
+                    OnPropertyChanged("RightRearMotorAmps");
                 }
             }
         }
 
-
-        public double TiltY
+        public double LeftFrontMotorAmps
         {
-            get { return tiltY; }
+            get { return leftFrontAmps; }
             set
             {
-                if (tiltY != value)
+                if (leftFrontAmps != value)
                 {
-                    tiltY = value;
-                    OnPropertyChanged("TiltY");
+                    leftFrontAmps = value;
+                    OnPropertyChanged("LeftFrontMotorAmps");
                 }
             }
         }
 
-
-        public double BinLeftMotorAmps
+        public double LeftRearMotorAmps
         {
-            get { return binLeftMotorAmps; }
+            get { return leftRearAmps; }
             set
             {
-                if (binLeftMotorAmps != value)
+                if (leftRearAmps != value)
                 {
-                    binLeftMotorAmps = value;
-                    OnPropertyChanged("BinLeftMotorAmps");
-                }
-            }
-        }
-
-        public double BinRightMotorAmps
-        {
-            get { return binRightMotorAmps; }
-            set
-            {
-                if (binRightMotorAmps != value)
-                {
-                    binRightMotorAmps = value;
-                    OnPropertyChanged("BinRightMotorAmps");
+                    leftRearAmps = value;
+                    OnPropertyChanged("LeftRearMotorAmps");
                 }
             }
         }
@@ -236,6 +220,19 @@ namespace lunabotics.OCU.ViewModels
             }
         }
 
+        public double BucketPivotAngle
+        {
+            get { return bucketAngle; }
+            set
+            {
+                if (bucketAngle != value)
+                {
+                    bucketAngle = value;
+                    OnPropertyChanged("BucketPivotAngle");
+                }
+            }
+        }
+
         public double X
         {
             get { return x; }
@@ -262,31 +259,19 @@ namespace lunabotics.OCU.ViewModels
             }
         }
 
-        public double Phi
+        public double Theta
         {
-            get { return phi; }
+            get { return theta; }
             set
             {
-                if (phi != value)
+                if (theta!= value)
                 {
-                    phi = value;
-                    OnPropertyChanged("Phi");
+                    theta = value;
+                    OnPropertyChanged("Theta");
                 }
             }
         }
 
-        public double Confidence
-        {
-            get { return confidence; }
-            set
-            {
-                if (confidence != value)
-                {
-                    confidence = value;
-                    OnPropertyChanged("Confidence");
-                }
-            }
-        }
 
         public int State
         {
@@ -328,52 +313,52 @@ namespace lunabotics.OCU.ViewModels
             }
         }
 
-        public double BucketPivotAngle
+        public double ScoopPivotAngle
         {
             get { return pivotAngle; }
             private set
             {
                 if (pivotAngle != value)
                 {
-                    pivotAngle = Math.Min(130,Math.Max(0,Math.Round(value, 0)));
-                    OnPropertyChanged("BucketPivotAngle");
-                    OnPropertyChanged("BucketGraphicPivotAngle");
+                    pivotAngle = value;
+                    OnPropertyChanged("ScoopPivotAngle");
+                    OnPropertyChanged("ScoopGraphicPivotAngle");
                 }
             }
         }
 
-        public double BucketGraphicPivotAngle
+        public double ScoopGraphicPivotAngle
         {
-            get { return 130 - BucketPivotAngle; }
+            get { return 130 - ScoopPivotAngle; }
         }
 
-        public bool BucketUpperLimitSwitch
+        public bool ScoopUpperLimitSwitch
         {
-            get { return bucketUpperLimitSwitch; }
+            get { return ScoopUpperLimitSwitch; }
             private set
             {
-                if (bucketUpperLimitSwitch != value)
+                if (scoopUpperLimitSwitch != value)
                 {
-                    bucketUpperLimitSwitch = value;
-                    OnPropertyChanged("BucketUpperLimitSwitch");
+                    scoopUpperLimitSwitch = value;
+                    OnPropertyChanged("ScooptUpperLimitSwitch");
                 }
             }
         }
 
-        public bool BucketLowerLimitSwitch
+        public bool ScoopLowerLimitSwitch
         {
-            get { return bucketLowerLimitSwitch; }
+            get { return scoopLowerLimitSwitch; }
             private set
             {
-                if (bucketLowerLimitSwitch != value)
+                if (scoopLowerLimitSwitch != value)
                 {
-                    bucketLowerLimitSwitch = value;
-                    OnPropertyChanged("BucketLowerLimitSwitch");
+                    scoopLowerLimitSwitch = value;
+                    OnPropertyChanged("ScoopLowerLimitSwitch");
                 }
             }
         }
 
-        public double BucketPitchAngle
+        public double ScoopPitchAngle
         {
             get { return pitchAngle; }
             private set
@@ -381,11 +366,23 @@ namespace lunabotics.OCU.ViewModels
                 if (pitchAngle != value)
                 {
                     pitchAngle = Math.Min(15, Math.Max(0, Math.Round(value, 0)));
-                    OnPropertyChanged("BucketPitchAngle");
+                    OnPropertyChanged("ScoopPitchAngle");
                 }
             }
         }
 
+        public double ArmMotorAmps
+        {
+            get { return armMotorAmps; }
+            private set
+            {
+                if (armMotorAmps != value)
+                {
+                    armMotorAmps = value;
+                    OnPropertyChanged("ArmMotorAmps");
+                }
+            }
+        }
         public BatteryInfo DriveBatteryInfo
         {
             get { return driveBatteryInfo; }
@@ -501,18 +498,19 @@ namespace lunabotics.OCU.ViewModels
                 }
 
                 //*other telemetry*/
-                BeltMotorAmps = e.Telemetry.ArmMotorAmps;
-                BucketPitchAngle = e.Telemetry.ScoopPitchAngle;
-                BucketPivotAngle = e.Telemetry.ArmSwingAngle;
-                BucketLowerLimitSwitch = e.Telemetry.ScoopLowerLimitSwitchDepressed;
-                BucketUpperLimitSwitch = e.Telemetry.ScoopUpperLimitSwitchDepressed;
+                ArmMotorAmps = e.Telemetry.ArmMotorAmps;
+                ScoopPitchAngle = e.Telemetry.ScoopPitchAngle;
+                ScoopPivotAngle = e.Telemetry.ArmSwingAngle;
+                BucketPivotAngle = e.Telemetry.BucketPivotAngle;
+                ScoopLowerLimitSwitch = e.Telemetry.ScoopLowerLimitSwitchDepressed;
+                ScoopUpperLimitSwitch = e.Telemetry.ScoopUpperLimitSwitchDepressed;
 
                 
                 
                 // Localization //
                 X = e.Telemetry.X;
                 Y = e.Telemetry.Y;
-                Phi = e.Telemetry.Psi;
+                Theta = e.Telemetry.Psi;
                 State = e.Telemetry.State;
 
                 // Rear Proximity Sensors // 
@@ -522,10 +520,9 @@ namespace lunabotics.OCU.ViewModels
                 ProximityBar1 = e.Telemetry.RearProximityLeft;
                 ProximityBar2 = e.Telemetry.RearProximityRight;
 
-
                 // Collection Bin States // 
-                BinLeftMotorAmps = e.Telemetry.BinLeftMotorAmps; // From 'driver' perspective
-                BinRightMotorAmps = e.Telemetry.BinRightMotorAmps;
+                //BinLeftMotorAmps = e.Telemetry.BinLeftMotorAmps; // From 'driver' perspective
+                //BinRightMotorAmps = e.Telemetry.BinRightMotorAmps;
                 //BinLowerSwitchDepressed = e.Telemetry.BinLowerSwitchDepressed;
                 //BinUpperSwitchDepressed = e.Telemetry.BinUpperSwitchDepressed;                 
                  

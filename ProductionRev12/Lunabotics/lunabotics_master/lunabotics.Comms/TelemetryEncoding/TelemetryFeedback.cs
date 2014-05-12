@@ -11,19 +11,20 @@ namespace lunabotics.Comms.TelemetryEncoding
         public double DriveBatteryVoltage;
         public double CleanBatteryVoltage;
         public double PowerUsed;
+        public double RightFrontMotorAmps, RightRearMotorAmps, LeftFrontMotorAmps, LeftRearMotorAmps;
+
 
         // Arm state
         public double ScoopPitchAngle;
         public double ArmSwingAngle;
         public double ArmMotorAmps;
+        public double BucketPivotAngle;
         public bool ScoopLowerLimitSwitchDepressed;
         public bool ScoopUpperLimitSwitchDepressed;
 
         // Collection bin state
-        public double BinLeftMotorAmps; // From 'driver' perspective
-        public double BinRightMotorAmps;
-        //public bool BinLowerSwitchDepressed;
-        //public bool BinUpperSwitchDepressed;
+        //public double BinLeftMotorAmps; // From 'driver' perspective
+        //public double BinRightMotorAmps;
         
         // Proximity sensors
         public double RearProximityLeft;
@@ -43,8 +44,8 @@ namespace lunabotics.Comms.TelemetryEncoding
         //public int RearRangeFinderDataLength;
         //public double[] RearRangeFinderData;
 
-        //13 doubles for power/angles, 2 bools for limit switches, 1 ints for rear range finder data length
-        private static int MIN_SIZE = 13 * sizeof(double) + 2 * sizeof(bool) + 1 * sizeof(int);
+        //14 doubles for power/angles, 2 bools for limit switches, 1 ints for rear range finder data length
+        private static int MIN_SIZE = 16 * sizeof(double) + 2 * sizeof(bool) + 1 * sizeof(int);
 
         public object Clone()
         {
@@ -93,12 +94,24 @@ namespace lunabotics.Comms.TelemetryEncoding
             Array.Copy(ama_bytes, 0, toReturn, position, ama_bytes.Length);
             position += sizeof(double);
 
-            byte[] blma_bytes = BitConverter.GetBytes(BinLeftMotorAmps);
-            Array.Copy(blma_bytes, 0, toReturn, position, blma_bytes.Length);
+            byte[] bpa_bytes = BitConverter.GetBytes(BucketPivotAngle);
+            Array.Copy(bpa_bytes, 0, toReturn, position, bpa_bytes.Length);
             position += sizeof(double);
 
-            byte[] brma_bytes = BitConverter.GetBytes(BinRightMotorAmps);
-            Array.Copy(brma_bytes, 0, toReturn, position, brma_bytes.Length);
+            byte[] rfma_bytes = BitConverter.GetBytes(RightFrontMotorAmps);
+            Array.Copy(rfma_bytes, 0, toReturn, position, rfma_bytes.Length);
+            position += sizeof(double);
+
+            byte[] rrma_bytes = BitConverter.GetBytes(RightRearMotorAmps);
+            Array.Copy(rrma_bytes, 0, toReturn, position, rrma_bytes.Length);
+            position += sizeof(double);
+
+            byte[] lfma_bytes = BitConverter.GetBytes(LeftFrontMotorAmps);
+            Array.Copy(lfma_bytes, 0, toReturn, position, lfma_bytes.Length);
+            position += sizeof(double);
+
+            byte[] lrma_bytes = BitConverter.GetBytes(LeftRearMotorAmps);
+            Array.Copy(lrma_bytes, 0, toReturn, position, lrma_bytes.Length);
             position += sizeof(double);
 
             byte[] rpl_bytes = BitConverter.GetBytes(RearProximityLeft);
@@ -190,10 +203,19 @@ namespace lunabotics.Comms.TelemetryEncoding
             feedback.ArmMotorAmps = BitConverter.ToDouble(bytes, position);
             position += sizeof(double);
 
-            feedback.BinLeftMotorAmps = BitConverter.ToDouble(bytes, position);
+            feedback.BucketPivotAngle = BitConverter.ToDouble(bytes, position);
             position += sizeof(double);
 
-            feedback.BinRightMotorAmps = BitConverter.ToDouble(bytes, position);
+            feedback.RightFrontMotorAmps = BitConverter.ToDouble(bytes, position);
+            position += sizeof(double);
+
+            feedback.RightRearMotorAmps = BitConverter.ToDouble(bytes, position);
+            position += sizeof(double);
+
+            feedback.LeftFrontMotorAmps = BitConverter.ToDouble(bytes, position);
+            position += sizeof(double);
+
+            feedback.LeftRearMotorAmps = BitConverter.ToDouble(bytes, position);
             position += sizeof(double);
 
             feedback.RearProximityLeft = BitConverter.ToDouble(bytes, position);
@@ -217,8 +239,6 @@ namespace lunabotics.Comms.TelemetryEncoding
 
             feedback.ScoopUpperLimitSwitchDepressed = BitConverter.ToBoolean(bytes, position);
             position += sizeof(bool);
-
-
 
             //Ints
             feedback.State = BitConverter.ToInt32(bytes, position);

@@ -110,7 +110,7 @@
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Path=IsActive, Mode=OneWay}" Value="True">
                                             <DataTrigger.Setters>
-                                                <Setter Property="Stroke" Value="Green"/>
+                                                <Setter Property="Stroke" Value="#FFEEB111"/>
                                             </DataTrigger.Setters>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding Path=IsActive, Mode=OneWay}" Value="False">

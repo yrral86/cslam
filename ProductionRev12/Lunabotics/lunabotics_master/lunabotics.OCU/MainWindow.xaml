@@ -9,7 +9,7 @@
         xmlns:converters="clr-namespace:lunabotics.OCU.Converters"
         xmlns:components="clr-namespace:lunabotics.OCU.Components"
         xmlns:visual="clr-namespace:lunabotics.OCU.Visual_Controls"
-        Title="WVU Lunabotics" Height="700" Width="1000">
+        Title="Mountaineer Mining Vehicle 2014" Height="700" Width="1000">
     <Window.Resources>
         <converters:SecondsToTimeStringConverter x:Key="ticksConverter"/>
         <converters:NegateConverter x:Key="negateConverter"/>
@@ -75,7 +75,7 @@
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Path=CommsEnabled, Mode=OneWay}" Value="True">
                                         <DataTrigger.Setters>
-                                            <Setter Property="Stroke" Value="Green"/>
+                                            <Setter Property="Stroke" Value="#FFEEB111"/>
                                         </DataTrigger.Setters>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding Path=CommsEnabled, Mode=OneWay}" Value="False">
@@ -132,9 +132,9 @@
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <views:CameraView DataContext="{Binding FrontCamera}" Grid.Row="0" Grid.Column="0"/>
-            <views:CameraView DataContext="{Binding BucketCamera}" Grid.Row="0" Grid.Column="1"/>
-            <views:CameraView DataContext="{Binding RearCamera}" Grid.Row="0" Grid.Column="2"/>
+            <views:CameraView DataContext="{Binding FrontCamera}" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,142,0"/>
+            <views:CameraView DataContext="{Binding BucketCamera}" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="176,0,0,0"/>
+            <!--<views:CameraView DataContext="{Binding RearCamera}" Grid.Row="0" Grid.Column="2"/>-->
             <!--<Grid Grid.Row="1" Grid.Column="1" DataContext="{Binding Telemetry}" HorizontalAlignment="Center">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
@@ -176,53 +176,54 @@
             <Border Grid.Row="1" Grid.ColumnSpan="3" BorderBrush="{StaticResource ControlBorderBrush}" BorderThickness="1" CornerRadius="2" Margin="6,5,5,5"
                     DataContext="{Binding Telemetry}">
 
-                    <Grid>
+                    <Grid Margin="0,0,0,0">
                         <StackPanel HorizontalAlignment="Left" Orientation="Vertical" Margin="20,-3,0,3">
-                        <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding BucketPivotAngle, StringFormat='Arm Angle: \{0:f0}&#186;'}"/>
-                        <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding BucketPitchAngle, StringFormat='Bucket Angle: \{0:f0}&#186;'}"/>
+                        <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding ScoopPivotAngle, StringFormat='Arm Angle: \{0:f0}&#186;'}"/>
+                        <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding ScoopPitchAngle, StringFormat='Scoop Angle: \{0:f0}&#186;'}"/>
+                        <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding ArmMotorAmps, StringFormat='Arm Motor Amps: \{0:f0}&#186;'}"/>
+                        <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding BucketPivotAngle, StringFormat='Dump Bucket Angle: \{0:f0}&#186;'}"/>
                         <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding X, StringFormat=X: \{0:f1\}}"/>
                         <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding Y, StringFormat=Y: \{0:f1\}}"/>
-                        <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding Phi, StringFormat=Phi: \{0:f1\}}"/>
-                        <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding Confidence, StringFormat=Confidence: \{0:f1\}}"/>
+                        <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding Theta, StringFormat=Theta: \{0:f1\}}"/>
                         <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding State, StringFormat=State: \{0:f1\}}"/>
-                        <!--<TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding BeltMotorAmps, StringFormat='Belt Motor Amps: \{0:f1}'}"/>-->
-                        <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding TiltX, StringFormat='Tilt X: \{0:f1}'}"/>
-                        <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding TiltY, StringFormat='Tilt Y: \{0:f1}'}"/>
 
 
 
 
 
                     </StackPanel>
-                    <Viewbox HorizontalAlignment="Right" Width="623">
+                    <Viewbox HorizontalAlignment="Center" Width="600" Margin="250,0,250,0">
                         <Canvas Height="1250" Width="2000" VerticalAlignment="Center" HorizontalAlignment="Center">
                             <Canvas Panel.ZIndex="1" Canvas.Top="607" Canvas.Left="287">
-                            <Image Source="Resources/Arm.png" Canvas.Left="400"/>
-                                <Image Source="Resources/Scoop.png" Canvas.Top="175" Canvas.Left="38" Panel.ZIndex="2">
+                                <Image Source="Resources/Scoop.png" Panel.ZIndex="2" RenderTransformOrigin="0.876,0.154" Canvas.Top="87" Canvas.Left="-149">
                                 <Image.RenderTransform>
-                                    <RotateTransform CenterX="397" CenterY="277" Angle="{Binding BucketPitchAngle, Converter={StaticResource negateConverter}}"/>
+                                    <RotateTransform CenterX="0" CenterY="0" Angle="{Binding ScoopPivotAngle}"/>
                                 </Image.RenderTransform>
                             </Image>
-                            <Canvas.RenderTransform>
-                                <RotateTransform Angle="{Binding BucketGraphicPivotAngle}" CenterX="588" CenterY="100"/>
-                            </Canvas.RenderTransform>
+                                <Image Source="Resources/Bucket.png" Canvas.Left="426" Canvas.Top="-66" RenderTransformOrigin="0.914,0.106">
+                                <Image.RenderTransform>
+                                    <RotateTransform Angle="{Binding BucketPivotAngle}" CenterX="0" CenterY="0"/>
+                                </Image.RenderTransform>
+                            </Image>
                         </Canvas>
-                        <components:SwitchIndicator DataContext="{Binding BucketUpperLimitSwitch}" Canvas.Left="947" Canvas.Top="207" Height="60" Width="60"/>
-                        <components:SwitchIndicator DataContext="{Binding BucketLowerLimitSwitch}" Canvas.Left="662" Canvas.Top="1132" Height="60" Width="60"/>
-                        <Image Source="Resources/Lunabot Side View.png" Canvas.Top="407" Canvas.Left="787"/>
-                            <components:SwitchIndicator DataContext="{Binding BinLowerSwitchDepressed}" Canvas.Left="1889" Canvas.Top="425" Height="60" Width="60"/>
-                            <components:SwitchIndicator DataContext="{Binding BinUpperSwitchDepressed}" Canvas.Left="1723" Canvas.Top="247" Height="60" Width="60"/>
+                        <!--<components:SwitchIndicator DataContext="{Binding ScoopUpperLimitSwitch}" Canvas.Left="782" Canvas.Top="632" Height="50" Width="50"/>
+                        <components:SwitchIndicator DataContext="{Binding ScoopLowerLimitSwitch}" Canvas.Left="602" Canvas.Top="1128" Height="50" Width="50"/>-->
+                        <Image Source="Resources/base.png" Canvas.Top="564" Canvas.Left="457" Panel.ZIndex="4"/>
+
                         </Canvas>
                     </Viewbox>
-                    <TextBlock Margin="200,0,500,260" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding BinLeftMotorAmps, StringFormat=Bin Left Motor Amps: \{0:f1\}}"/>
-                    <TextBlock Margin="200,25,500,235" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding BinRightMotorAmps, StringFormat=Bin Right Motor Amps: \{0:f1\}}"/>
-                    <TextBlock Margin="200,50,500,210" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding RearProximityLeft, StringFormat=Left Rear Proximity Sensor: \{0:f1\}}"/>
-                    <TextBlock Margin="200,75,500,185" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding RearProximityRight, StringFormat=Right Rear Proximity Sensor: \{0:f1\}}"/>
-                    <ProgressBar HorizontalAlignment="Left" Height="101" Orientation="Vertical" Margin="243,149,0,0" VerticalAlignment="Top" Width="35" Value="{Binding ProximityBar1}" Maximum="100" Minimum="0"/>
-                    <ProgressBar HorizontalAlignment="Left" Height="101" Orientation="Vertical" Margin="302,149,0,0" VerticalAlignment="Top" Width="35" Value="{Binding ProximityBar2}" Maximum="100" Minimum="0"/>
-                    <TextBlock Margin="243,250,637,32" Text="Left" Foreground="{StaticResource TextForegroundBrush}" FontSize="12" VerticalAlignment="Top"/>
-                    <TextBlock Margin="302,250,575,32" Text="Right" Foreground="{StaticResource TextForegroundBrush}" FontSize="12" VerticalAlignment="Top"/>
-                    <TextBlock Margin="243,126,602,160" Text="Rear Proximity" Foreground="{StaticResource TextForegroundBrush}" FontSize="12" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <TextBlock Margin="700,0,0,260" Text="Drive Motor Current Draw" Foreground="{StaticResource TextForegroundBrush}" FontSize="14" VerticalAlignment="Top"/>
+                    <TextBlock Margin="700,25,0,235" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding LeftFrontMotorAmps, StringFormat=Left Front: \{0:f1\}}"/>
+                    <TextBlock Margin="825,25,0,235" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding RightFrontMotorAmps, StringFormat=Right Front: \{0:f1\}}"/>
+                    <TextBlock Margin="700,50,0,210" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding LeftRearMotorAmps, StringFormat=Left Rear: \{0:f1\}}"/>
+                    <TextBlock Margin="825,50,0,210" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding RightRearMotorAmps, StringFormat=Right Rear: \{0:f1\}}"/>
+                    <TextBlock Margin="806,170,0,95" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding RearProximityLeft, StringFormat=Left Distance: \{0:f1\}}"/>
+                    <TextBlock Margin="806,215,0,45" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding RearProximityRight, StringFormat=Right Distance: \{0:f1\}}"/>
+                    <ProgressBar Foreground="#FFEEB111" HorizontalAlignment="Left" Height="25" Orientation="Horizontal" Margin="685,170,0,0" VerticalAlignment="Top" Width="120" Value="{Binding ProximityBar1}" Maximum="80" Minimum="0" />
+                    <ProgressBar Foreground="#FFEEB111" HorizontalAlignment="Left" Height="25" Orientation="Horizontal" Margin="685,215,0,0" VerticalAlignment="Top" Width="120" Value="{Binding ProximityBar2}" Maximum="80" Minimum="0"/>
+                    <!--<TextBlock Margin="825,232,55,0" Text="Left" Foreground="{StaticResource TextForegroundBrush}" FontSize="12" VerticalAlignment="Top"/>
+                    <TextBlock Margin="825,257,52,0" Text="Right" Foreground="{StaticResource TextForegroundBrush}" FontSize="12" VerticalAlignment="Top"/>-->
+                    <TextBlock Margin="685,142,0,0" Text="Rear Proximity" Foreground="{StaticResource TextForegroundBrush}" FontSize="14" VerticalAlignment="Top" HorizontalAlignment="Left"/>
 
                     <!--"<TextBlock Margin="306,22,633,262" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding BeltMotorAmps, StringFormat=Belt Motor Amps: \{0:f1\}}"/>
                     <TextBlock Margin="306,47,633,237" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding TiltX, StringFormat=Tilt X: \{0:f1\}}"/>
@@ -236,7 +237,7 @@
             </Border>
         </Grid>
         <Grid Grid.Row="1" Grid.Column="1" DataContext="{Binding Telemetry}" Margin="3">
-            <Expander ExpandDirection="Left" Margin="3" Background="#80303030" Padding="1,2,1,2">
+            <Expander ExpandDirection="Left" Margin="3" Background="#DDEEB111" Padding="1,2,1,2">
                 <Expander.Header>
                     <StackPanel Orientation="Vertical">
                         <components:BatteryView DataContext="{Binding DriveBatteryInfo}">
@@ -347,7 +348,7 @@
                                 </Style>
                             </charting:AreaSeries.DataPointStyle>
                             <charting:AreaSeries.DependentRangeAxis>
-                                <charting:LinearAxis Orientation="Y" Title="Voltage" Minimum="16" Maximum="21" FontSize="10" ShowGridLines="True"/>
+                                <charting:LinearAxis Orientation="Y" Title="Voltage" Minimum="14" Maximum="21" FontSize="10" ShowGridLines="True"/>
                             </charting:AreaSeries.DependentRangeAxis>
                             <charting:AreaSeries.IndependentAxis>
                                 <charting:LinearAxis Orientation="X" FontSize="10" ShowGridLines="True">

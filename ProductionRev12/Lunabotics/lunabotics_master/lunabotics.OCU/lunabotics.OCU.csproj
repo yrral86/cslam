@@ -212,6 +212,7 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <None Include="app.config" />
     <None Include="Properties\CameraSettings.settings">
@@ -246,9 +247,13 @@
     <Resource Include="Resources\Gear.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\Arm.png" />
-    <Resource Include="Resources\Lunabot Side View.png" />
     <Resource Include="Resources\Scoop.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\base.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\bucket.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

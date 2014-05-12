@@ -18,11 +18,11 @@ namespace lunabotics.RCU
 {
     class Program
     {
-        static bool autonomous = true;
+        //static bool autonomous = true;
         static bool useAutonomy = true;
         static bool useRangeFinders = false;
         static bool useRoboteQs = true;
-        static bool useWebcams = false;
+        static bool useWebcams = true;
         static AutonomyHandler autonomy;
         
         static RCUConfiguration configuration;
@@ -149,10 +149,10 @@ namespace lunabotics.RCU
                     bucketCam.Activate();
                     Thread.Sleep(200);
                     
-                    rearCam = new Webcam(configuration.OCU_IP_Address, configuration.RearCameraConfiguration);
-                    Thread.Sleep(200);
-                    rearCam.Activate();
-                    Thread.Sleep(200);
+                    //rearCam = new Webcam(configuration.OCU_IP_Address, configuration.RearCameraConfiguration);
+                    //Thread.Sleep(200);
+                    //rearCam.Activate();
+                    //Thread.Sleep(200);
                     
                 }
               
@@ -162,7 +162,7 @@ namespace lunabotics.RCU
                     autonomy = new AutonomyHandler(configuration.AutonomyConfiguration, ref telemetryHandler);
                     autonomy.AutonomyUpdated += autonomy_AutonomyUpdated;
                     autonomy.Activate();
-                    //autonomy.Start(); //Added
+                    //autonomy.Start(); //Add for only autonomy
                     telemetryHandler.AddProvider(autonomy);
                 }
 
@@ -440,13 +440,13 @@ namespace lunabotics.RCU
                         roboteq.SetValues(deviceStates);
                         //Thread.Sleep(1000);
                     }
-                    //if (frontCam != null)
-                    //    if (robotState.ContainsKey(Comms.CommandEncoding.CommandFields.FrontCameraState))
-                    //        frontCam.UpdateState(Comms.States.VideoState.DecodeVideoState(robotState[CommandFields.FrontCameraState]));
+                    if (frontCam != null)
+                        if (robotState.ContainsKey(Comms.CommandEncoding.CommandFields.FrontCameraState))
+                            frontCam.UpdateState(Comms.States.VideoState.DecodeVideoState(robotState[CommandFields.FrontCameraState]));
 
-                    //if (bucketCam != null)
-                    //    if (robotState.ContainsKey(Comms.CommandEncoding.CommandFields.BucketCameraState))
-                    //        bucketCam.UpdateState(Comms.States.VideoState.DecodeVideoState(robotState[CommandFields.BucketCameraState]));
+                    if (bucketCam != null)
+                        if (robotState.ContainsKey(Comms.CommandEncoding.CommandFields.BucketCameraState))
+                            bucketCam.UpdateState(Comms.States.VideoState.DecodeVideoState(robotState[CommandFields.BucketCameraState]));
                 }
                 catch (OperationCanceledException ex)
                 {
