@@ -38,8 +38,8 @@ namespace lunabotics.RCU.Autonomy.Algorithms
                     case AlgorithmState.LowerScoop:
                         if (robot.TelemetryFeedback.ArmSwingAngle > -0.6279659846) //Get pitch telemetry
                         {
-                            outputState[CommandFields.BucketPivot] = -1000;
-                            outputState[CommandFields.BucketPitch] = 1000;
+                            outputState[CommandFields.ScoopPivot] = -1000;
+                            outputState[CommandFields.ScoopPitch] = 1000;
                         }
                         else
                             state = AlgorithmState.DigIn;
@@ -47,8 +47,8 @@ namespace lunabotics.RCU.Autonomy.Algorithms
                     case AlgorithmState.DigIn:
                         if (!robot.TelemetryFeedback.ScoopLowerLimitSwitchDepressed)
                         {
-                            outputState[CommandFields.BucketPivot] = -1000;
-                            outputState[CommandFields.BucketPitch] = 1000;
+                            outputState[CommandFields.ScoopPivot] = -1000;
+                            outputState[CommandFields.ScoopPitch] = 1000;
                             outputState[CommandFields.TranslationalVelocity] = 500;
                         }
                         else
@@ -57,13 +57,13 @@ namespace lunabotics.RCU.Autonomy.Algorithms
                     case AlgorithmState.DigMore:
                         if (robot.TelemetryFeedback.ArmSwingAngle < -0.6279659846)
                         {
-                            outputState[CommandFields.BucketPivot] = 1000;
+                            outputState[CommandFields.ScoopPivot] = 1000;
                             outputState[CommandFields.TranslationalVelocity] = 500;
                         }
                         break;
                     case AlgorithmState.DepositScoop:
                         if (!robot.TelemetryFeedback.ScoopUpperLimitSwitchDepressed)
-                            outputState[CommandFields.BucketPivot] = 1000;
+                            outputState[CommandFields.ScoopPivot] = 1000;
                         else
                         {
                             outputState[CommandFields.TranslationalVelocity] = 500;
@@ -79,8 +79,8 @@ namespace lunabotics.RCU.Autonomy.Algorithms
                     case AlgorithmState.Done:
                         outputState[CommandFields.RotationalVelocity]=0;
                         outputState[CommandFields.TranslationalVelocity] = 500;
-                        outputState[CommandFields.BucketPitch] = 0;
-                        outputState[CommandFields.BucketPivot] = 0;
+                        outputState[CommandFields.ScoopPitch] = 0;
+                        outputState[CommandFields.ScoopPivot] = 0;
                         break;
                     default:
                         break;

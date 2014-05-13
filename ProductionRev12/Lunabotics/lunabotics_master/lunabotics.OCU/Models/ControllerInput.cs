@@ -29,10 +29,10 @@ namespace lunabotics.OCU.Models
             outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = Convert.ToInt16(state.ThumbSticks.Left.X * 1000.0);
 
             //Scoop Arms - raise arms with up on right stick, lower with down
-            outputState[Comms.CommandEncoding.CommandFields.BucketPivot] = GetArmPivot(state); 
+            outputState[Comms.CommandEncoding.CommandFields.ScoopPivot] = GetArmPivot(state); 
 
             //Scoop Actuators left trigger to retract actuators, right trigger to extend
-            outputState[Comms.CommandEncoding.CommandFields.BucketPitch] = GetPitch(state);
+            outputState[Comms.CommandEncoding.CommandFields.ScoopPitch] = GetPitch(state);
             
             //Bucket - left bumper to lower, right bumper to raise
             outputState[Comms.CommandEncoding.CommandFields.LeftBucketActuator] = GetActuator(state);
