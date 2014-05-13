@@ -252,58 +252,96 @@ namespace lunabotics.RCU.Autonomy
                             currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
                             currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
 
-                            //turnToGivenHeading(-90);
-                            //tankTurnLeft(450);
-                            state = State.TemporaryTesting;
+                            turnToGivenHeading(0);
+                            state = State.TraverseClearPath;
+                            //state = State.TemporaryTesting;
                             break;
 
                         case State.TemporaryTesting:
 
                             while (currentPose[Pose.Xpos] < 5100)
                             {
-                                //MoveForward(300);
                                 Move(300, direction.forward);
-                                Thread.Sleep(100);
 
                             }
 
-                            state = State.Mining;
-                            break;
-                        case State.Mining:
-
                             turnToGivenHeading(90);
-                            Thread.Sleep(100);
 
                             while (currentPose[Pose.Ypos] < 2800)
                             {
-                                //MoveForward(300);
                                 Move(300, direction.forward);
-                                Thread.Sleep(100);
                             }
 
                             turnToGivenHeading(180);
-                            Thread.Sleep(100);
 
                             while (currentPose[Pose.Xpos] > 1900)
                             {
-                                //MoveForward(300);
                                 Move(300, direction.forward);
-                                Thread.Sleep(100);
                             }
 
                             turnToGivenHeading(-90);
-                            Thread.Sleep(100);
 
                             while (currentPose[Pose.Ypos] > 1500)
                             {
                                 Move(300, direction.forward);
-                                Thread.Sleep(100);
                             }
                             
                             turnToGivenHeading(0);
-                            Thread.Sleep(100);
 
                             state = State.TemporaryTesting;
+                            break;
+
+                        case State.TraverseClearPath:
+
+                            while (currentPose[Pose.Xpos] < 5100)
+                            {
+                                Move(300, direction.forward);
+                                if (currentPose[Pose.Ypos] < 1890)
+                                    turnToGivenHeading(10);
+                                else if (currentPose[Pose.Ypos] > 1990)
+                                    turnToGivenHeading(-10);
+                                else
+                                    turnToGivenHeading(0);
+                            }
+
+                            state = State.Mining;
+                            break;
+
+                        case State.Mining:
+
+                            turnToGivenHeading(90);
+                            // lower bucket
+
+                            Move(300, direction.forward);
+
+                            // dump bucket
+                            // probably should mine some more
+
+                            state = State.ReturnToDeposition;
+                            break;
+
+                        case State.ReturnToDeposition:
+                            turnToGivenHeading(0);
+
+                            while (currentPose[Pose.Xpos] > 1900)
+                            {
+                                Move(300, direction.reverse);
+                                if (currentPose[Pose.Ypos] < 1890)
+                                    turnToGivenHeading(-10);
+                                else if (currentPose[Pose.Ypos] > 1990)
+                                    turnToGivenHeading(10);
+                                else
+                                    turnToGivenHeading(0);
+                            }
+
+                            state = State.Deposition;
+                            break;
+
+                        case State.Deposition:
+
+                            // dump bin
+
+                            state = State.TraverseClearPath;
                             break;
 
                         case State.SafeShutdown:
@@ -340,6 +378,8 @@ namespace lunabotics.RCU.Autonomy
 
         public void Move(int steps, direction dir)
         {
+
+            //475 Steps to move .333 meters
             ResetCounters();
             short transPower = 0, rotPower = 0;
             //Set Powers

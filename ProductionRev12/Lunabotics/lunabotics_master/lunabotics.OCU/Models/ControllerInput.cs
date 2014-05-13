@@ -29,7 +29,7 @@ namespace lunabotics.OCU.Models
             outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = Convert.ToInt16(state.ThumbSticks.Left.X * 1000.0);
 
             //Scoop Arms - raise arms with up on right stick, lower with down
-            outputState[Comms.CommandEncoding.CommandFields.BucketPivot] = Convert.ToInt16(state.ThumbSticks.Right.Y * 1000.0);
+            outputState[Comms.CommandEncoding.CommandFields.BucketPivot] = GetArmPivot(state); 
 
             //Scoop Actuators left trigger to retract actuators, right trigger to extend
             outputState[Comms.CommandEncoding.CommandFields.BucketPitch] = GetPitch(state);
@@ -52,6 +52,7 @@ namespace lunabotics.OCU.Models
                 mode = Mode.Autonomous;
             if (state.Buttons.Back == ButtonState.Pressed)
                 mode = Mode.Manual;
+            /*
             if (state.Buttons.A == ButtonState.Pressed)
             {
                 //if(Scoop.Angle >=120)
@@ -62,6 +63,7 @@ namespace lunabotics.OCU.Models
                 //if(Scoop.Angle >=120)
                 mode = Mode.BinRaiseMacro;
             }
+            */
             if (state.Buttons.X == ButtonState.Pressed)
             {
                 //if(Bucket.Angle = 0)
@@ -76,32 +78,6 @@ namespace lunabotics.OCU.Models
                 (Math.Pow(Math.E, ControllerSettings.Default.SpeedSensitivity * input) + 1);
         }
 
-        //Radius uses left-stick x-value
-        internal static short GetRadius(int input)
-        {
-
-            if (input == 0) //no steering
-                return 0;
-            else if (input == -1000) //counter-clockwise spin
-            {
-                return -1000;
-            }
-            else if (input == 1000) //clockwise spin
-            {
-                return 1000;
-            }
-            else
-            { //general case
-
-                double input_magnitude = Math.Abs(input);
-
-                double rad = (1000 - input_magnitude) / (ControllerSettings.Default.SteeringSensitivity / 100.0 * input_magnitude);
-
-
-                return Convert.ToInt16(rad * Math.Sign(input));
-            }
-        }
-
         private static short GetPitch(GamePadState state)
         {
             if (state.Triggers.Left > 0 && state.Triggers.Right > 0) //both triggers depressed
@@ -110,22 +86,37 @@ namespace lunabotics.OCU.Models
             {
                 return (short)Math.Round(state.Triggers.Left * -1000.0);
             }
-            else //right trigger only
+            else if (state.Triggers.Right > 0)//right trigger only
             {
                 return (short)Math.Round(state.Triggers.Right * 1000.0);
             }
+            else if (state.Buttons.A == ButtonState.Pressed)
+            {
+                return 1000;
+            }
+            else if (state.Buttons.Y == ButtonState.Pressed)
+            {
+                return -1000;
+            }
+            else
+                return 0;
         }
 
-        private static short GetPivot(GamePadState state)
+        private static short GetArmPivot(GamePadState state)
         {
-            if (state.Buttons.RightShoulder == ButtonState.Pressed &&
-                state.Buttons.LeftShoulder == ButtonState.Pressed)
-                return 0;
-            else if (state.Buttons.LeftShoulder == ButtonState.Pressed)
+            if (Math.Abs(state.ThumbSticks.Right.Y) > 0)
+            {
+                return Convert.ToInt16(state.ThumbSticks.Right.Y * 1000.0);
+            }
+            else if (state.Buttons.A == ButtonState.Pressed)
+            {
                 return -1000;
-            else if (state.Buttons.RightShoulder == ButtonState.Pressed)
+            }
+            else if (state.Buttons.Y == ButtonState.Pressed)
+            {
                 return 1000;
-            else 
+            }
+            else
                 return 0;
         }
 

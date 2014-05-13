@@ -10,7 +10,7 @@ static int iterations = 0;
 static int m, sensor_degrees, long_side, short_side, start;
 static double spacing;
 // 600 mm
-static int sensor_radius = 600;
+static int sensor_radius = 550;
 
 #ifndef LINUX
 __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
@@ -204,8 +204,8 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
     y = short_side/4;
     if (rand_limit(2))
       y *= 3;
-    //theta = rand_limit(360) - 180;
-    theta = 180;
+    theta = rand_limit(360) - 180;
+    //theta = 180;
 	t = theta*M_PI/180;
     particles[i] = particle_init(x + sensor_radius*cos(t), y + sensor_radius*sin(t), theta);
     particles[i].map = initial_map.map;

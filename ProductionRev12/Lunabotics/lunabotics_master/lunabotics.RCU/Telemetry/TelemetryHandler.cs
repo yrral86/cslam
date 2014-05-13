@@ -317,9 +317,9 @@ namespace lunabotics.RCU.Telemetry
                             break;
                         case Configuration.Telemetry.BucketAngleRaw:
                             //Bucket Angle Pot Voltage
-                            //1350 at 0 degrees (bottom)
-                            //2360 at 90 degrees (top)
-                            BucketAngle = (int)((e.UpdatedTelemetry[telem] - 1350) / 13.7);
+                            //1320 at 0 degrees (bottom)
+                            //2600 at 90 degrees (top)
+                            BucketAngle = (int)((e.UpdatedTelemetry[telem] - 1320) / 13.7);
                             break;
                         case Configuration.Telemetry.ArmLowerLimitSwitch:
                             ScoopLowerLimitSwitch = (e.UpdatedTelemetry[telem] > 0 ? true : false);
