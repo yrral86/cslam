@@ -33,10 +33,10 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   // set up shared memory
   param_sem = CreateSemaphore(NULL, 0, 1, param_sem_name);
   return_sem = CreateSemaphore(NULL, 0, 1, return_sem_name);
-  //ready_sem = CreateSemaphore(NULL, 0, 1, ready_sem_name);
+  ready_sem = CreateSemaphore(NULL, 0, 1, ready_sem_name);
   assert(param_sem != NULL);
   assert(return_sem != NULL);
-  //assert(ready_sem != NULL);
+  assert(ready_sem != NULL);
 
   // parameter space size is (sensor readings + 1) * sizeof(int)
   // first int specifies which function, remainder are params
@@ -65,16 +65,17 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   //CreateProcess(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
   ReleaseSemaphore(param_sem, 1, NULL);
   WaitForSingleObject(return_sem, INFINITE);
-  //ReleaseSemaphore(ready_sem, 1, NULL);
+  ReleaseSemaphore(ready_sem, 1, NULL);
 }
 
 __declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
+	WaitForSingleObject(ready_sem, INFINITE);
+
 	params[0] = SLAMD_MOVE;
 	params[1] = dx;
 	params[2] = dy;
 	params[3] = dtheta;
 
-	//WaitForSingleObject(ready_sem, INFINITE);
 	ReleaseSemaphore(param_sem, 1, NULL);
 	WaitForSingleObject(return_sem, INFINITE);
 }
@@ -215,6 +216,13 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   best_particle = particles[0];
 
   landmark_map_dereference(initial_map.map);
+
+#ifndef LINUX
+  return_sem = CreateSemaphore(NULL, 0, 1, return_sem_name);
+  ready_sem = CreateSemaphore(NULL, 0, 1, ready_sem_name);
+  assert(return_sem != NULL);
+  assert(ready_sem != NULL);
+#endif
 }
 
 #ifndef LINUX
@@ -387,7 +395,7 @@ void swarm_update(int *distances) {
   best_particle.map = landmark_map_copy(best_particle.map);
 
 #ifndef LINUX
-//  ReleaseSemaphore(return_sem, 1, NULL);
+  ReleaseSemaphore(return_sem, 1, NULL);
 #endif
 
   // normalize particle log probabilities, convert to normal probabilities for resampling
@@ -452,7 +460,7 @@ void swarm_update(int *distances) {
   iterations++;
 
 #ifndef LINUX
-//  ReleaseSemaphore(ready_sem, 1, NULL);
+  ReleaseSemaphore(ready_sem, 1, NULL);
 #endif
 }
 

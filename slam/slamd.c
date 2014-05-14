@@ -1,7 +1,7 @@
 #include "slamd.h"
 
 int main(int argc, char **argv) {
-  int i, m, param_size, return_size;
+  int i, m, param_size, return_size, last_command;
   FILE *record;
 
   // set up shared memory
@@ -30,6 +30,7 @@ int main(int argc, char **argv) {
   while (1) {
     WaitForSingleObject(param_sem, INFINITE);
     record = fopen("slamd_record.csv", "a");
+	last_command = params[0];
     switch (params[0]) {
     case SLAMD_INIT:
       fprintf(record, "init\n");
@@ -68,7 +69,7 @@ int main(int argc, char **argv) {
     // UPDATE releases semaphore inline to return
     // as early as possible while it normalizes,
     // sorts, and resamples in the background
-    //if (params[0] != SLAMD_UPDATE)
+    if (last_command != SLAMD_UPDATE)
       ReleaseSemaphore(return_sem, 1, NULL);
   }
 
