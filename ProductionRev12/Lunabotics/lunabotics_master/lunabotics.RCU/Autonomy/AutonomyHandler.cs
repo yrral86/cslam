@@ -65,6 +65,8 @@ namespace lunabotics.RCU.Autonomy
         public short rightPower = -400;
         public short leftPower = 400;
 
+        public int lane_width = 750;
+
         private bool active; // Thread started
         private bool started; // State set to run
         private readonly object timerSync = new object();
@@ -297,22 +299,22 @@ namespace lunabotics.RCU.Autonomy
                             break;
 
                         case State.TraverseClearPath:
-
-                            while (currentPose[Pose.Xpos] < 6260)
+                            while (currentPose[Pose.Xpos] < 5000)
                             {
-                                if (currentPose[Pose.Xpos] < 5800)
+                                if (currentPose[Pose.Xpos] < 4500)
                                     Move(300, direction.forward);
                                 else
-                                    Move(MMToSteps((int)(6260 - currentPose[Pose.Xpos])), direction.forward);
-                                if (currentPose[Pose.Ypos] < 1890)
-                                    turnToGivenHeading(10);
-                                else if (currentPose[Pose.Ypos] > 1990)
-                                    turnToGivenHeading(-10);
+                                    Move(MMToSteps((int)(5000 - currentPose[Pose.Xpos])), direction.forward);
+                                if (currentPose[Pose.Ypos] < 1940 - lane_width/2)
+                                    turnToGivenHeading(20);
+                                else if (currentPose[Pose.Ypos] > 1940 + lane_width/2)
+                                    turnToGivenHeading(-20);
                                 else
                                     turnToGivenHeading(0);
                             }
 
-                            state = State.Mining;
+                            //state = State.Mining;
+                            state = State.ReturnToDeposition;
                             break;
 
                         case State.Mining:
@@ -322,7 +324,7 @@ namespace lunabotics.RCU.Autonomy
 
                                 MineScoop();
 
-                                Move(600, direction.reverse);
+                                Move(300, direction.reverse);
                             }
                             state = State.ReturnToDeposition;
                             break;
@@ -330,14 +332,14 @@ namespace lunabotics.RCU.Autonomy
                         case State.ReturnToDeposition:
                             turnToGivenHeading(0);
 
-                            while (currentPose[Pose.Xpos] > 1500)
+                            while (currentPose[Pose.Xpos] > 2000)
                             {
                                 Move(300, direction.reverse);
 
-                                if (currentPose[Pose.Ypos] < 1890)
-                                    turnToGivenHeading(-10);
-                                else if (currentPose[Pose.Ypos] > 1990)
-                                    turnToGivenHeading(10);
+                                if (currentPose[Pose.Ypos] < 1940 - lane_width/2)
+                                    turnToGivenHeading(-20);
+                                else if (currentPose[Pose.Ypos] > 1940 + lane_width/2)
+                                    turnToGivenHeading(20);
                                 else
                                     turnToGivenHeading(0);
                             }
@@ -348,9 +350,9 @@ namespace lunabotics.RCU.Autonomy
                         case State.Deposition:
                             while (currentPose[Pose.Xpos] > 600)
                             {
-                                if (currentPose[Pose.Ypos] < 1890)
+                                if (currentPose[Pose.Ypos] < 1940 - lane_width/2)
                                     turnToGivenHeading(-90);
-                                else if (currentPose[Pose.Ypos] > 1990)
+                                else if (currentPose[Pose.Ypos] > 1940 + lane_width/2)
                                     turnToGivenHeading(90);
                                 else
                                     turnToGivenHeading(0);
@@ -375,7 +377,7 @@ namespace lunabotics.RCU.Autonomy
                                     reversePower = -800;
                                 }
                                 else
-                                    Move(300, direction.reverse);
+                                    Move(MMToSteps((int)Math.Abs(currentPose[Pose.Ypos] - 1940)), direction.reverse);
 
                             }
 
@@ -475,7 +477,8 @@ namespace lunabotics.RCU.Autonomy
 
         public int MMToSteps(int mm)
         {
-            return (int)(mm / 0.7023);
+            //return (int)(mm / 0.7023);
+            return mm;
         }
 
         public bool MineScoop()
@@ -484,9 +487,9 @@ namespace lunabotics.RCU.Autonomy
             if (currentPose[Pose.Xpos] < 6530)
             {
                 Stopwatch st = new Stopwatch();
-                SetArmSwingAndScoopPitch(0, 10);
-                Move(300, direction.forward);
-                SetArmSwingAndScoopPitch(145, 0);
+                SetArmSwingAndScoopPitch(60, 10);
+                Move(150, direction.forward);
+                SetArmSwingAndScoopPitch(130, 0);
                 st.Start();
                 while (st.ElapsedMilliseconds < 5000)
                 {
@@ -546,7 +549,6 @@ namespace lunabotics.RCU.Autonomy
                 outputState = MergeStates(outputState, staticOutput);
                 //Make calls to event handler to move motors
                 OnAutonomyUpdated(new AutonomyArgs(outputState));
-
                
                 angle_error = angle - (int)robot.TelemetryFeedback.BucketPivotAngle;
                 if (Math.Abs(angle_error) < 2)
@@ -595,6 +597,8 @@ namespace lunabotics.RCU.Autonomy
             OnAutonomyUpdated(new AutonomyArgs(outputState));
             //Reset Hall count for next motor command
             ResetCounters();
+            if (dir == direction.reverse)
+                steps *= -1;
             ParticleFiltering(steps, steps);
         }
 
