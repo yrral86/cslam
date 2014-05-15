@@ -2,14 +2,14 @@
 #include <stdio.h>
 #include "slamd.h"
 
-static particle particles[PARTICLE_COUNT];
-static particle previous_particles[PARTICLE_COUNT];
+static particle particles[INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT];
+static particle previous_particles[INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT];
 static particle best_particle;
 static landmark_map *map;
 static int iterations = 0;
 static int m, sensor_degrees, long_side, short_side, start;
 static double spacing;
-// 600 mm
+// 550 mm
 static int sensor_radius = 550;
 
 #ifndef LINUX
@@ -201,13 +201,13 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   */
   // initialize first round of particles
   x = start/2;
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  for (i = 0; i < INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT; i++) {
     y = short_side/4;
     if (rand_limit(2))
       y *= 3;
-    //theta = rand_limit(360) - 180;
-    theta = 180;
-	t = theta*M_PI/180;
+    theta = rand_limit(360) - 180;
+    //theta = 180;
+    t = theta*M_PI/180;
     particles[i] = particle_init(x + sensor_radius*cos(t), y + sensor_radius*sin(t), theta);
     particles[i].map = initial_map.map;
     landmark_map_reference(particles[i].map);
@@ -231,7 +231,7 @@ void swarm_move_internal(int dx, int dy, int dtheta) {
 #ifdef LINUX
 void swarm_move(int dx, int dy, int dtheta) {
 #endif
-  int i, tries;
+  int i, tries, p_count;
   double t_old, t_new;
   particle p;
   t_old = best_particle.theta*M_PI/180;
@@ -241,8 +241,13 @@ void swarm_move(int dx, int dy, int dtheta) {
   dx += sensor_radius*(cos(t_new) - cos(t_old));
   dy += sensor_radius*(sin(t_new) - sin(t_old));
 
-  // add motion (nothing for now, relying on high variance and lots of particles)
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  if (iterations < 1)
+    p_count = INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT;
+  else
+    p_count = PARTICLE_COUNT;
+
+  // add motion
+  for (i = 0; i < p_count; i++) {
     p = particles[i];
     tries = 0;
     do {
@@ -270,16 +275,21 @@ void swarm_update_internal(int *distances) {
 #ifdef LINUX
 void swarm_update(int *distances) {
 #endif
-  int i, j, k, l, best_index;
+  int i, j, k, l, best_index, p_count;
   int swap, x, y;
   double posterior, distance, theta, degrees, s, c, total, min, p, step;
   //  double xyt[3];
   particle temp;
 
+  if (iterations < 1)
+    p_count = INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT;
+  else
+    p_count = PARTICLE_COUNT;
+
   min = 10000.0;
   best_index = 0;
   // evaulate each direction for each particle
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  for (i = 0; i < p_count; i++) {
     posterior = 0.0;
 
     /*
@@ -347,39 +357,39 @@ void swarm_update(int *distances) {
     // evaluate the particle's relative probability
     for (j = 0; j < m; j++) {
       distance = distances[j];
-	  if (distance < 8000) {
-      // forward is now 0 degrees, left -, right +
-      //      degrees = -1*(-sensor_degrees/2.0 + j*spacing);
-      degrees = -sensor_degrees/2.0 + j*spacing;
-      theta = (degrees - particles[i].theta)*M_PI/180;
-      s = sin(theta);
-      c = cos(theta);
+      if (distance < 8000) {
+	// forward is now 0 degrees, left -, right +
+	//      degrees = -1*(-sensor_degrees/2.0 + j*spacing);
+	degrees = -sensor_degrees/2.0 + j*spacing;
+	theta = (degrees - particles[i].theta)*M_PI/180;
+	s = sin(theta);
+	c = cos(theta);
 
-      // check and record unseen every 2000 mm
-      for (l = 0; l < distance; l += 2000) {
-	x = l*c + particles[i].x;
-	y = l*s + short_side - particles[i].y;
+	// check and record unseen every 2000 mm
+	for (l = distance - 2000; l > 0; l -= 2000) {
+	  x = l*c + particles[i].x;
+	  y = l*s + short_side - particles[i].y;
+
+	  // make sure it is in bounds
+	  if (in_arena(x, y)) {
+	    k = buffer_index_from_x_y(x, y);
+	    p = landmark_unseen_probability(particles[i].map, k);
+	    posterior += -log(p);
+	  } else posterior += -log(0.05);
+	}
+
+	// check and record seen
+	x = distance*c + particles[i].x;
+	y = distance*s + short_side - particles[i].y;
 
 	// make sure it is in bounds
 	if (in_arena(x, y)) {
 	  k = buffer_index_from_x_y(x, y);
-	  p = landmark_unseen_probability(particles[i].map, k);
+	  p = landmark_seen_probability(particles[i].map, k);
 	  posterior += -log(p);
 	} else posterior += -log(0.05);
       }
-
-      // check and record seen
-      x = distance*c + particles[i].x;
-      y = distance*s + short_side - particles[i].y;
-
-      // make sure it is in bounds
-      if (in_arena(x, y)) {
-	k = buffer_index_from_x_y(x, y);
-	p = landmark_seen_probability(particles[i].map, k);
-	posterior += -log(p);
-      } else posterior += -log(0.05);
     }
-	}
 
     particles[i].p += posterior;
     if (particles[i].p < min) {
@@ -400,13 +410,13 @@ void swarm_update(int *distances) {
 
   // normalize particle log probabilities, convert to normal probabilities for resampling
   total = 0.0;
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  for (i = 0; i < p_count; i++) {
     particles[i].p -= min;
     particles[i].p = pow(M_E, -particles[i].p);
     total += particles[i].p;
   }
 
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  for (i = 0; i < p_count; i++) {
     particles[i].p /= total;
   }
 
@@ -415,7 +425,7 @@ void swarm_update(int *distances) {
   i = 0;
   do {
     swap = 0;
-    for (j = 0; j < PARTICLE_COUNT - i - 1; j++)
+    for (j = 0; j < p_count - i - 1; j++)
       // if the left particle is smaller probability, bubble it right
       if (particles[j].p < particles[j + 1].p) {
 	temp = particles[j];
@@ -427,18 +437,18 @@ void swarm_update(int *distances) {
   } while (swap);
 
   /*
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  for (i = 0; i < p_count; i++) {
     if (particles[i].p > 0)
       printf("i: %i, p: %g\n", i, particles[i].p);
   }
   */
 
   // save old particles before we resample
-  memcpy(previous_particles, particles, sizeof(particle)*PARTICLE_COUNT);
+  memcpy(previous_particles, particles, sizeof(particle)*p_count);
   // resample with replacement
   p = rand()/(double)RAND_MAX;
-  step = 1.0/PARTICLE_COUNT;
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  step = 1.0/p_count;
+  for (i = 0; i < p_count; i++) {
     p += step;
     if (p > 1.0) p -= 1.0;
     total = 0.0;
@@ -450,11 +460,11 @@ void swarm_update(int *distances) {
   }
 
   // dereference previous particle maps
-  for (i = 0; i < PARTICLE_COUNT; i++)
+  for (i = 0; i < p_count; i++)
     landmark_map_dereference(previous_particles[i].map);
 
   // restore log probabilities
-  for (i = 0; i < PARTICLE_COUNT; i++)
+  for (i = 0; i < p_count; i++)
     particles[i].p = -log(particles[i].p);
 
   iterations++;
