@@ -316,8 +316,8 @@ namespace lunabotics.RCU
                         //    if (!feedback.BinUpperSwitchDepressed)
                         //    {
                         //        // Move actuators in and raise scoop
-                        //        state[CommandFields.BucketPitch] = -1000;
-                        //        state[CommandFields.BucketPivot] = 1000;
+                        //        state[CommandFields.ScoopPitch] = -1000;
+                        //        state[CommandFields.ScoopPivot] = 1000;
                         //        stopwatch.Restart();
                         //    }
                         //    else if (stopwatch.ElapsedMilliseconds < 700)
@@ -359,7 +359,7 @@ namespace lunabotics.RCU
                         //        else
                         //        {
                         //            // Close enough, move scoop all the way down
-                        //            state[CommandFields.BucketPivot] = -1000;
+                        //            state[CommandFields.ScoopPivot] = -1000;
                         //            // Check for done
                         //            if (feedback.BinLowerSwitchDepressed)
                         //            {
@@ -425,10 +425,10 @@ namespace lunabotics.RCU
                     }
 
                     //TEMPORARY KLUDGE:
-                    if (robotState.ContainsKey(CommandFields.BucketPitch))
-                        deviceStates[Devices.Actuators] = robotState[Comms.CommandEncoding.CommandFields.BucketPitch];
-                    if (robotState.ContainsKey(CommandFields.BucketPivot))
-                        deviceStates[Devices.Pivot] = robotState[Comms.CommandEncoding.CommandFields.BucketPivot];
+                    if (robotState.ContainsKey(CommandFields.ScoopPitch))
+                        deviceStates[Devices.Actuators] = robotState[Comms.CommandEncoding.CommandFields.ScoopPitch];
+                    if (robotState.ContainsKey(CommandFields.ScoopPivot))
+                        deviceStates[Devices.Pivot] = robotState[Comms.CommandEncoding.CommandFields.ScoopPivot];
                     if (robotState.ContainsKey(CommandFields.LeftBucketActuator))
                         deviceStates[Devices.LeftBucketActuator] = robotState[Comms.CommandEncoding.CommandFields.LeftBucketActuator];
                     if (robotState.ContainsKey(CommandFields.RightBucketActuator))

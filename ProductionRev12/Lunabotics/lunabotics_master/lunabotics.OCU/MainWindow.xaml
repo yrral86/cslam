@@ -180,7 +180,7 @@
                         <StackPanel HorizontalAlignment="Left" Orientation="Vertical" Margin="20,-3,0,3">
                         <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding ScoopPivotAngle, StringFormat='Arm Angle: \{0:f0}&#186;'}"/>
                         <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding ScoopPitchAngle, StringFormat='Scoop Angle: \{0:f0}&#186;'}"/>
-                        <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding ArmMotorAmps, StringFormat='Arm Motor Amps: \{0:f0}&#186;'}"/>
+                        <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding ArmMotorAmps, StringFormat='Arm Motor Amps: \{0:f0}'}"/>
                         <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding BucketPivotAngle, StringFormat='Dump Bucket Angle: \{0:f0}&#186;'}"/>
                         <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding X, StringFormat=X: \{0:f1\}}"/>
                         <TextBlock Margin="3" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding Y, StringFormat=Y: \{0:f1\}}"/>
@@ -213,12 +213,12 @@
                         </Canvas>
                     </Viewbox>
                     <TextBlock Margin="700,0,0,260" Text="Drive Motor Current Draw" Foreground="{StaticResource TextForegroundBrush}" FontSize="14" VerticalAlignment="Top"/>
-                    <TextBlock Margin="700,25,0,235" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding LeftFrontMotorAmps, StringFormat=Left Front: \{0:f1\}}"/>
-                    <TextBlock Margin="825,25,0,235" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding RightFrontMotorAmps, StringFormat=Right Front: \{0:f1\}}"/>
-                    <TextBlock Margin="700,50,0,210" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding LeftRearMotorAmps, StringFormat=Left Rear: \{0:f1\}}"/>
-                    <TextBlock Margin="825,50,0,210" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding RightRearMotorAmps, StringFormat=Right Rear: \{0:f1\}}"/>
-                    <TextBlock Margin="806,170,0,95" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding RearProximityLeft, StringFormat=Left Distance: \{0:f1\}}"/>
-                    <TextBlock Margin="806,215,0,45" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding RearProximityRight, StringFormat=Right Distance: \{0:f1\}}"/>
+                    <TextBlock Margin="700,25,0,235" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding LeftFrontMotorAmps, StringFormat='Left Front: \{0:f1}'}"/>
+                    <TextBlock Margin="825,25,0,235" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding RightFrontMotorAmps, StringFormat='Right Front: \{0:f1}'}"/>
+                    <TextBlock Margin="700,50,0,210" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding LeftRearMotorAmps, StringFormat='Left Rear: \{0:f1}'}"/>
+                    <TextBlock Margin="825,50,0,210" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding RightRearMotorAmps, StringFormat='Right Rear: \{0:f1}'}"/>
+                    <TextBlock Margin="806,170,0,95" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding RearProximityLeft, StringFormat='Left Distance: \{0:f1\}'}"/>
+                    <TextBlock Margin="806,215,0,45" FontSize="14" Foreground="{StaticResource TextForegroundBrush}" Text="{Binding RearProximityRight, StringFormat='Right Distance: \{0:f1\}'}"/>
                     <ProgressBar Foreground="#FFEEB111" HorizontalAlignment="Left" Height="25" Orientation="Horizontal" Margin="685,170,0,0" VerticalAlignment="Top" Width="120" Value="{Binding ProximityBar1}" Maximum="80" Minimum="0" />
                     <ProgressBar Foreground="#FFEEB111" HorizontalAlignment="Left" Height="25" Orientation="Horizontal" Margin="685,215,0,0" VerticalAlignment="Top" Width="120" Value="{Binding ProximityBar2}" Maximum="80" Minimum="0"/>
                     <!--<TextBlock Margin="825,232,55,0" Text="Left" Foreground="{StaticResource TextForegroundBrush}" FontSize="12" VerticalAlignment="Top"/>

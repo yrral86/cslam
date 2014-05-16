@@ -19,8 +19,8 @@ namespace lunabotics.RCU.Hokuyo
         public int[] SerialScan()
         {
             const int GET_NUM = 1;
-            const int start_step = 85;
-            const int end_step = 598; // Only scanning 180 degrees
+            const int start_step = 286;
+            const int end_step = 494; // Only scanning 180 degrees
 
             List<int> distances = new List<int>();
             int[] distanceArray;
@@ -54,11 +54,12 @@ namespace lunabotics.RCU.Hokuyo
                         Console.WriteLine(receive_data);
                         continue;
                     }
+                    /*
                     // show distance data
                     for (int j = 365; j < 395; j++)
                     {
                         Console.WriteLine("time stamp: " + time_stamp.ToString() + " distance[" + j + "] : " + distances[j].ToString());
-                    }
+                    }*/
                 }
 
                 urg.Write(SCIP_Writer.QT()); // stop measurement mode

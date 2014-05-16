@@ -13,7 +13,7 @@ namespace lunabotics.RCU.Telemetry
             Front,
             Rear
         }
-
+        
         //Hall Counter Variables
         public static double Robo1HallCount1;
         public static double Robo1HallCount2;
@@ -406,7 +406,7 @@ namespace lunabotics.RCU.Telemetry
         {
             get
             {
-                return robo1Mot1Amps;
+                return robo1Mot1Amps / 10;
             }
         }
 
@@ -414,7 +414,7 @@ namespace lunabotics.RCU.Telemetry
         {
             get
             {
-                return robo1Mot2Amps;
+                return robo1Mot2Amps / 10;
             }
         }
 
@@ -422,7 +422,7 @@ namespace lunabotics.RCU.Telemetry
         {
             get
             {
-                return robo2Mot1Amps;
+                return robo2Mot1Amps / 10;
             }
         }
 
@@ -430,7 +430,7 @@ namespace lunabotics.RCU.Telemetry
         {
             get
             {
-                return robo2Mot2Amps;
+                return robo2Mot2Amps / 10;
             }
         }
 
@@ -451,17 +451,17 @@ namespace lunabotics.RCU.Telemetry
 
         public double X
         {
-            get { return x / 10.0; }
+            get { return x; }
         }
 
         public double Y
         {
-            get { return y / 10.0; }
+            get { return y; }
         }
 
         public double Psi
         {
-            get { return psi / 10.0; }
+            get { return psi; }
         }
 
         public int State

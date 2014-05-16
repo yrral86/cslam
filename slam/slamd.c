@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
     // UPDATE releases semaphore inline to return
     // as early as possible while it normalizes,
     // sorts, and resamples in the background
-    if (params[0] != SLAMD_UPDATE)
+    //if (params[0] != SLAMD_UPDATE)
       ReleaseSemaphore(return_sem, 1, NULL);
   }
 

@@ -62,20 +62,7 @@
     <Compile Include="Autonomy\AutonomyHandler.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Autonomy\Field.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Autonomy\Localization\Swarm.cs" />
-    <Compile Include="Autonomy\MappingAlgorithm.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Autonomy\MiningAlgorithm.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Autonomy\Position.cs" />
-    <Compile Include="Autonomy\RangeFinderModel.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Autonomy\Robot.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -83,6 +70,7 @@
     <Compile Include="Controllers\RoboteQ.cs" />
     <Compile Include="Controllers\RoboteQUpdateQueue.cs" />
     <Compile Include="Hokuyo\get_distance_ethernet.cs" />
+    <Compile Include="Hokuyo\get_distance_serial.cs" />
     <Compile Include="Hokuyo\SCIP_library.cs" />
     <Compile Include="Models\BucketController.cs" />
     <Compile Include="Models\Kinematics.cs" />

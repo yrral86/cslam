@@ -17,6 +17,7 @@ namespace lunabotics.OCU.Models
         public static Dictionary<lunabotics.Comms.CommandEncoding.CommandFields, short> GetLunabotState()
         {
             var state = GamePad.GetState(ControllerSettings.Default.Player, GamePadDeadZone.Circular);
+            var boardState = Keyboard.GetState();
 
             if(!state.IsConnected)
                 throw new Exception("Controller " + ControllerSettings.Default.Player + " is Disconnected!");
@@ -29,14 +30,14 @@ namespace lunabotics.OCU.Models
             outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = Convert.ToInt16(state.ThumbSticks.Left.X * 1000.0);
 
             //Scoop Arms - raise arms with up on right stick, lower with down
-            outputState[Comms.CommandEncoding.CommandFields.BucketPivot] = GetArmPivot(state); 
+            outputState[Comms.CommandEncoding.CommandFields.ScoopPivot] = GetArmPivot(state, boardState); 
 
             //Scoop Actuators left trigger to retract actuators, right trigger to extend
-            outputState[Comms.CommandEncoding.CommandFields.BucketPitch] = GetPitch(state);
+            outputState[Comms.CommandEncoding.CommandFields.ScoopPitch] = GetPitch(state);
             
             //Bucket - left bumper to lower, right bumper to raise
-            outputState[Comms.CommandEncoding.CommandFields.LeftBucketActuator] = GetActuator(state);
-            outputState[Comms.CommandEncoding.CommandFields.RightBucketActuator] = GetActuator(state);
+            outputState[Comms.CommandEncoding.CommandFields.LeftBucketActuator] = GetActuator(state, boardState);
+            outputState[Comms.CommandEncoding.CommandFields.RightBucketActuator] = GetActuator(state, boardState);
 
             // Set autonomy state
             outputState[Comms.CommandEncoding.CommandFields.Mode] = GetMode(state);
@@ -63,12 +64,12 @@ namespace lunabotics.OCU.Models
                 //if(Scoop.Angle >=120)
                 mode = Mode.BinRaiseMacro;
             }
-            */
             if (state.Buttons.X == ButtonState.Pressed)
             {
                 //if(Bucket.Angle = 0)
                 mode = Mode.CollectScoopMacro;
             }
+            */
             return (short)mode;
         }
 
@@ -102,17 +103,17 @@ namespace lunabotics.OCU.Models
                 return 0;
         }
 
-        private static short GetArmPivot(GamePadState state)
+        private static short GetArmPivot(GamePadState state, KeyboardState boardstate)
         {
             if (Math.Abs(state.ThumbSticks.Right.Y) > 0)
             {
                 return Convert.ToInt16(state.ThumbSticks.Right.Y * 1000.0);
             }
-            else if (state.Buttons.A == ButtonState.Pressed)
+            else if (state.Buttons.A == ButtonState.Pressed || boardstate.IsKeyDown(Keys.Left))
             {
                 return -1000;
             }
-            else if (state.Buttons.Y == ButtonState.Pressed)
+            else if (state.Buttons.Y == ButtonState.Pressed || boardstate.IsKeyDown(Keys.Right))
             {
                 return 1000;
             }
@@ -120,20 +121,14 @@ namespace lunabotics.OCU.Models
                 return 0;
         }
 
-        private static short GetActuator(GamePadState state)
+        private static short GetActuator(GamePadState state, KeyboardState boardstate)
         {
-            //if (state.DPad.Up == ButtonState.Pressed)
-            //    return 1000;
-            //else if (state.DPad.Down == ButtonState.Pressed)
-            //    return -1000;
-            //else
-            //    return 0;
             if (state.Buttons.RightShoulder == ButtonState.Pressed &&
                 state.Buttons.LeftShoulder == ButtonState.Pressed)
                 return 0;
-            else if (state.Buttons.LeftShoulder == ButtonState.Pressed)
+            else if (state.Buttons.LeftShoulder == ButtonState.Pressed || boardstate.IsKeyDown(Keys.Down))
                 return -1000;
-            else if (state.Buttons.RightShoulder == ButtonState.Pressed)
+            else if (state.Buttons.RightShoulder == ButtonState.Pressed || boardstate.IsKeyDown(Keys.Up))
                 return 1000;
             else
                 return 0;

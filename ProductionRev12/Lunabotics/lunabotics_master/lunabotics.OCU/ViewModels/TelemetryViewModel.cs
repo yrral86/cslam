@@ -145,7 +145,7 @@ namespace lunabotics.OCU.ViewModels
         public double RightFrontMotorAmps
         {
             get { return rightFrontAmps; }
-            set
+            private set
             {
                 if (rightFrontAmps != value)
                 {
@@ -158,7 +158,7 @@ namespace lunabotics.OCU.ViewModels
         public double RightRearMotorAmps
         {
             get { return rightRearAmps; }
-            set
+            private set
             {
                 if (rightRearAmps != value)
                 {
@@ -171,7 +171,7 @@ namespace lunabotics.OCU.ViewModels
         public double LeftFrontMotorAmps
         {
             get { return leftFrontAmps; }
-            set
+            private set
             {
                 if (leftFrontAmps != value)
                 {
@@ -184,7 +184,7 @@ namespace lunabotics.OCU.ViewModels
         public double LeftRearMotorAmps
         {
             get { return leftRearAmps; }
-            set
+            private set
             {
                 if (leftRearAmps != value)
                 {
@@ -209,7 +209,7 @@ namespace lunabotics.OCU.ViewModels
 
         public bool BinUpperSwitchDepressed
         {
-            get { return binUpperSwitchDepressed; }
+            get { return binUpperSwitchDepressed; } 
             set
             {
                 if (binUpperSwitchDepressed != value)
@@ -498,6 +498,10 @@ namespace lunabotics.OCU.ViewModels
                 }
 
                 //*other telemetry*/
+                RightFrontMotorAmps = e.Telemetry.RightFrontMotorAmps;
+                RightRearMotorAmps = e.Telemetry.RightRearMotorAmps;
+                LeftFrontMotorAmps = e.Telemetry.LeftFrontMotorAmps;
+                LeftRearMotorAmps = e.Telemetry.LeftRearMotorAmps;
                 ArmMotorAmps = e.Telemetry.ArmMotorAmps;
                 ScoopPitchAngle = e.Telemetry.ScoopPitchAngle;
                 ScoopPivotAngle = e.Telemetry.ArmSwingAngle;

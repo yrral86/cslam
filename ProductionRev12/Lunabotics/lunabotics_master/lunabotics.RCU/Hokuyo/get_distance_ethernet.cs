@@ -1,4 +1,4 @@
-﻿/*!
+/*!
  * \file
  * \brief Get distance data from Ethernet type URG
  * \author Jun Fujimoto
@@ -21,8 +21,8 @@ namespace lunabotics.RCU.Hokuyo
         {
 //            const int start_step = 0;
 //            const int end_step = 1080;
-            const int start_step = 180;
-            const int end_step = 900;
+            const int start_step = 180; //left-most (Robot perspective)
+            const int end_step = 900; //right-most
 
 
             //List to hold all 1080 distance values
@@ -79,6 +79,61 @@ namespace lunabotics.RCU.Hokuyo
 
             distanceArray = distances.ToArray();
             return distanceArray;
+        }
+
+        //take value array from EthernetScan and return averaged cenenter with +/- 10 degrees
+        //return array: [int leftVal, int CenterVal, int rightVal]
+        private int[] getLCR()
+        {
+            /*  
+                720 scan points
+                180 degrees
+
+                720/180  = 4 scanpoints/degrees
+
+                90 degrees:
+                90*4 = 360
+                scanpoint 360 is 90 degrees
+              
+                110 degrees (+20):
+                110*4 = 440
+                scanpoint 440 is 110 degrees
+
+                70 degrees (-20):
+                70*4 = 280
+                scanpoint 280 is 70 degrees
+             */
+
+            int[] LCR = new int[3];
+            int[] scanData = EthernetScan(); //hokuyo values from 180 to 900 (180 degree scan)
+            //center-most values @ sample 360
+            //average 10 center-most values:
+            int sum = 0;
+            for (int i = 355; i < 365; i++)
+            {
+                sum += scanData[i];
+            }
+            LCR[1] = (int)(sum / 10); //center
+
+            //-20 degrees off-center values @ sample 460
+            //10 average -20 degrees off-center values:
+            sum = 0;
+            for (int i = 275; i < 285; i++)
+            {
+                sum += scanData[i];
+            }
+            LCR[0] = (int)(sum / 10); //left
+
+            //+20 degrees off-center values @ sample 620
+            //10 average +20 degrees off-center values:
+            sum = 0;
+            for (int i = 435; i < 445; i++)
+            {
+                sum += scanData[i];
+            }
+            LCR[2] = (int)(sum / 10); //right
+
+            return LCR;
         }
 
 

@@ -17,11 +17,11 @@ namespace lunabotics.Configuration
         Pivot,
         Actuators,
 
-        /* Bin */
+        /* Bucket */
         LeftBucketActuator,
         RightBucketActuator,
 
         /* Rangefinder */
-        RangeFinderServo
+        RangeFinderEnable
     }
 }

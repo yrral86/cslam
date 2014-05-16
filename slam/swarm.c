@@ -33,10 +33,10 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   // set up shared memory
   param_sem = CreateSemaphore(NULL, 0, 1, param_sem_name);
   return_sem = CreateSemaphore(NULL, 0, 1, return_sem_name);
-  ready_sem = CreateSemaphore(NULL, 0, 1, ready_sem_name);
+  //ready_sem = CreateSemaphore(NULL, 0, 1, ready_sem_name);
   assert(param_sem != NULL);
   assert(return_sem != NULL);
-  assert(ready_sem != NULL);
+  //assert(ready_sem != NULL);
 
   // parameter space size is (sensor readings + 1) * sizeof(int)
   // first int specifies which function, remainder are params
@@ -65,7 +65,7 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   //CreateProcess(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
   ReleaseSemaphore(param_sem, 1, NULL);
   WaitForSingleObject(return_sem, INFINITE);
-  ReleaseSemaphore(ready_sem, 1, NULL);
+  //ReleaseSemaphore(ready_sem, 1, NULL);
 }
 
 __declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
@@ -74,7 +74,7 @@ __declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
 	params[2] = dy;
 	params[3] = dtheta;
 
-	WaitForSingleObject(ready_sem, INFINITE);
+	//WaitForSingleObject(ready_sem, INFINITE);
 	ReleaseSemaphore(param_sem, 1, NULL);
 	WaitForSingleObject(return_sem, INFINITE);
 }
@@ -204,8 +204,8 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
     y = short_side/4;
     if (rand_limit(2))
       y *= 3;
-    theta = rand_limit(360) - 180;
-    //theta = 180;
+    //theta = rand_limit(360) - 180;
+    theta = 180;
 	t = theta*M_PI/180;
     particles[i] = particle_init(x + sensor_radius*cos(t), y + sensor_radius*sin(t), theta);
     particles[i].map = initial_map.map;
@@ -339,6 +339,7 @@ void swarm_update(int *distances) {
     // evaluate the particle's relative probability
     for (j = 0; j < m; j++) {
       distance = distances[j];
+	  if (distance < 8000) {
       // forward is now 0 degrees, left -, right +
       //      degrees = -1*(-sensor_degrees/2.0 + j*spacing);
       degrees = -sensor_degrees/2.0 + j*spacing;
@@ -370,6 +371,7 @@ void swarm_update(int *distances) {
 	posterior += -log(p);
       } else posterior += -log(0.05);
     }
+	}
 
     particles[i].p += posterior;
     if (particles[i].p < min) {
@@ -385,7 +387,7 @@ void swarm_update(int *distances) {
   best_particle.map = landmark_map_copy(best_particle.map);
 
 #ifndef LINUX
-  ReleaseSemaphore(return_sem, 1, NULL);
+//  ReleaseSemaphore(return_sem, 1, NULL);
 #endif
 
   // normalize particle log probabilities, convert to normal probabilities for resampling
@@ -450,7 +452,7 @@ void swarm_update(int *distances) {
   iterations++;
 
 #ifndef LINUX
-  ReleaseSemaphore(ready_sem, 1, NULL);
+//  ReleaseSemaphore(ready_sem, 1, NULL);
 #endif
 }
 
