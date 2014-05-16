@@ -10,10 +10,10 @@ static int iterations = 0;
 static int converged, m, sensor_degrees, long_side, short_side, start;
 static double spacing;
 // 550 mm
-static int sensor_radius = 550;
+static int sensor_radius;
 
 #ifndef LINUX
-__declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
+__declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in, int radius) {
   int param_size, return_size;
 
   m = m_in;
@@ -22,6 +22,7 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   short_side = short_side_in;
   start = start_in;
   spacing = sensor_degrees/(double)(m);
+  sensor_radius = radius;
 
   // set up shared memory
   param_sem = CreateSemaphore(NULL, 0, 1, param_sem_name);
@@ -55,7 +56,8 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   params[2] = degrees_in;
   params[3] = long_side_in;
   params[4] = short_side_in;
-  params[5] = start_in;  
+  params[5] = start_in;
+  params[6] = radius;
 
   ReleaseSemaphore(param_sem, 1, NULL);
   WaitForSingleObject(return_sem, INFINITE);
@@ -123,10 +125,10 @@ __declspec(dllexport) int swarm_get_best_theta() {
 #endif
 
 #ifndef LINUX
-void swarm_init_internal(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
+void swarm_init_internal(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in, int radius) {
 #endif
 #ifdef LINUX
-void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
+void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in, int radius) {
 #endif
   int i, j, k, s;
   int x, y, theta;
@@ -140,6 +142,7 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   short_side = short_side_in;
   start = start_in;
   spacing = sensor_degrees/(double)(m);
+  sensor_radius = radius;
 
   rand_normal_init();
 

@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     case SLAMD_INIT:
       fprintf(record, "init\n");
       m = params[1];
-      printf("calling swarm_init(%i, %i, %i, %i, %i)\n", params[1], params[2], params[3], params[4], params[5]);
+      printf("calling swarm_init(%i, %i, %i, %i, %i)\n", params[1], params[2], params[3], params[4], params[5], params[6]);
       swarm_init_internal(params[1], params[2], params[3], params[4], params[5]);
       break;
     case SLAMD_MOVE:
