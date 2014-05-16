@@ -14,7 +14,7 @@ namespace lunabotics.RCU.Localization
 		 * short_side: length of short side of arena in mm
 		 * start: length of start area in mm
 		 */
-		[DllImport ("slam", CallingConvention=CallingConvention.Cdecl)] public static extern void swarm_init(int m, int degrees, int long_side, int short_side, int start);
+		[DllImport ("slam", CallingConvention=CallingConvention.Cdecl)] public static extern void swarm_init(int m, int degrees, int long_side, int short_side, int start, int sensor_radius);
 		/*
 		 * swarm_move
 		 * dx: change in x (long side) since last update in mm
