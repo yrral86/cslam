@@ -46,6 +46,10 @@ int main(int argc, char **argv) {
       printf("calling swarm_update(%i, %i, %i, %i, %i, .... )\n", params[1], params[2], params[3], params[4], params[5]);
       swarm_update_internal(params + 1);
       break;
+    case SLAMD_CONVERGED:
+      *return_value = swarm_converged_internal();
+      printf("converged: %i\n", *return_value);
+      break;
     case SLAMD_X:
       *return_value = swarm_get_best_x_internal();
       printf("x value: %i\n", *return_value);

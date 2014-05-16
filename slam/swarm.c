@@ -7,7 +7,7 @@ static particle previous_particles[INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT];
 static particle best_particle;
 static landmark_map *map;
 static int iterations = 0;
-static int m, sensor_degrees, long_side, short_side, start;
+static int converged, m, sensor_degrees, long_side, short_side, start;
 static double spacing;
 // 550 mm
 static int sensor_radius = 550;
@@ -84,6 +84,15 @@ __declspec(dllexport) void swarm_map(int *distances) {
 	memcpy(params + 1, distances, m*sizeof(int));
 	ReleaseSemaphore(param_sem, 1, NULL);
 	WaitForSingleObject(return_sem, INFINITE);
+}
+
+// returns 1 if standard deviations are low
+// 0 otherwise 
+__declspec(dllexport) int swarm_converged() {
+	params[0] = SLAMD_X;
+	ReleaseSemaphore(param_sem, 1, NULL);
+	WaitForSingleObject(return_sem, INFINITE);
+	return *return_value;
 }
 
 __declspec(dllexport) int swarm_get_best_x() {
@@ -253,7 +262,8 @@ void swarm_update_internal(int *distances) {
 void swarm_update(int *distances) {
 #endif
   int i, j, k, l, best_index, p_count;
-  int swap, x, y;
+  int swap, x, y, count;
+  double mean[3], stddev[3];
   double posterior, distance, theta, degrees, s, c, total, min, p, step;
   //  double xyt[3];
   particle temp;
@@ -272,9 +282,9 @@ void swarm_update(int *distances) {
     // evaluate the particle's relative probability
     for (j = 0; j < m; j++) {
       distance = distances[j];
+      // skip any distances that are more than 8 meters in case we shoot over the walls
       if (distance < 8000) {
 	// forward is now 0 degrees, left -, right +
-	//      degrees = -1*(-sensor_degrees/2.0 + j*spacing);
 	degrees = -sensor_degrees/2.0 + j*spacing;
 	theta = (degrees - particles[i].theta)*M_PI/180;
 	s = sin(theta);
@@ -351,6 +361,55 @@ void swarm_update(int *distances) {
     i++;
   } while (swap);
 
+  // calculate standard deviation of top 90%
+  i = 0;
+  total = 0.0;
+  mean[0] = 0.0;
+  mean[1] = 0.0;
+  mean[2] = 0.0;
+  count = 0;
+  while (total < 0.99) {
+    mean[0] += particles[i].x;
+    mean[1] += particles[i].y;
+    mean[2] += particles[i].theta;
+    count++;
+    total += particles[i].p;
+    i++;
+  }
+
+  for (i = 0; i < 3; i++)
+    mean[i] /= count;
+
+  stddev[0] = 0.0;
+  stddev[1] = 0.0;
+  stddev[2] = 0.0;
+  total = 0.0;
+  i = 0;
+  while (total < 0.99) {
+    stddev[0] += pow(mean[0] - particles[i].x, 2);
+    stddev[1] += pow(mean[1] - particles[i].y, 2);
+    stddev[2] += pow(mean[2] - particles[i].theta, 2);
+    total += particles[i].p;
+    i++;
+  }
+
+  for (i = 0; i < 3; i++) {
+    if (count > 1)
+      stddev[i] /= count - 1;
+    else
+      stddev[i] /= count;
+    stddev[i] = sqrt(stddev[i]);
+  }
+
+  // make sure 99% of particles are within 50mm and 1 degree
+  if (sqrt(pow(stddev[0], 2) + pow(stddev[1], 2)) < 50 && stddev[2] < 1)
+    converged = 1;
+  else
+    converged = 0;
+
+  if (!converged || count > 1)
+    printf("count: %d, max prob: %g, standard deviations: %g, %g, %g, converged: %d\n", count, particles[0].p, stddev[0], stddev[1], stddev[2], converged);
+
   // save old particles before we resample
   memcpy(previous_particles, particles, sizeof(particle)*p_count);
   // resample with replacement
@@ -421,6 +480,15 @@ void swarm_map(int *distances) {
       landmark_set_seen(map, k);
     }
   }
+}
+
+#ifndef LINUX
+int swarm_converged_internal() {
+#endif
+#ifdef LINUX
+int swarm_converged() {
+#endif
+  return converged;
 }
 
 #ifndef LINUX
