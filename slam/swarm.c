@@ -15,21 +15,14 @@ static int sensor_radius = 550;
 #ifndef LINUX
 __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
   int param_size, return_size;
-  /*  LPWSTR command = L"Slamd.exe";
-  STARTUPINFO si;
-  PROCESS_INFORMATION pi;
-  */
+
   m = m_in;
   sensor_degrees = degrees_in;
   long_side = long_side_in;
   short_side = short_side_in;
   start = start_in;
   spacing = sensor_degrees/(double)(m);
-  /*
-  ZeroMemory(&si, sizeof(si));
-  si.cb = sizeof(si);
-  ZeroMemory(&pi, sizeof(pi));
-  */
+
   // set up shared memory
   param_sem = CreateSemaphore(NULL, 0, 1, param_sem_name);
   return_sem = CreateSemaphore(NULL, 0, 1, return_sem_name);
@@ -62,7 +55,6 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   params[4] = short_side_in;
   params[5] = start_in;  
 
-  //CreateProcess(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
   ReleaseSemaphore(param_sem, 1, NULL);
   WaitForSingleObject(return_sem, INFINITE);
   ReleaseSemaphore(ready_sem, 1, NULL);
@@ -117,14 +109,6 @@ __declspec(dllexport) int swarm_get_best_theta() {
 
 #endif
 
-/*
-// TODO: _ETH
-double K[3*RAW_SENSOR_DISTANCES_USB], H[RAW_SENSOR_DISTANCES_USB*3], P[9], PH[3*RAW_SENSOR_DISTANCES_USB], HPH[RAW_SENSOR_DISTANCES_USB*RAW_SENSOR_DISTANCES_USB];
-// 1% of measurement, avereage around 40 mm
-double R = 40;
-// TODO: VRV(T) to scale R based on distances
-*/
-
 #ifndef LINUX
 void swarm_init_internal(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
 #endif
@@ -157,9 +141,6 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
       landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(k, j), 10000);
       landmark_set_seen_value(initial_map.map,
 			      buffer_index_from_x_y(k, short_side - 1 - j), 10000);
-      //      landmark_set_seen_value(map, buffer_index_from_x_y(k, j), 1000);
-      //      landmark_set_seen_value(map,
-      //      			      buffer_index_from_x_y(k, short_side - 1 - j), 1000);
     }
 
   for (k = 0; k < short_side; k += BUFFER_FACTOR)
@@ -167,9 +148,6 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
             landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(j, k), 10000);
             landmark_set_seen_value(initial_map.map,
       			      buffer_index_from_x_y(long_side - 1 - j, k), 10000);
-	    //	    landmark_set_seen_value(map, buffer_index_from_x_y(j, k), 1000);
-	    //	    landmark_set_seen_value(map,
-	    //				    buffer_index_from_x_y(long_side - 1 - j, k), 1000);
     }
   /*
   // load map
@@ -206,7 +184,6 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
     if (rand_limit(2))
       y *= 3;
     theta = rand_limit(360) - 180;
-    //theta = 180;
     t = theta*M_PI/180;
     particles[i] = particle_init(x + sensor_radius*cos(t), y + sensor_radius*sin(t), theta);
     particles[i].map = initial_map.map;
@@ -292,68 +269,6 @@ void swarm_update(int *distances) {
   for (i = 0; i < p_count; i++) {
     posterior = 0.0;
 
-    /*
-    // EKF
-    //    H = magical_jacobian_magic();
-    // TODO: _ETH
-    bzero(H, sizeof(double)*RAW_SENSOR_DISTANCES_USB*3);
-    xyt[0] = particles[i].x_var;
-    xyt[1] = particles[i].y_var;
-    xyt[2] = particles[i].theta_var;
-    for (j = 0; j < 3; j++)
-      for (k = 0; k < 3; k++)
-	if (j == k)
-	  P[j*3+k] = xyt[j];
-	else
-	  P[j*3+k] = sqrt(xyt[j])*sqrt(xyt[k]);
-    
-    // K NUMERATOR
-    // TODO: _ETH
-    bzero(PH, sizeof(double)*3*RAW_SENSOR_DISTANCES_USB);
-    // TODO: _ETH
-    for (j = 0; j < RAW_SENSOR_DISTANCES_USB; j++)
-      for (k = 0; k < 3; k++)
-	for (l = 0; l < 3; l++)
-	  // TODO _ETH
-	  PH[k*RAW_SENSOR_DISTANCES_USB + j] += P[k*3 + l]*H[k*RAW_SENSOR_DISTANCES_USB + l];
-
-    
-    // K DENOMINATOR
-    // TODO: _ETH
-    bzero(HPH, sizeof(double)*RAW_SENSOR_DISTANCES_USB*RAW_SENSOR_DISTANCES_USB);
-    for (j = 0; j < RAW_SENSOR_DISTANCES_USB; j++)
-      for (k = 0; k < RAW_SENSOR_DISTANCES_USB; k++)
-	for (l = 0; l < 3; l++) {
-	  HPH[k*RAW_SENSOR_DISTANCES_USB + j] += H[k*3 + l]*PH[l*RAW_SENSOR_DISTANCES_USB + k]; 
-	  if (j == k)
-	    HPH[k*RAW_SENSOR_DISTANCES_USB + j] += R;
-	}
-
-    // TODO: INVERT K DENOMINATOR
-
-    // K
-    // TODO: _ETH
-    bzero(K, sizeof(double)*3*RAW_SENSOR_DISTANCES_USB);
-    for (j = 0; j < RAW_SENSOR_DISTANCES_USB; j++)
-      for (k = 0; k < 3; k++)
-	for (l = 0; l < RAW_SENSOR_DISTANCES_USB; l++)
-	  K[k*RAW_SENSOR_DISTANCES_USB + j] += PH[k*RAW_SENSOR_DISTANCES_USB + l] *
-	    HPH[l*RAW_SENSOR_DISTANCES_USB + j];
-
-    // K(actual - simulated)
-    sim = landmark_map_simulate_scan(particles[i]);
-    bzero(xyt, sizeof(double)*3);
-    for (j = 0; j < 3; j++)
-      for (l = 0; l < RAW_SENSOR_DISTANCES_USB; l++)
-	// use first scan if there are multiple
-	xyt[j] += K[j*RAW_SENSOR_DISTANCES + l]*(scans[0].distances[l]-sim.distances[l]);
-
-    // adjust particle
-    particles[i].x += xyt[0];
-    particles[i].y += xyt[1];
-    particles[i].theta += xyt[2];
-    */
-
     // evaluate the particle's relative probability
     for (j = 0; j < m; j++) {
       distance = distances[j];
@@ -435,13 +350,6 @@ void swarm_update(int *distances) {
       }
     i++;
   } while (swap);
-
-  /*
-  for (i = 0; i < p_count; i++) {
-    if (particles[i].p > 0)
-      printf("i: %i, p: %g\n", i, particles[i].p);
-  }
-  */
 
   // save old particles before we resample
   memcpy(previous_particles, particles, sizeof(particle)*p_count);
