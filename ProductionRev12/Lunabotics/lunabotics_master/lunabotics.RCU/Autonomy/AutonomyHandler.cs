@@ -62,6 +62,7 @@ namespace lunabotics.RCU.Autonomy
         #region Fields
         //Mining Data
         private int scoopsMined = 0;
+        private int hasMined = 0;
         private int maximumScoops = 4;
 
         //Initialize motor powers (Note forward power is negative)
@@ -239,9 +240,9 @@ namespace lunabotics.RCU.Autonomy
                             int tries = 0;
 
                             //Initialize position - temporary 
-                            StartingAutonomy();
+                            //StartingAutonomy();
                             //Initialize Particle Filter
-                            Swarm.swarm_init(721, 180, 7300, 4100, 1940);
+                            Swarm.swarm_init(721, 180, 7300, 4100, 1940, (int)configuration.SensorRadius);
                             //Move(300, direction.forward);
                             //Move(300, direction.right);
                             //Move(300, direction.left);
@@ -274,7 +275,7 @@ namespace lunabotics.RCU.Autonomy
                                 currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
                             }
 
-                            turnToGivenHeading(0);
+                            //turnToGivenHeading(0);
                             state = State.TraverseClearPath;
                             //state = State.TemporaryTesting;
                             break;
@@ -317,6 +318,7 @@ namespace lunabotics.RCU.Autonomy
                             break;
 
                         case State.TraverseClearPath:
+                            SetArmSwingAndScoopPitch(145, 0);
                             while (currentPose[Pose.Xpos] < 4440)
                             {
                                 if (currentPose[Pose.Ypos] < configuration.RoverLane - lane_width / 2)
@@ -339,50 +341,80 @@ namespace lunabotics.RCU.Autonomy
 
                         case State.Mining:
                             scoopsMined = 0;
+                            if (hasMined == 1)
+                            {
+                                if (configuration.RoverLane < 1940)
+                                {
+                                    turnToGivenHeading(90);
+                                    while (currentPose[Pose.Xpos] < (configuration.RoverLane + configuration.RoverWidth * 2))
+                                        Move(MMToSteps((int)(configuration.RoverLane + configuration.RoverWidth * 2 - currentPose[Pose.Xpos])), direction.forward);
+                                }
+                                else
+                                {
+
+                                    turnToGivenHeading(-90);
+                                    while (currentPose[Pose.Xpos] < (configuration.RoverLane - configuration.RoverWidth * 2))
+                                        Move(MMToSteps((int)(currentPose[Pose.Xpos] - (configuration.RoverLane - configuration.RoverWidth * 2))), direction.forward);
+
+                                }
+                            }
+                            else if (hasMined > 1)
+                            {
+                                Move(1200, direction.left);
+                                Move(1200, direction.right);
+                                state = State.Manual;
+                                
+                            }
+
                             while (currentPose[Pose.Xpos] < 5365 && scoopsMined < configuration.MaximumScoops)
                             {
                                 turnToGivenHeading(0);
-                                 
                                 MineScoop();
-
                                 scoopsMined++;
-
+                                if (stopwatch.ElapsedMilliseconds > 45000)
+                                {
+                                    state = State.ReturnToDeposition;
+                                    break;
+                                }
                             }
+                            hasMined++;
                             state = State.ReturnToDeposition;
                             break;
 
                         case State.ReturnToDeposition:
-                            turnToGivenHeading(0);
 
                             while (currentPose[Pose.Xpos] > 2000)
                             {
-                                Move(300, direction.reverse);
-
-                                if (currentPose[Pose.Ypos] < configuration.RoverLane - lane_width/2)
+                                if (currentPose[Pose.Ypos] < configuration.RoverLane - lane_width / 2)
                                     turnToGivenHeading(-20);
-                                else if (currentPose[Pose.Ypos] > configuration.RoverLane + lane_width/2)
+                                else if (currentPose[Pose.Ypos] > configuration.RoverLane + lane_width / 2)
                                     turnToGivenHeading(20);
                                 else
                                     turnToGivenHeading(0);
+
+                                Move(300, direction.reverse);
                             }
 
                             state = State.Deposition;
                             break;
 
                         case State.Deposition:
-                            EthernetSensorDepositionData = utm.getLCR();
+                            short oldForwardPower, oldReversePower;
+                            SetArmSwingAndScoopPitch(60, 0);
                             while (currentPose[Pose.Xpos] > configuration.SensorRadius + 3)
                             {
-                                if (currentPose[Pose.Ypos] < configuration.RoverLane - lane_width/2)
+                                if (currentPose[Pose.Ypos] < 1940 - lane_width/2)
                                     turnToGivenHeading(-90);
-                                else if (currentPose[Pose.Ypos] > configuration.RoverLane + lane_width/2)
+                                else if (currentPose[Pose.Ypos] > 1940 + lane_width/2)
                                     turnToGivenHeading(90);
                                 else
-                                    turnToGivenHeading(0);
+                                    turnToGivenHeading(0, 1);
 
 
-                                if (Math.Abs(currentPose[Pose.Heading]) < 5)
+                                if (Math.Abs(currentPose[Pose.Heading]) < 1)
                                 {
+                                    oldForwardPower = forwardPower;
+                                    oldReversePower = reversePower;
                                     forwardPower = 200;
                                     reversePower = -200;
                                     if (robot.TelemetryFeedback.BucketPivotAngle < 30 && robot.TelemetryFeedback.ArmSwingAngle < 75)
@@ -392,12 +424,13 @@ namespace lunabotics.RCU.Autonomy
                                     }
                                     else
                                     {
+
                                         outputState[CommandFields.LeftBucketActuator] = 0;
                                         outputState[CommandFields.RightBucketActuator] = 0;
                                     }
                                     Move(MMToSteps((int)(currentPose[Pose.Xpos] - configuration.SensorRadius)), direction.reverse);
-                                    forwardPower = 800;
-                                    reversePower = -800;
+                                    forwardPower = oldForwardPower;
+                                    reversePower = oldReversePower;
                                 }
                                 else
                                     Move(MMToSteps((int)Math.Abs(currentPose[Pose.Ypos] - configuration.RoverLane)), direction.reverse);
@@ -406,6 +439,8 @@ namespace lunabotics.RCU.Autonomy
 
                             SetBucketAngle(90);
                             Thread.Sleep(10000);
+                            Move(50, direction.forward);
+                            Move(50, direction.reverse);
                             SetBucketAngle(0);
 
                             state = State.TraverseClearPath;
@@ -510,9 +545,9 @@ namespace lunabotics.RCU.Autonomy
             if (currentPose[Pose.Xpos] < 6530)
             {
                 Stopwatch st = new Stopwatch();
-                SetArmSwingAndScoopPitch(60, 10);
+                SetArmSwingAndScoopPitch(5, 8);
                 Move(150, direction.forward);
-                SetArmSwingAndScoopPitch(130, 0);
+                SetArmSwingAndScoopPitch(145, 0);
                 st.Start();
                 while (st.ElapsedMilliseconds < 5000)
                 {
@@ -523,7 +558,7 @@ namespace lunabotics.RCU.Autonomy
                     OnAutonomyUpdated(new AutonomyArgs(outputState));
                 }
                 st.Stop();
-                SetArmSwingAndScoopPitch(60, 0);
+                SetArmSwingAndScoopPitch(60, 8);
                 mined = true;
             }
             return mined;
@@ -700,7 +735,7 @@ namespace lunabotics.RCU.Autonomy
             OnAutonomyUpdated(new AutonomyArgs(outputState));
         }
 
-        public void turnToGivenHeading(double desiredTheta)
+        public void turnToGivenHeading(double desiredTheta, double tol = 5)
         {
             int angleError = (int)Math.Round(desiredTheta - currentPose[Pose.Heading]);
             double spd = 4.35;
@@ -710,7 +745,7 @@ namespace lunabotics.RCU.Autonomy
 	    if (angleError < -180)
 	       angleError += 360;
 
-            while ((Math.Abs(angleError) > 5))
+            while ((Math.Abs(angleError) > tol))
             {
                 angleError = (int)Math.Round(desiredTheta - currentPose[Pose.Heading]);
 

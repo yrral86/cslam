@@ -11,9 +11,11 @@ namespace lunabotics.Configuration
         #region Fields
         public double ArenaWidth;
         public double ArenaLength;
+        public double ArenaStartingArea;
         public double Interval;
         public double RoverLength;
         public double RoverWidth;
+        public double SensorRadius;
         public double RoverLane;
         public double SafetyLength;
         public double MaximumRuntime;
