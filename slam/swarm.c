@@ -290,38 +290,37 @@ void swarm_update(int *distances) {
       distance = distances[j];
       // skip any distances that are more than 8 meters in case we shoot over the walls
       if (distance < 8000) {
-	// forward is now 0 degrees, left -, right +
-	degrees = -sensor_degrees/2.0 + j*spacing;
-	theta = (degrees - particles[i].theta)*M_PI/180;
-	s = sin(theta);
-	c = cos(theta);
+		// forward is now 0 degrees, left -, right +
+		degrees = -sensor_degrees/2.0 + j*spacing;
+		theta = (degrees - particles[i].theta)*M_PI/180;
+		s = sin(theta);
+		c = cos(theta);
 
-	// check and record unseen every 2000 mm
-	for (l = distance - 2000; l > 0; l -= 2000) {
-	  x = l*c + particles[i].x;
-	  y = l*s + short_side - particles[i].y;
+		// check and record unseen every 2000 mm
+		for (l = distance - 2000; l > 0; l -= 2000) {
+			x = l*c + particles[i].x;
+			y = l*s + short_side - particles[i].y;
 
-	  // make sure it is in bounds
-	  if (in_arena(x, y)) {
-	    k = buffer_index_from_x_y(x, y);
-	    p = landmark_unseen_probability(particles[i].map, k);
-	    posterior += -log(p);
-	  } else posterior += -log(0.05);
-	}
+			// make sure it is in bounds
+			if (in_arena(x, y)) {
+				k = buffer_index_from_x_y(x, y);
+				p = landmark_unseen_probability(particles[i].map, k);
+				posterior += -log(p);
+			} else posterior += -log(0.05);
+		}
 
-	// check and record seen
-	x = distance*c + particles[i].x;
-	y = distance*s + short_side - particles[i].y;
+		// check and record seen
+		x = distance*c + particles[i].x;
+		y = distance*s + short_side - particles[i].y;
 
-	// make sure it is in bounds
-	if (in_arena(x, y)) {
-	  k = buffer_index_from_x_y(x, y);
-	  p = landmark_seen_probability(particles[i].map, k);
-	  posterior += -log(p);
-	} else posterior += -log(0.05);
+		// make sure it is in bounds
+		if (in_arena(x, y)) {
+			k = buffer_index_from_x_y(x, y);
+			p = landmark_seen_probability(particles[i].map, k);
+			posterior += -log(p);
+		} else posterior += -log(0.05);
       }
     }
-	}
 
     particles[i].p += posterior;
     if (particles[i].p < min) {
