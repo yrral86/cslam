@@ -2,34 +2,27 @@
 #include <stdio.h>
 #include "slamd.h"
 
-static particle particles[PARTICLE_COUNT];
-static particle previous_particles[PARTICLE_COUNT];
+static particle particles[INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT];
+static particle previous_particles[INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT];
 static particle best_particle;
 static landmark_map *map;
 static int iterations = 0;
-static int m, sensor_degrees, long_side, short_side, start;
+static int converged, m, sensor_degrees, long_side, short_side, start;
 static double spacing;
-// 600 mm
+// 550 mm
 static int sensor_radius = 550;
 
 #ifndef LINUX
 __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
   int param_size, return_size;
-  /*  LPWSTR command = L"Slamd.exe";
-  STARTUPINFO si;
-  PROCESS_INFORMATION pi;
-  */
+
   m = m_in;
   sensor_degrees = degrees_in;
   long_side = long_side_in;
   short_side = short_side_in;
   start = start_in;
   spacing = sensor_degrees/(double)(m);
-  /*
-  ZeroMemory(&si, sizeof(si));
-  si.cb = sizeof(si);
-  ZeroMemory(&pi, sizeof(pi));
-  */
+
   // set up shared memory
   param_sem = CreateSemaphore(NULL, 0, 1, param_sem_name);
   return_sem = CreateSemaphore(NULL, 0, 1, return_sem_name);
@@ -62,10 +55,8 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   params[4] = short_side_in;
   params[5] = start_in;  
 
-  //CreateProcess(NULL, command, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
   ReleaseSemaphore(param_sem, 1, NULL);
   WaitForSingleObject(return_sem, INFINITE);
-  //ReleaseSemaphore(ready_sem, 1, NULL);
 }
 
 __declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
@@ -74,7 +65,6 @@ __declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
 	params[2] = dy;
 	params[3] = dtheta;
 
-	//WaitForSingleObject(ready_sem, INFINITE);
 	ReleaseSemaphore(param_sem, 1, NULL);
 	WaitForSingleObject(return_sem, INFINITE);
 }
@@ -86,11 +76,25 @@ __declspec(dllexport) void swarm_update(int *distances) {
 	WaitForSingleObject(return_sem, INFINITE);
 }
 
+__declspec(dllexport) void swarm_update_finalize() {
+        assert(ready_sem != NULL);
+	WaitForSingleObject(ready_sem, INFINITE);
+}
+
 __declspec(dllexport) void swarm_map(int *distances) {
 	params[0] = SLAMD_MAP;
 	memcpy(params + 1, distances, m*sizeof(int));
 	ReleaseSemaphore(param_sem, 1, NULL);
 	WaitForSingleObject(return_sem, INFINITE);
+}
+
+// returns 1 if standard deviations are low
+// 0 otherwise 
+__declspec(dllexport) int swarm_converged() {
+	params[0] = SLAMD_X;
+	ReleaseSemaphore(param_sem, 1, NULL);
+	WaitForSingleObject(return_sem, INFINITE);
+	return *return_value;
 }
 
 __declspec(dllexport) int swarm_get_best_x() {
@@ -115,14 +119,6 @@ __declspec(dllexport) int swarm_get_best_theta() {
 }
 
 #endif
-
-/*
-// TODO: _ETH
-double K[3*RAW_SENSOR_DISTANCES_USB], H[RAW_SENSOR_DISTANCES_USB*3], P[9], PH[3*RAW_SENSOR_DISTANCES_USB], HPH[RAW_SENSOR_DISTANCES_USB*RAW_SENSOR_DISTANCES_USB];
-// 1% of measurement, avereage around 40 mm
-double R = 40;
-// TODO: VRV(T) to scale R based on distances
-*/
 
 #ifndef LINUX
 void swarm_init_internal(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in) {
@@ -156,9 +152,6 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
       landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(k, j), 10000);
       landmark_set_seen_value(initial_map.map,
 			      buffer_index_from_x_y(k, short_side - 1 - j), 10000);
-      //      landmark_set_seen_value(map, buffer_index_from_x_y(k, j), 1000);
-      //      landmark_set_seen_value(map,
-      //      			      buffer_index_from_x_y(k, short_side - 1 - j), 1000);
     }
 
   for (k = 0; k < short_side; k += BUFFER_FACTOR)
@@ -166,9 +159,6 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
             landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(j, k), 10000);
             landmark_set_seen_value(initial_map.map,
       			      buffer_index_from_x_y(long_side - 1 - j, k), 10000);
-	    //	    landmark_set_seen_value(map, buffer_index_from_x_y(j, k), 1000);
-	    //	    landmark_set_seen_value(map,
-	    //				    buffer_index_from_x_y(long_side - 1 - j, k), 1000);
     }
   /*
   // load map
@@ -200,13 +190,12 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   */
   // initialize first round of particles
   x = start/2;
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  for (i = 0; i < INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT; i++) {
     y = short_side/4;
     if (rand_limit(2))
       y *= 3;
-    //theta = rand_limit(360) - 180;
-    theta = 180;
-	t = theta*M_PI/180;
+    theta = rand_limit(360) - 180;
+    t = theta*M_PI/180;
     particles[i] = particle_init(x + sensor_radius*cos(t), y + sensor_radius*sin(t), theta);
     particles[i].map = initial_map.map;
     landmark_map_reference(particles[i].map);
@@ -215,6 +204,13 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   best_particle = particles[0];
 
   landmark_map_dereference(initial_map.map);
+
+#ifndef LINUX
+  return_sem = CreateSemaphore(NULL, 0, 1, return_sem_name);
+  ready_sem = CreateSemaphore(NULL, 0, 1, ready_sem_name);
+  assert(return_sem != NULL);
+  assert(ready_sem != NULL);
+#endif
 }
 
 #ifndef LINUX
@@ -223,7 +219,7 @@ void swarm_move_internal(int dx, int dy, int dtheta) {
 #ifdef LINUX
 void swarm_move(int dx, int dy, int dtheta) {
 #endif
-  int i, tries;
+  int i, tries, p_count;
   double t_old, t_new;
   particle p;
   t_old = best_particle.theta*M_PI/180;
@@ -233,8 +229,13 @@ void swarm_move(int dx, int dy, int dtheta) {
   dx += sensor_radius*(cos(t_new) - cos(t_old));
   dy += sensor_radius*(sin(t_new) - sin(t_old));
 
-  // add motion (nothing for now, relying on high variance and lots of particles)
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  if (iterations < 1)
+    p_count = INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT;
+  else
+    p_count = PARTICLE_COUNT;
+
+  // add motion
+  for (i = 0; i < p_count; i++) {
     p = particles[i];
     tries = 0;
     do {
@@ -262,114 +263,63 @@ void swarm_update_internal(int *distances) {
 #ifdef LINUX
 void swarm_update(int *distances) {
 #endif
-  int i, j, k, l, best_index;
-  int swap, x, y;
+  int i, j, k, l, best_index, p_count;
+  int swap, x, y, count;
+  double mean[3], stddev[3];
   double posterior, distance, theta, degrees, s, c, total, min, p, step;
   //  double xyt[3];
   particle temp;
 
+#ifndef LINUX
+  ReleaseSemaphore(return_sem, 1, NULL);
+#endif
+
+  if (iterations < 1)
+    p_count = INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT;
+  else
+    p_count = PARTICLE_COUNT;
+
   min = 10000.0;
   best_index = 0;
   // evaulate each direction for each particle
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  for (i = 0; i < p_count; i++) {
     posterior = 0.0;
-
-    /*
-    // EKF
-    //    H = magical_jacobian_magic();
-    // TODO: _ETH
-    bzero(H, sizeof(double)*RAW_SENSOR_DISTANCES_USB*3);
-    xyt[0] = particles[i].x_var;
-    xyt[1] = particles[i].y_var;
-    xyt[2] = particles[i].theta_var;
-    for (j = 0; j < 3; j++)
-      for (k = 0; k < 3; k++)
-	if (j == k)
-	  P[j*3+k] = xyt[j];
-	else
-	  P[j*3+k] = sqrt(xyt[j])*sqrt(xyt[k]);
-    
-    // K NUMERATOR
-    // TODO: _ETH
-    bzero(PH, sizeof(double)*3*RAW_SENSOR_DISTANCES_USB);
-    // TODO: _ETH
-    for (j = 0; j < RAW_SENSOR_DISTANCES_USB; j++)
-      for (k = 0; k < 3; k++)
-	for (l = 0; l < 3; l++)
-	  // TODO _ETH
-	  PH[k*RAW_SENSOR_DISTANCES_USB + j] += P[k*3 + l]*H[k*RAW_SENSOR_DISTANCES_USB + l];
-
-    
-    // K DENOMINATOR
-    // TODO: _ETH
-    bzero(HPH, sizeof(double)*RAW_SENSOR_DISTANCES_USB*RAW_SENSOR_DISTANCES_USB);
-    for (j = 0; j < RAW_SENSOR_DISTANCES_USB; j++)
-      for (k = 0; k < RAW_SENSOR_DISTANCES_USB; k++)
-	for (l = 0; l < 3; l++) {
-	  HPH[k*RAW_SENSOR_DISTANCES_USB + j] += H[k*3 + l]*PH[l*RAW_SENSOR_DISTANCES_USB + k]; 
-	  if (j == k)
-	    HPH[k*RAW_SENSOR_DISTANCES_USB + j] += R;
-	}
-
-    // TODO: INVERT K DENOMINATOR
-
-    // K
-    // TODO: _ETH
-    bzero(K, sizeof(double)*3*RAW_SENSOR_DISTANCES_USB);
-    for (j = 0; j < RAW_SENSOR_DISTANCES_USB; j++)
-      for (k = 0; k < 3; k++)
-	for (l = 0; l < RAW_SENSOR_DISTANCES_USB; l++)
-	  K[k*RAW_SENSOR_DISTANCES_USB + j] += PH[k*RAW_SENSOR_DISTANCES_USB + l] *
-	    HPH[l*RAW_SENSOR_DISTANCES_USB + j];
-
-    // K(actual - simulated)
-    sim = landmark_map_simulate_scan(particles[i]);
-    bzero(xyt, sizeof(double)*3);
-    for (j = 0; j < 3; j++)
-      for (l = 0; l < RAW_SENSOR_DISTANCES_USB; l++)
-	// use first scan if there are multiple
-	xyt[j] += K[j*RAW_SENSOR_DISTANCES + l]*(scans[0].distances[l]-sim.distances[l]);
-
-    // adjust particle
-    particles[i].x += xyt[0];
-    particles[i].y += xyt[1];
-    particles[i].theta += xyt[2];
-    */
 
     // evaluate the particle's relative probability
     for (j = 0; j < m; j++) {
       distance = distances[j];
-	  if (distance < 8000) {
-      // forward is now 0 degrees, left -, right +
-      //      degrees = -1*(-sensor_degrees/2.0 + j*spacing);
-      degrees = -sensor_degrees/2.0 + j*spacing;
-      theta = (degrees - particles[i].theta)*M_PI/180;
-      s = sin(theta);
-      c = cos(theta);
+      // skip any distances that are more than 8 meters in case we shoot over the walls
+      if (distance < 8000) {
+	// forward is now 0 degrees, left -, right +
+	degrees = -sensor_degrees/2.0 + j*spacing;
+	theta = (degrees - particles[i].theta)*M_PI/180;
+	s = sin(theta);
+	c = cos(theta);
 
-      // check and record unseen every 2000 mm
-      for (l = 0; l < distance; l += 2000) {
-	x = l*c + particles[i].x;
-	y = l*s + short_side - particles[i].y;
+	// check and record unseen every 2000 mm
+	for (l = distance - 2000; l > 0; l -= 2000) {
+	  x = l*c + particles[i].x;
+	  y = l*s + short_side - particles[i].y;
+
+	  // make sure it is in bounds
+	  if (in_arena(x, y)) {
+	    k = buffer_index_from_x_y(x, y);
+	    p = landmark_unseen_probability(particles[i].map, k);
+	    posterior += -log(p);
+	  } else posterior += -log(0.05);
+	}
+
+	// check and record seen
+	x = distance*c + particles[i].x;
+	y = distance*s + short_side - particles[i].y;
 
 	// make sure it is in bounds
 	if (in_arena(x, y)) {
 	  k = buffer_index_from_x_y(x, y);
-	  p = landmark_unseen_probability(particles[i].map, k);
+	  p = landmark_seen_probability(particles[i].map, k);
 	  posterior += -log(p);
 	} else posterior += -log(0.05);
       }
-
-      // check and record seen
-      x = distance*c + particles[i].x;
-      y = distance*s + short_side - particles[i].y;
-
-      // make sure it is in bounds
-      if (in_arena(x, y)) {
-	k = buffer_index_from_x_y(x, y);
-	p = landmark_seen_probability(particles[i].map, k);
-	posterior += -log(p);
-      } else posterior += -log(0.05);
     }
 	}
 
@@ -386,19 +336,15 @@ void swarm_update(int *distances) {
   best_particle = particles[best_index];
   best_particle.map = landmark_map_copy(best_particle.map);
 
-#ifndef LINUX
-//  ReleaseSemaphore(return_sem, 1, NULL);
-#endif
-
   // normalize particle log probabilities, convert to normal probabilities for resampling
   total = 0.0;
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  for (i = 0; i < p_count; i++) {
     particles[i].p -= min;
     particles[i].p = pow(M_E, -particles[i].p);
     total += particles[i].p;
   }
 
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  for (i = 0; i < p_count; i++) {
     particles[i].p /= total;
   }
 
@@ -407,7 +353,7 @@ void swarm_update(int *distances) {
   i = 0;
   do {
     swap = 0;
-    for (j = 0; j < PARTICLE_COUNT - i - 1; j++)
+    for (j = 0; j < p_count - i - 1; j++)
       // if the left particle is smaller probability, bubble it right
       if (particles[j].p < particles[j + 1].p) {
 	temp = particles[j];
@@ -418,19 +364,61 @@ void swarm_update(int *distances) {
     i++;
   } while (swap);
 
-  /*
-  for (i = 0; i < PARTICLE_COUNT; i++) {
-    if (particles[i].p > 0)
-      printf("i: %i, p: %g\n", i, particles[i].p);
+  // calculate standard deviation of top 90%
+  i = 0;
+  total = 0.0;
+  mean[0] = 0.0;
+  mean[1] = 0.0;
+  mean[2] = 0.0;
+  count = 0;
+  while (total < 0.99) {
+    mean[0] += particles[i].x;
+    mean[1] += particles[i].y;
+    mean[2] += particles[i].theta;
+    count++;
+    total += particles[i].p;
+    i++;
   }
-  */
+
+  for (i = 0; i < 3; i++)
+    mean[i] /= count;
+
+  stddev[0] = 0.0;
+  stddev[1] = 0.0;
+  stddev[2] = 0.0;
+  total = 0.0;
+  i = 0;
+  while (total < 0.99) {
+    stddev[0] += pow(mean[0] - particles[i].x, 2);
+    stddev[1] += pow(mean[1] - particles[i].y, 2);
+    stddev[2] += pow(mean[2] - particles[i].theta, 2);
+    total += particles[i].p;
+    i++;
+  }
+
+  for (i = 0; i < 3; i++) {
+    if (count > 1)
+      stddev[i] /= count - 1;
+    else
+      stddev[i] /= count;
+    stddev[i] = sqrt(stddev[i]);
+  }
+
+  // make sure 99% of particles are within 50mm and 1 degree
+  if (sqrt(pow(stddev[0], 2) + pow(stddev[1], 2)) < 50 && stddev[2] < 1)
+    converged = 1;
+  else
+    converged = 0;
+
+  if (!converged || count > 1)
+    printf("count: %d, max prob: %g, standard deviations: %g, %g, %g, converged: %d\n", count, particles[0].p, stddev[0], stddev[1], stddev[2], converged);
 
   // save old particles before we resample
-  memcpy(previous_particles, particles, sizeof(particle)*PARTICLE_COUNT);
+  memcpy(previous_particles, particles, sizeof(particle)*p_count);
   // resample with replacement
   p = rand()/(double)RAND_MAX;
-  step = 1.0/PARTICLE_COUNT;
-  for (i = 0; i < PARTICLE_COUNT; i++) {
+  step = 1.0/p_count;
+  for (i = 0; i < p_count; i++) {
     p += step;
     if (p > 1.0) p -= 1.0;
     total = 0.0;
@@ -442,17 +430,17 @@ void swarm_update(int *distances) {
   }
 
   // dereference previous particle maps
-  for (i = 0; i < PARTICLE_COUNT; i++)
+  for (i = 0; i < p_count; i++)
     landmark_map_dereference(previous_particles[i].map);
 
   // restore log probabilities
-  for (i = 0; i < PARTICLE_COUNT; i++)
+  for (i = 0; i < p_count; i++)
     particles[i].p = -log(particles[i].p);
 
   iterations++;
 
 #ifndef LINUX
-//  ReleaseSemaphore(ready_sem, 1, NULL);
+  ReleaseSemaphore(ready_sem, 1, NULL);
 #endif
 }
 
@@ -495,6 +483,15 @@ void swarm_map(int *distances) {
       landmark_set_seen(map, k);
     }
   }
+}
+
+#ifndef LINUX
+int swarm_converged_internal() {
+#endif
+#ifdef LINUX
+int swarm_converged() {
+#endif
+  return converged;
 }
 
 #ifndef LINUX
