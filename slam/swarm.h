@@ -14,6 +14,7 @@
 __declspec(dllexport) void swarm_init(int, int, int, int, int);
 __declspec(dllexport) void swarm_move(int, int, int);
 __declspec(dllexport) void swarm_update(int*);
+__declspec(dllexport) void swarm_update_finalize();
 __declspec(dllexport) void swarm_map(int*);
 __declspec(dllexport) int swarm_converged();
 __declspec(dllexport) int swarm_get_best_x();

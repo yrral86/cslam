@@ -79,6 +79,11 @@ __declspec(dllexport) void swarm_update(int *distances) {
 	WaitForSingleObject(return_sem, INFINITE);
 }
 
+__declspec(dllexport) void swarm_update_finalize() {
+        assert(ready_sem != NULL);
+	WaitForSingleObject(ready_sem, INFINITE);
+}
+
 __declspec(dllexport) void swarm_map(int *distances) {
 	params[0] = SLAMD_MAP;
 	memcpy(params + 1, distances, m*sizeof(int));
@@ -268,6 +273,10 @@ void swarm_update(int *distances) {
   //  double xyt[3];
   particle temp;
 
+#ifndef LINUX
+  ReleaseSemaphore(return_sem, 1, NULL);
+#endif
+
   if (iterations < 1)
     p_count = INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT;
   else
@@ -328,10 +337,6 @@ void swarm_update(int *distances) {
     landmark_map_dereference(best_particle.map);
   best_particle = particles[best_index];
   best_particle.map = landmark_map_copy(best_particle.map);
-
-#ifndef LINUX
-  ReleaseSemaphore(return_sem, 1, NULL);
-#endif
 
   // normalize particle log probabilities, convert to normal probabilities for resampling
   total = 0.0;
