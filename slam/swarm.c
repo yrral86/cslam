@@ -57,12 +57,9 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
 
   ReleaseSemaphore(param_sem, 1, NULL);
   WaitForSingleObject(return_sem, INFINITE);
-  ReleaseSemaphore(ready_sem, 1, NULL);
 }
 
 __declspec(dllexport) void swarm_move(int dx, int dy, int dtheta) {
-	WaitForSingleObject(ready_sem, INFINITE);
-
 	params[0] = SLAMD_MOVE;
 	params[1] = dx;
 	params[2] = dy;
