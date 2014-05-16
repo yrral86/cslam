@@ -31,6 +31,8 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   assert(return_sem != NULL);
   //assert(ready_sem != NULL);
 
+  converged = 0;
+
   // parameter space size is (sensor readings + 1) * sizeof(int)
   // first int specifies which function, remainder are params
   param_size = (m_in + 1)*sizeof(int);

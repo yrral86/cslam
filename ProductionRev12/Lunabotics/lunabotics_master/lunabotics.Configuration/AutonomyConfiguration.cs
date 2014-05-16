@@ -14,9 +14,10 @@ namespace lunabotics.Configuration
         public double Interval;
         public double RoverLength;
         public double RoverWidth;
+        public double RoverLane;
         public double SafetyLength;
         public double MaximumRuntime;
-        public int MaximumRegolith;
+        public int MaximumScoops;
         #endregion
         }
 }

@@ -55,12 +55,14 @@ namespace lunabotics.RCU.Autonomy
         public event EventHandler<Telemetry.TelemetryEventArgs> TelemetryUpdated;
         //Array to hold sensor values
         private int[] EthernetSensorData;
+        private int[] EthernetSensorDepositionData;
         private int[] SerialSensorData;
         #endregion
 
         #region Fields
-        //Localization Telemetry
-        public static double Xpos, Ypos, Theta;
+        //Mining Data
+        private int scoopsMined = 0;
+        private int maximumScoops = 4;
 
         //Initialize motor powers (Note forward power is negative)
         public short forwardPower = 800;
@@ -234,6 +236,7 @@ namespace lunabotics.RCU.Autonomy
                             break;
 
                         case State.InitializeAutonomy:
+                            int tries = 0;
 
                             //Initialize position - temporary 
                             StartingAutonomy();
@@ -246,16 +249,30 @@ namespace lunabotics.RCU.Autonomy
                             //state = State.Manual;
                             //break;
 
+                            EthernetSensorData = utm.EthernetScan();
+
                             //Loop to try and converge particles
-                            for (int j = 0; j < 5; j++)
+                            while (Swarm.swarm_converged() == 0 && tries < 200)
                             {
-                                EthernetSensorData = utm.EthernetScan();
                                 Swarm.swarm_move(0, 0, 0);
                                 Swarm.swarm_update(EthernetSensorData);
+                                EthernetSensorData = utm.EthernetScan();
+                                Swarm.swarm_update_finalize();
+                                tries++;
                             }
-                            currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
-                            currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
-                            currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
+
+                            if (tries == 200)
+                            {
+                                currentPose[Pose.Xpos] = 9999;
+                                currentPose[Pose.Ypos] = 9999;
+                                currentPose[Pose.Heading] = 9999;
+                            }
+                            else
+                            {
+                                currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
+                                currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
+                                currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
+                            }
 
                             turnToGivenHeading(0);
                             state = State.TraverseClearPath;
@@ -300,32 +317,36 @@ namespace lunabotics.RCU.Autonomy
                             break;
 
                         case State.TraverseClearPath:
-                            while (currentPose[Pose.Xpos] < 5000)
+                            while (currentPose[Pose.Xpos] < 4440)
                             {
-                                if (currentPose[Pose.Xpos] < 4500)
-                                    Move(300, direction.forward);
-                                else
-                                    Move(MMToSteps((int)(5000 - currentPose[Pose.Xpos])), direction.forward);
-                                if (currentPose[Pose.Ypos] < 1940 - lane_width/2)
+                                if (currentPose[Pose.Ypos] < configuration.RoverLane - lane_width / 2)
                                     turnToGivenHeading(20);
-                                else if (currentPose[Pose.Ypos] > 1940 + lane_width/2)
+                                else if (currentPose[Pose.Ypos] > configuration.RoverLane + lane_width / 2)
                                     turnToGivenHeading(-20);
                                 else
                                     turnToGivenHeading(0);
+
+                                if (currentPose[Pose.Xpos] < 4000)
+                                    Move(300, direction.forward);
+                                else
+                                    Move(MMToSteps((int)(5000 - currentPose[Pose.Xpos])), direction.forward);
+                                
                             }
 
-                            //state = State.Mining;
-                            state = State.ReturnToDeposition;
+                            state = State.Mining;
+                            //state = State.ReturnToDeposition;
                             break;
 
                         case State.Mining:
-                            while (currentPose[Pose.Xpos] > 4440)
+                            scoopsMined = 0;
+                            while (currentPose[Pose.Xpos] < 5365 && scoopsMined < configuration.MaximumScoops)
                             {
                                 turnToGivenHeading(0);
-
+                                 
                                 MineScoop();
 
-                                Move(300, direction.reverse);
+                                scoopsMined++;
+
                             }
                             state = State.ReturnToDeposition;
                             break;
@@ -337,9 +358,9 @@ namespace lunabotics.RCU.Autonomy
                             {
                                 Move(300, direction.reverse);
 
-                                if (currentPose[Pose.Ypos] < 1940 - lane_width/2)
+                                if (currentPose[Pose.Ypos] < configuration.RoverLane - lane_width/2)
                                     turnToGivenHeading(-20);
-                                else if (currentPose[Pose.Ypos] > 1940 + lane_width/2)
+                                else if (currentPose[Pose.Ypos] > configuration.RoverLane + lane_width/2)
                                     turnToGivenHeading(20);
                                 else
                                     turnToGivenHeading(0);
@@ -349,11 +370,12 @@ namespace lunabotics.RCU.Autonomy
                             break;
 
                         case State.Deposition:
-                            while (currentPose[Pose.Xpos] > 600)
+                            EthernetSensorDepositionData = utm.getLCR();
+                            while (currentPose[Pose.Xpos] > configuration.SensorRadius + 3)
                             {
-                                if (currentPose[Pose.Ypos] < 1940 - lane_width/2)
+                                if (currentPose[Pose.Ypos] < configuration.RoverLane - lane_width/2)
                                     turnToGivenHeading(-90);
-                                else if (currentPose[Pose.Ypos] > 1940 + lane_width/2)
+                                else if (currentPose[Pose.Ypos] > configuration.RoverLane + lane_width/2)
                                     turnToGivenHeading(90);
                                 else
                                     turnToGivenHeading(0);
@@ -363,7 +385,7 @@ namespace lunabotics.RCU.Autonomy
                                 {
                                     forwardPower = 200;
                                     reversePower = -200;
-                                    if (robot.TelemetryFeedback.BucketPivotAngle < 30)
+                                    if (robot.TelemetryFeedback.BucketPivotAngle < 30 && robot.TelemetryFeedback.ArmSwingAngle < 75)
                                     {
                                         outputState[CommandFields.LeftBucketActuator] = 1000;
                                         outputState[CommandFields.RightBucketActuator] = 1000;
@@ -373,17 +395,17 @@ namespace lunabotics.RCU.Autonomy
                                         outputState[CommandFields.LeftBucketActuator] = 0;
                                         outputState[CommandFields.RightBucketActuator] = 0;
                                     }
-                                    Move(MMToSteps((int)(currentPose[Pose.Xpos] - 600)), direction.reverse);
+                                    Move(MMToSteps((int)(currentPose[Pose.Xpos] - configuration.SensorRadius)), direction.reverse);
                                     forwardPower = 800;
                                     reversePower = -800;
                                 }
                                 else
-                                    Move(MMToSteps((int)Math.Abs(currentPose[Pose.Ypos] - 1940)), direction.reverse);
+                                    Move(MMToSteps((int)Math.Abs(currentPose[Pose.Ypos] - configuration.RoverLane)), direction.reverse);
 
                             }
 
                             SetBucketAngle(90);
-                            Thread.Sleep(5000);
+                            Thread.Sleep(10000);
                             SetBucketAngle(0);
 
                             state = State.TraverseClearPath;
@@ -605,23 +627,39 @@ namespace lunabotics.RCU.Autonomy
 
         public void ParticleFiltering(int stepsR, int stepsL)
         {
-            //Scan Hokuyo
-            EthernetSensorData = utm.EthernetScan();
+            int tries = 0;
+
             //Estimate Current Pose
             changePose = Kinematics.UpdatePose(stepsR, stepsL, currentPose);
             //Particle filtering
             Swarm.swarm_move((int)changePose[Pose.Xpos], (int)changePose[Pose.Ypos], (int)changePose[Pose.Heading]);
-            Swarm.swarm_update(EthernetSensorData);
-            for (int j = 0; j < 5; j++)
+
+            //Scan Hokuyo
+            EthernetSensorData = utm.EthernetScan();
+            while (Swarm.swarm_converged() == 0 && tries < 200)
             {
-                EthernetSensorData = utm.EthernetScan();
-                Swarm.swarm_move(0, 0, 0);
                 Swarm.swarm_update(EthernetSensorData);
+                EthernetSensorData = utm.EthernetScan();
+                Swarm.swarm_update_finalize();
+                tries++;
+                if (Swarm.swarm_converged() == 0 && tries < 200)
+                    Swarm.swarm_move(0, 0, 0);
             }
+
             //Update Current Pose to Particle filter outputs
-            currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
-            currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
-            currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
+            if (tries == 200)
+            {
+                currentPose[Pose.Xpos] = 9999;
+                currentPose[Pose.Ypos] = 9999;
+                currentPose[Pose.Heading] = 9999;
+            }
+            else
+            {
+                currentPose[Pose.Xpos] = Swarm.swarm_get_best_x();
+                currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
+                currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
+            }
+
             robot.TelemetryFeedback.X = currentPose[Pose.Xpos];
             robot.TelemetryFeedback.Y = currentPose[Pose.Ypos];
             robot.TelemetryFeedback.Psi = currentPose[Pose.Heading];

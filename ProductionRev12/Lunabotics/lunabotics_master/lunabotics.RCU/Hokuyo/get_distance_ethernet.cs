@@ -83,7 +83,7 @@ namespace lunabotics.RCU.Hokuyo
 
         //take value array from EthernetScan and return averaged cenenter with +/- 10 degrees
         //return array: [int leftVal, int CenterVal, int rightVal]
-        private int[] getLCR()
+        public int[] getLCR()
         {
             /*  
                 720 scan points
