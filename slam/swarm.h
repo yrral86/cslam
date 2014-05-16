@@ -11,7 +11,7 @@
 #include "buffer.h"
 
 #ifndef LINUX
-__declspec(dllexport) void swarm_init(int, int, int, int, int);
+__declspec(dllexport) void swarm_init(int, int, int, int, int, int);
 __declspec(dllexport) void swarm_move(int, int, int);
 __declspec(dllexport) void swarm_update(int*);
 __declspec(dllexport) void swarm_update_finalize();
@@ -29,7 +29,7 @@ int swarm_get_best_y_internal();
 int swarm_get_best_theta_internal();
 #endif
 #ifdef LINUX
-void swarm_init(int, int, int, int, int);
+void swarm_init(int, int, int, int, int, int);
 void swarm_move(int, int, int);
 void swarm_update(int*);
 void swarm_map(int*);

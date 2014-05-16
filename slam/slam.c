@@ -27,7 +27,7 @@ int main (int argc, char **argv) {
 
   // swarm_init will set up buffer sizing
   //  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, 7380, 3880, 1500);
-  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, arena_width, arena_height, 2000);
+  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, arena_width, arena_height, 2000, 0);
 
   // allocate buffers
   for (i = 0; i < BUFFER_HISTORY; i++)

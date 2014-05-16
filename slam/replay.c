@@ -42,7 +42,7 @@ int main (int argc, char **argv) {
 
     switch(current_command) {
     case SLAMD_INIT:
-      swarm_init(parsed_line[1], parsed_line[2], parsed_line[3], parsed_line[4], parsed_line[5]);
+      swarm_init(parsed_line[1], parsed_line[2], parsed_line[3], parsed_line[4], parsed_line[5], 600);
 
       // allocate buffers
       for (i = 0; i < BUFFER_HISTORY; i++)
