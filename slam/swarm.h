@@ -24,6 +24,7 @@ void swarm_init_internal(int, int, int, int, int);
 void swarm_move_internal(int, int, int);
 void swarm_update_internal(int*);
 void swarm_map_internal(int*);
+int swarm_converged_internal();
 int swarm_get_best_x_internal();
 int swarm_get_best_y_internal();
 int swarm_get_best_theta_internal();

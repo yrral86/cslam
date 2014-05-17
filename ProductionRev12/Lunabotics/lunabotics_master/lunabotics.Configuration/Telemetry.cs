@@ -53,5 +53,10 @@ namespace lunabotics.Configuration
 
         // Autonomy
         LocalizationState,
+
+        //Rear Hokuyo Distances
+        LidarDistanceLeft,
+        LidarDistanceCenter, 
+        LidarDistanceRight,
     }
 }

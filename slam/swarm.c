@@ -27,10 +27,10 @@ __declspec(dllexport) void swarm_init(int m_in, int degrees_in, int long_side_in
   // set up shared memory
   param_sem = CreateSemaphore(NULL, 0, 1, param_sem_name);
   return_sem = CreateSemaphore(NULL, 0, 1, return_sem_name);
-  //ready_sem = CreateSemaphore(NULL, 0, 1, ready_sem_name);
+  ready_sem = CreateSemaphore(NULL, 0, 1, ready_sem_name);
   assert(param_sem != NULL);
   assert(return_sem != NULL);
-  //assert(ready_sem != NULL);
+  assert(ready_sem != NULL);
 
   converged = 0;
 
@@ -81,7 +81,7 @@ __declspec(dllexport) void swarm_update(int *distances) {
 }
 
 __declspec(dllexport) void swarm_update_finalize() {
-        assert(ready_sem != NULL);
+    assert(ready_sem != NULL);
 	WaitForSingleObject(ready_sem, INFINITE);
 }
 
@@ -95,7 +95,7 @@ __declspec(dllexport) void swarm_map(int *distances) {
 // returns 1 if standard deviations are low
 // 0 otherwise 
 __declspec(dllexport) int swarm_converged() {
-	params[0] = SLAMD_X;
+	params[0] = SLAMD_CONVERGED;
 	ReleaseSemaphore(param_sem, 1, NULL);
 	WaitForSingleObject(return_sem, INFINITE);
 	return *return_value;
@@ -199,8 +199,9 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
     y = short_side/4;
     if (rand_limit(2))
       y *= 3;
-    theta = rand_limit(360) - 180;
-    t = theta*M_PI/180;
+    //theta = rand_limit(360) - 180;
+    theta = 180;
+	t = theta*M_PI/180;
     particles[i] = particle_init(x + sensor_radius*cos(t), y + sensor_radius*sin(t), theta);
     particles[i].map = initial_map.map;
     landmark_map_reference(particles[i].map);
@@ -238,6 +239,10 @@ void swarm_move(int dx, int dy, int dtheta) {
     p_count = INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT;
   else
     p_count = PARTICLE_COUNT;
+	
+  // reset convergence if we have a non 0 move
+  if (abs(dx) > 0 || abs(dy) > 0 || abs(dtheta) > 0)
+	converged = 0;
 
   // add motion
   for (i = 0; i < p_count; i++) {

@@ -36,6 +36,11 @@ namespace lunabotics.Comms.TelemetryEncoding
         public double Psi;
         public int State;
 
+        //Rear Hokuyo Distance Data
+        public double LidarDistanceLeft;
+        public double LidarDistanceCenter;
+        public double LidarDistanceRight;
+
         //// Front rangefinder
         //public int FrontRangeFinderDataLength;
         //public double[] FrontRangeFinderData;
@@ -146,6 +151,14 @@ namespace lunabotics.Comms.TelemetryEncoding
             Array.Copy(state_bytes, 0, toReturn, position, state_bytes.Length);
             position += sizeof(int);
 
+            byte[] ldc_bytes = BitConverter.GetBytes(State);
+            Array.Copy(ldc_bytes, 0, toReturn, position, ldc_bytes.Length);
+            position += sizeof(int);
+
+            byte[] ldr_bytes = BitConverter.GetBytes(State);
+            Array.Copy(ldr_bytes, 0, toReturn, position, ldr_bytes.Length);
+            position += sizeof(int);
+
             //byte[] front_rf_length_bytes = BitConverter.GetBytes(FrontRangeFinderDataLength);
             //Array.Copy(front_rf_length_bytes, 0, toReturn, position, front_rf_length_bytes.Length);
             //position += sizeof(int);
@@ -231,6 +244,15 @@ namespace lunabotics.Comms.TelemetryEncoding
             position += sizeof(double);
 
             feedback.Psi = BitConverter.ToDouble(bytes, position);
+            position += sizeof(double);
+
+            feedback.LidarDistanceLeft = BitConverter.ToDouble(bytes, position);
+            position += sizeof(double);
+
+            feedback.LidarDistanceCenter = BitConverter.ToDouble(bytes, position);
+            position += sizeof(double);
+
+            feedback.LidarDistanceRight = BitConverter.ToDouble(bytes, position);
             position += sizeof(double);
 
             //Bools           

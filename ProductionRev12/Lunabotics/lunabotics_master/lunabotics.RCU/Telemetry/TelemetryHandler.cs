@@ -311,15 +311,15 @@ namespace lunabotics.RCU.Telemetry
                             break;
                         case Configuration.Telemetry.ScoopArmAngleRaw:
                             //Scoop Arm Pot Volatage 
-                            //200 at 145 degrees (top)
-                            //4150 at 0 degrees (bottom)
-                            ScoopArmAngle = Math.Abs((int)((e.UpdatedTelemetry[telem] - 405) / 28) - 145);
+                            //800 at 145 degrees (top)
+                            //5050 at 0 degrees (bottom)
+                            ScoopArmAngle = Math.Abs((int)((e.UpdatedTelemetry[telem] - 800) / 29.31) - 145);
                             break;
                         case Configuration.Telemetry.BucketAngleRaw:
                             //Bucket Angle Pot Voltage
-                            //1320 at 0 degrees (bottom)
-                            //2600 at 90 degrees (top)
-                            BucketAngle = (int)((e.UpdatedTelemetry[telem] - 1320) / 13.7);
+                            //3700 at 0 degrees (bottom)
+                            //2380 at 90 degrees (top)
+                            BucketAngle = (int)((e.UpdatedTelemetry[telem] - 3700) / -14.6);
                             break;
                         case Configuration.Telemetry.ArmLowerLimitSwitch:
                             ScoopLowerLimitSwitch = (e.UpdatedTelemetry[telem] > 0 ? true : false);
@@ -333,6 +333,15 @@ namespace lunabotics.RCU.Telemetry
                             break;
                         case Configuration.Telemetry.RearLeftIR:
                             rearProximityLeft = Math.Min(80, (6787 / (e.UpdatedTelemetry[telem] - 3)) - 4);
+                            break;
+                        case Configuration.Telemetry.LocalizationX:
+                            x = e.UpdatedTelemetry[telem];
+                            break;
+                        case Configuration.Telemetry.LocalizationY:
+                            y = e.UpdatedTelemetry[telem];
+                            break;
+                        case Configuration.Telemetry.LocalizationPsi:
+                            psi = e.UpdatedTelemetry[telem];
                             break;
                         default:
                             break;

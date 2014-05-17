@@ -30,6 +30,7 @@ namespace lunabotics.RCU.Autonomy
             ReturnToDeposition,
             Mining,
             Deposition,
+            DepositionNoFeedback,
             TemporaryTesting,
             SafeShutdown
         }
@@ -63,7 +64,6 @@ namespace lunabotics.RCU.Autonomy
         //Mining Data
         private int scoopsMined = 0;
         private int hasMined = 0;
-        private int maximumScoops = 4;
 
         //Initialize motor powers (Note forward power is negative)
         public short forwardPower = 800;
@@ -90,10 +90,13 @@ namespace lunabotics.RCU.Autonomy
         //TcpClient urg = new TcpClient();
 
         private Stopwatch stopwatch;
+        private Stopwatch dumpClock;
         private System.Timers.Timer timer;
-        private Zone expectedZone;
+        
         // Create output state
         private Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
+        //Create telemetry state
+        private Dictionary<Configuration.Telemetry, int> outputTelemetry = new  Dictionary<Configuration.Telemetry, int>();
         //Create current pose
         private Dictionary<Pose, double> currentPose = new Dictionary<Pose, double>();
         //Create pose to hold changes in pose after moving
@@ -112,6 +115,7 @@ namespace lunabotics.RCU.Autonomy
 
             // Create stopwatch
             stopwatch = new Stopwatch();
+            dumpClock = new Stopwatch();
 
             // Add telemetry callback
             telemetryHandler.TelemetryFeedbackProcessed += telemetryHandler_TelemetryFeedbackProcessed;
@@ -176,6 +180,7 @@ namespace lunabotics.RCU.Autonomy
 
         public void Start()
         {
+            int i = 0;
             ////hokuyo initialization
             //urg.Connect(ip_address, port_number);
             //stream = urg.GetStream();
@@ -186,11 +191,21 @@ namespace lunabotics.RCU.Autonomy
             state = State.InitializeAutonomy;
             // Set flag
             started = true;
-            // Set zone
-            expectedZone = Zone.Start;
             //Reset Hall Counts From previous runs
             ResetCounters();
 
+            /*Test of Pose Telemetry
+            while (true)
+            {
+
+                outputTelemetry[Configuration.Telemetry.LocalizationX] = i;
+                outputTelemetry[Configuration.Telemetry.LocalizationY] = i + 1;
+                outputTelemetry[Configuration.Telemetry.LocalizationPsi] = i - 1;
+                OnTelemetryUpdated(new TelemetryEventArgs((int)configuration.Interval, outputTelemetry));
+                Thread.Sleep(1000);
+                i++;
+            }
+            */
         }
 
         public void Stop()
@@ -274,7 +289,11 @@ namespace lunabotics.RCU.Autonomy
                                 currentPose[Pose.Ypos] = Swarm.swarm_get_best_y();
                                 currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
                             }
-
+                            outputTelemetry[Configuration.Telemetry.LocalizationX] = (int)currentPose[Pose.Xpos];
+                            outputTelemetry[Configuration.Telemetry.LocalizationY] = (int)currentPose[Pose.Ypos];
+                            outputTelemetry[Configuration.Telemetry.LocalizationPsi] = (int)currentPose[Pose.Heading];
+                            OnTelemetryUpdated(new TelemetryEventArgs((int)configuration.Interval, outputTelemetry));
+                            Thread.Sleep(5000);
                             //turnToGivenHeading(0);
                             state = State.TraverseClearPath;
                             //state = State.TemporaryTesting;
@@ -445,7 +464,61 @@ namespace lunabotics.RCU.Autonomy
 
                             state = State.TraverseClearPath;
                             break;
+                        case State.DepositionNoFeedback:
+                            while (currentPose[Pose.Xpos] > 600)
+                            {
+                                if (currentPose[Pose.Ypos] < 1940 - lane_width / 2)
+                                    turnToGivenHeading(-90);
+                                else if (currentPose[Pose.Ypos] > 1940 + lane_width / 2)
+                                    turnToGivenHeading(90);
+                                else
+                                    turnToGivenHeading(0);
 
+
+                                if (Math.Abs(currentPose[Pose.Heading]) < 5)
+                                {
+                                    forwardPower = 200;
+                                    reversePower = -200;
+                                    if (robot.TelemetryFeedback.BucketPivotAngle < 30)
+                                    {
+                                        outputState[CommandFields.LeftBucketActuator] = 1000;
+                                        outputState[CommandFields.RightBucketActuator] = 1000;
+                                    }
+                                    else
+                                    {
+                                        outputState[CommandFields.LeftBucketActuator] = 0;
+                                        outputState[CommandFields.RightBucketActuator] = 0;
+                                    }
+                                    Move(MMToSteps((int)(currentPose[Pose.Xpos] - 600)), direction.reverse);
+                                    forwardPower = 800;
+                                    reversePower = -800;
+                                }
+                                else
+                                    Move(MMToSteps((int)Math.Abs(currentPose[Pose.Ypos] - 1940)), direction.reverse);
+
+                            }
+
+                            dumpClock.Start();
+                            while (dumpClock.ElapsedMilliseconds < 70000)
+                            {
+                                outputState[CommandFields.LeftBucketActuator] = 1000;
+                                outputState[CommandFields.RightBucketActuator] = 1000;
+                                outputState = MergeStates(outputState, staticOutput);
+                                //Make calls to event handler to move motors
+                                OnAutonomyUpdated(new AutonomyArgs(outputState));
+                            }
+                            Thread.Sleep(5000);
+                            dumpClock.Restart();
+                            while (dumpClock.ElapsedMilliseconds < 70000)
+                            {
+                                outputState[CommandFields.LeftBucketActuator] = -1000;
+                                outputState[CommandFields.RightBucketActuator] = -1000;
+                                outputState = MergeStates(outputState, staticOutput);
+                                //Make calls to event handler to move motors
+                                OnAutonomyUpdated(new AutonomyArgs(outputState));
+                            }
+                            state = State.TraverseClearPath;
+                            break;
                         case State.SafeShutdown:
 
                             Stop();
@@ -622,7 +695,6 @@ namespace lunabotics.RCU.Autonomy
 
         public void Move(int steps, direction dir)
         {
-
             //475 Steps to move .333 meters
             ResetCounters();
             short transPower = 0, rotPower = 0;
@@ -695,10 +767,10 @@ namespace lunabotics.RCU.Autonomy
                 currentPose[Pose.Heading] = Swarm.swarm_get_best_theta();
             }
 
-            robot.TelemetryFeedback.X = currentPose[Pose.Xpos];
-            robot.TelemetryFeedback.Y = currentPose[Pose.Ypos];
-            robot.TelemetryFeedback.Psi = currentPose[Pose.Heading];
-
+            outputTelemetry[Configuration.Telemetry.LocalizationX] = (int)currentPose[Pose.Xpos];
+            outputTelemetry[Configuration.Telemetry.LocalizationY] = (int)currentPose[Pose.Ypos];
+            outputTelemetry[Configuration.Telemetry.LocalizationPsi] = (int)currentPose[Pose.Heading];
+            OnTelemetryUpdated(new TelemetryEventArgs((int)configuration.Interval, outputTelemetry));
         }
 
         //Call each time to reset the Hall Count for all of the Roboteqs in config

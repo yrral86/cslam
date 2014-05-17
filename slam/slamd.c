@@ -64,11 +64,12 @@ int main(int argc, char **argv) {
       break;
     }
 
-    // write to file
+	// write to file
     for (i = 0; i < m + 1; i++)
       fprintf(record, "%i,", params[i]);
     fprintf(record, "%i\n", return_value[0]);
     fclose(record);
+	
 
     // UPDATE releases semaphore inline to return
     // as early as possible while it normalizes,

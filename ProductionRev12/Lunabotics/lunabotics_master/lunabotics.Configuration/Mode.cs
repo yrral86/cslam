@@ -9,10 +9,7 @@ namespace lunabotics.Configuration
     {
         Manual,
         Autonomous,
-        BinLowerMacro,
-        BinRaiseMacro,
-        CollectScoopMacro,
-        DockRobotMacro,
+        ScanLidar,
         Null
     }
 }

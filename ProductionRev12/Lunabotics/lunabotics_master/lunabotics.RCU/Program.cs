@@ -22,7 +22,7 @@ namespace lunabotics.RCU
         static bool useAutonomy = true;
         static bool useRangeFinders = false;
         static bool useRoboteQs = true;
-        static bool useWebcams = true;
+        static bool useWebcams = false;
         static AutonomyHandler autonomy;
         
         static RCUConfiguration configuration;
@@ -280,6 +280,8 @@ namespace lunabotics.RCU
                         case Mode.Autonomous:
                             if (!autonomy.Started)
                                 autonomy.Start();
+                            break;
+                        case Mode.ScanLidar:
                             break;
                         //case Mode.BinLowerMacro:
                         //    if (!feedback.BinLowerSwitchDepressed)
