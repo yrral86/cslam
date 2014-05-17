@@ -199,8 +199,8 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
     y = short_side/4;
     if (rand_limit(2))
       y *= 3;
-    //theta = rand_limit(360) - 180;
-    theta = 180;
+    theta = rand_limit(360) - 180;
+    //theta = 180;
 	t = theta*M_PI/180;
     particles[i] = particle_init(x + sensor_radius*cos(t), y + sensor_radius*sin(t), theta);
     particles[i].map = initial_map.map;
@@ -414,7 +414,7 @@ void swarm_update(int *distances) {
   }
 
   // make sure 99% of particles are within 50mm and 1 degree
-  if (sqrt(pow(stddev[0], 2) + pow(stddev[1], 2)) < 50 && stddev[2] < 1)
+  if (sqrt(pow(stddev[0], 2) + pow(stddev[1], 2)) < 50 && stddev[2] < 2)
     converged = 1;
   else
     converged = 0;
@@ -534,11 +534,11 @@ int swarm_get_best_theta() {
 }
 
 int swarm_get_x(int i) {
-  return particles[i].x - sensor_radius*cos(particles[i].theta*M_PI/180);
+  return particles[i].x - sensor_radius*cos(particles[i].theta*M_PI/180) - 150;
 }
 
 int swarm_get_y(int i) {
-  return short_side - (particles[i].y - sensor_radius*sin(particles[i].theta*M_PI/180));
+  return short_side - (particles[i].y - sensor_radius*sin(particles[i].theta*M_PI/180)) - 150;
 }
 
 int swarm_get_theta(int i) {

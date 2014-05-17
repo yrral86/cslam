@@ -50,7 +50,7 @@ namespace lunabotics.Comms.TelemetryEncoding
         //public double[] RearRangeFinderData;
 
         //14 doubles for power/angles, 2 bools for limit switches, 1 ints for rear range finder data length
-        private static int MIN_SIZE = 16 * sizeof(double) + 2 * sizeof(bool) + 1 * sizeof(int);
+        private static int MIN_SIZE = 19 * sizeof(double) + 2 * sizeof(bool) + 1 * sizeof(int);
 
         public object Clone()
         {

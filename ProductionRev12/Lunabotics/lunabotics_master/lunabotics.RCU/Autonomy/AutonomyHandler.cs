@@ -193,7 +193,8 @@ namespace lunabotics.RCU.Autonomy
             started = true;
             //Reset Hall Counts From previous runs
             ResetCounters();
-
+            //Turn to Zero
+            turnToThetaZero();
             /*Test of Pose Telemetry
             while (true)
             {
@@ -337,6 +338,7 @@ namespace lunabotics.RCU.Autonomy
                             break;
 
                         case State.TraverseClearPath:
+                            SetBucketAngle(0);
                             SetArmSwingAndScoopPitch(145, 0);
                             while (currentPose[Pose.Xpos] < 4440)
                             {
@@ -350,12 +352,12 @@ namespace lunabotics.RCU.Autonomy
                                 if (currentPose[Pose.Xpos] < 4000)
                                     Move(300, direction.forward);
                                 else
-                                    Move(MMToSteps((int)(5000 - currentPose[Pose.Xpos])), direction.forward);
+                                    Move(MMToSteps((int)(4440 - currentPose[Pose.Xpos])), direction.forward);
                                 
                             }
 
-                            state = State.Mining;
-                            //state = State.ReturnToDeposition;
+                            //state = State.Mining;
+                            state = State.ReturnToDeposition;
                             break;
 
                         case State.Mining:
@@ -385,7 +387,7 @@ namespace lunabotics.RCU.Autonomy
                                 
                             }
 
-                            while (currentPose[Pose.Xpos] < 5365 && scoopsMined < configuration.MaximumScoops)
+                            while (currentPose[Pose.Xpos] < 5000     && scoopsMined < configuration.MaximumScoops)
                             {
                                 turnToGivenHeading(0);
                                 MineScoop();
@@ -615,7 +617,7 @@ namespace lunabotics.RCU.Autonomy
         public bool MineScoop()
         {
             bool mined = false;
-            if (currentPose[Pose.Xpos] < 6530)
+            if (currentPose[Pose.Xpos] < 5000)
             {
                 Stopwatch st = new Stopwatch();
                 SetArmSwingAndScoopPitch(5, 8);
@@ -642,19 +644,28 @@ namespace lunabotics.RCU.Autonomy
             int arm_pivot_error, scoop_pitch_error;
             arm_pivot_error = arm_angle - (int)robot.TelemetryFeedback.ArmSwingAngle;
             scoop_pitch_error = scoop_angle - (int)robot.TelemetryFeedback.ScoopPitchAngle;
-            while (Math.Abs(arm_pivot_error) > 0 && Math.Abs(scoop_pitch_error) > 0)
+            while (Math.Abs(arm_pivot_error) > 0 || Math.Abs(scoop_pitch_error) > 0)
             {
-                outputState[Comms.CommandEncoding.CommandFields.ScoopPitch] = (short)(1000 * scoop_pitch_error / Math.Abs(scoop_pitch_error));
-                outputState[Comms.CommandEncoding.CommandFields.ScoopPivot] = (short)(1000 * arm_pivot_error / Math.Abs(arm_pivot_error));
+                if (Math.Abs(scoop_pitch_error) > 0)
+                    outputState[Comms.CommandEncoding.CommandFields.ScoopPitch] = (short)(1000 * scoop_pitch_error / Math.Abs(scoop_pitch_error));
+                else
+                    outputState[Comms.CommandEncoding.CommandFields.ScoopPitch] = 0;
+                
+                if (Math.Abs(arm_pivot_error) > 0)
+                    outputState[Comms.CommandEncoding.CommandFields.ScoopPivot] = (short)(1000 * arm_pivot_error / Math.Abs(arm_pivot_error));
+                else
+                    outputState[Comms.CommandEncoding.CommandFields.ScoopPivot] = 0;
 
                 //Set Output States
                 outputState = MergeStates(outputState, staticOutput);
                 //Make calls to event handler to move motors
                 OnAutonomyUpdated(new AutonomyArgs(outputState));
 
+                Thread.Sleep(100);
+
                 arm_pivot_error = arm_angle - (int)robot.TelemetryFeedback.ArmSwingAngle;
                 scoop_pitch_error = scoop_angle - (int)robot.TelemetryFeedback.ScoopPitchAngle;
-                if (Math.Abs(arm_pivot_error) < 2)
+                if (Math.Abs(arm_pivot_error) < 3)
                     arm_pivot_error = 0;
                 if (Math.Abs(scoop_pitch_error) < 2)
                     scoop_pitch_error = 0;
@@ -680,7 +691,9 @@ namespace lunabotics.RCU.Autonomy
                 outputState = MergeStates(outputState, staticOutput);
                 //Make calls to event handler to move motors
                 OnAutonomyUpdated(new AutonomyArgs(outputState));
-               
+
+                Thread.Sleep(100);
+
                 angle_error = angle - (int)robot.TelemetryFeedback.BucketPivotAngle;
                 if (Math.Abs(angle_error) < 2)
                     angle_error = 0;
@@ -792,11 +805,11 @@ namespace lunabotics.RCU.Autonomy
         public void turnToThetaZero()
         {
             EthernetSensorData = utm.EthernetScan();
-            while (((EthernetSensorData[0] + EthernetSensorData[720]) > 4000 || (EthernetSensorData[0] + EthernetSensorData[720]) < 3760) && EthernetSensorData[361] > 400)
+            while ((((EthernetSensorData[0] + EthernetSensorData[720]) > 4000 || (EthernetSensorData[0] + EthernetSensorData[720]) < 3760)) && EthernetSensorData[361] > 400)
             {
                 outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
                 //Velocity must be negative for left turn
-                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 300;
+                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 80;
                 outputState = MergeStates(outputState, staticOutput);
                 OnAutonomyUpdated(new AutonomyArgs(outputState));
                 EthernetSensorData = utm.EthernetScan();
