@@ -62,6 +62,7 @@
     <Compile Include="Autonomy\AutonomyHandler.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Autonomy\Localization\Filtering.cs" />
     <Compile Include="Autonomy\Localization\Swarm.cs" />
     <Compile Include="Autonomy\Robot.cs">
       <SubType>Code</SubType>

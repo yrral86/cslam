@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <RCUConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <CommandPort>10000</CommandPort>
-  <OCU_IP_Address>192.168.1.103</OCU_IP_Address>
-  <!--<OCU_IP_Address>127.0.0.1</OCU_IP_Address>-->
+  <OCU_IP_Address>192.168.1.147</OCU_IP_Address>
+  <!--OCU_IP_Address>127.0.0.1</OCU_IP_Address-->
   <RoboteqConfigurations>
     <RoboteqConfiguration>
       <COM_Port>COM7</COM_Port>
@@ -320,9 +320,9 @@
     </PitchConversion>
     <PivotConversion>
       <MinPivot>0</MinPivot>
-      <MinPivotSensorValue>800</MinPivotSensorValue>
-      <MaxPivot>130</MaxPivot>
-      <MaxPivotSensorValue>5050</MaxPivotSensorValue>
+      <MinPivotSensorValue>5100</MinPivotSensorValue>
+      <MaxPivot>145</MaxPivot>
+      <MaxPivotSensorValue>1030</MaxPivotSensorValue>
     </PivotConversion>
   </TelemetryConfiguration>
   <RearRangeFinder>
@@ -335,10 +335,12 @@
     <ArenaWidth>3880</ArenaWidth>
     <ArenaLength>7380</ArenaLength>
     <ArenaStartingArea>1940</ArenaStartingArea>
-    <RoverLength>.97</RoverLength>
-    <RoverWidth>.72</RoverWidth>
-    <SafetyLength>1000</SafetyLength>
-    <SensorRadius>550</SensorRadius>
+    <ArenaMiningArea>4440</ArenaMiningArea>
+    <RoverLengthScoopDown>1500</RoverLengthScoopDown>
+    <RoverLengthScoopUp>950</RoverLengthScoopUp>
+    <RoverWidth>750</RoverWidth>
+    <SafetyLength>300</SafetyLength>
+    <SensorRadius>570</SensorRadius>
     <RoverLane>1940</RoverLane>
     <MaximumScoops>4</MaximumScoops>
     <MaximumRuntime>1000</MaximumRuntime>

@@ -311,9 +311,9 @@ namespace lunabotics.RCU.Telemetry
                             break;
                         case Configuration.Telemetry.ScoopArmAngleRaw:
                             //Scoop Arm Pot Volatage 
-                            //800 at 145 degrees (top)
-                            //5050 at 0 degrees (bottom)
-                            ScoopArmAngle = Math.Abs((int)((e.UpdatedTelemetry[telem] - 800) / 29.31) - 145);
+                            //1030 at 145 degrees (top)
+                            //5090 at 0 degrees (bottom)
+                            ScoopArmAngle = Math.Abs((int)((e.UpdatedTelemetry[telem] - 1030) / 28) - 145);
                             break;
                         case Configuration.Telemetry.BucketAngleRaw:
                             //Bucket Angle Pot Voltage

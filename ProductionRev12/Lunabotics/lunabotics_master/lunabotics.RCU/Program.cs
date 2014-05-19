@@ -13,16 +13,22 @@ using lunabotics.Comms.CommandEncoding;
 using lunabotics.RCU.Controllers;
 using lunabotics.Comms.TelemetryEncoding;
 using System.Diagnostics;
+//Added for Testing --- REMOVE
+using lunabotics.RCU.Localization;
+using lunabotics.RCU.Hokuyo;
+
+
 
 namespace lunabotics.RCU
 {
     class Program
     {
+
         //static bool autonomous = true;
         static bool useAutonomy = true;
         static bool useRangeFinders = false;
         static bool useRoboteQs = true;
-        static bool useWebcams = false;
+        static bool useWebcams = true;
         static AutonomyHandler autonomy;
         
         static RCUConfiguration configuration;
@@ -45,6 +51,7 @@ namespace lunabotics.RCU
 
         static CancellationTokenSource tokenSource = new CancellationTokenSource();
         static Thread stateProcessor;
+        static Autonomy.Localization.Filtering filtering;
         static Utility.UpdateQueue<Dictionary<Comms.CommandEncoding.CommandFields, short>> stateQueue = new Utility.UpdateQueue<Dictionary<Comms.CommandEncoding.CommandFields, short>>(-1);
 
         static void Main(string[] args)
@@ -176,6 +183,9 @@ namespace lunabotics.RCU
                 //packet handler
                 stateProcessor = new Thread(new ThreadStart(StateProcessorDoWork));
                 stateProcessor.Start();
+
+                filtering = new Autonomy.Localization.Filtering((int)configuration.AutonomyConfiguration.SensorRadius);
+
             }
             catch (Exception ex)
             {
@@ -219,7 +229,7 @@ namespace lunabotics.RCU
                     autonomy.Start();
 
                 // Queue commands from autonomy
-                stateQueue.Enqueue(e.UpdatedState); //No idea
+                stateQueue.Enqueue(e.UpdatedState); 
             }
         }
 
@@ -272,10 +282,17 @@ namespace lunabotics.RCU
                     {
                         case Mode.Manual:
                             // Stop autonomy if active
+
                             if (autonomy.Started)
+                            {
+                                Console.WriteLine("AHhhhh");
                                 autonomy.Stop();
+                                
+                                filtering.startFiltering();
+                            }
                             // Enqueue current state from controller
                             stateQueue.Enqueue(state);
+                            
                             break;
                         case Mode.Autonomous:
                             if (!autonomy.Started)

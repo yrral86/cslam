@@ -12,8 +12,10 @@ namespace lunabotics.Configuration
         public double ArenaWidth;
         public double ArenaLength;
         public double ArenaStartingArea;
+        public double ArenaMiningArea;
         public double Interval;
-        public double RoverLength;
+        public double RoverLengthScoopUp;
+        public double RoverLengthScoopDown;
         public double RoverWidth;
         public double SensorRadius;
         public double RoverLane;
