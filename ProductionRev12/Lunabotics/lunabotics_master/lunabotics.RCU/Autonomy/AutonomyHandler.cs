@@ -195,7 +195,7 @@ namespace lunabotics.RCU.Autonomy
             //Reset Hall Counts From previous runs
             ResetCounters();
             //Turn to Zero
-            turnToThetaZero();
+            //turnToThetaZero();
             /*Test of Pose Telemetry
             while (true)
             {
@@ -357,8 +357,8 @@ namespace lunabotics.RCU.Autonomy
                                 
                             }
 
-                            //state = State.Mining;
-                            state = State.ReturnToDeposition;
+                            state = State.Mining;
+                            //state = State.ReturnToDeposition;
                             break;
 
                         case State.Mining:
@@ -418,7 +418,7 @@ namespace lunabotics.RCU.Autonomy
                                 Move(300, direction.reverse);
                             }
 
-                            state = State.Deposition;
+                            state = State.DepositionNoFeedback;
                             break;
 
                         case State.Deposition:
@@ -462,7 +462,7 @@ namespace lunabotics.RCU.Autonomy
                             }
                             Move(50, direction.reverse);
                             SetBucketAngle(90);
-                            Thread.Sleep(10000);
+                            Thread.Sleep(20000);
                             Move(50, direction.forward);
                             Move(50, direction.reverse);
                             SetBucketAngle(0);
@@ -674,9 +674,9 @@ namespace lunabotics.RCU.Autonomy
 
                 arm_pivot_error = arm_angle - (int)robot.TelemetryFeedback.ArmSwingAngle;
                 scoop_pitch_error = scoop_angle - (int)robot.TelemetryFeedback.ScoopPitchAngle;
-                if (Math.Abs(arm_pivot_error) < 3)
+                if (Math.Abs(arm_pivot_error) < 4)
                     arm_pivot_error = 0;
-                if (Math.Abs(scoop_pitch_error) < 2)
+                if (Math.Abs(scoop_pitch_error) < 1)
                     scoop_pitch_error = 0;
             }
 
@@ -811,24 +811,6 @@ namespace lunabotics.RCU.Autonomy
             }
         }
 
-        public void turnToThetaZero()
-        {
-            Console.WriteLine("Turn to 0");
-            EthernetSensorData = utm.EthernetScan();
-            while ((((EthernetSensorData[0] + EthernetSensorData[720]) > 3920 || (EthernetSensorData[0] + EthernetSensorData[720]) < 3840)) && EthernetSensorData[361] > 400)
-            {
-                outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
-                //Velocity must be negative for left turn
-                outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 80;
-                outputState = MergeStates(outputState, staticOutput);
-                OnAutonomyUpdated(new AutonomyArgs(outputState));
-                EthernetSensorData = utm.EthernetScan();
-            }
-            outputState[Comms.CommandEncoding.CommandFields.TranslationalVelocity] = 0;
-            outputState[Comms.CommandEncoding.CommandFields.RotationalVelocity] = 0;
-            outputState = MergeStates(outputState, staticOutput);
-            OnAutonomyUpdated(new AutonomyArgs(outputState));
-        }
 
         public void turnToGivenHeading(double desiredTheta, double tol = 5)
         {

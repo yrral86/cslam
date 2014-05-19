@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <RCUConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <CommandPort>10000</CommandPort>
-  <OCU_IP_Address>192.168.1.147</OCU_IP_Address>
+  <OCU_IP_Address>192.168.1.187</OCU_IP_Address>
   <!--OCU_IP_Address>127.0.0.1</OCU_IP_Address-->
   <RoboteqConfigurations>
     <RoboteqConfiguration>
