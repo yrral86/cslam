@@ -30,6 +30,7 @@ namespace lunabotics.RCU
         static bool useRoboteQs = true;
         static bool useWebcams = true;
         static AutonomyHandler autonomy;
+        static bool autonomy_begin = false;
         
         static RCUConfiguration configuration;
 
@@ -51,7 +52,7 @@ namespace lunabotics.RCU
 
         static CancellationTokenSource tokenSource = new CancellationTokenSource();
         static Thread stateProcessor;
-        static Autonomy.Localization.Filtering filtering;
+        //static Autonomy.Localization.Filtering filtering;
         static Utility.UpdateQueue<Dictionary<Comms.CommandEncoding.CommandFields, short>> stateQueue = new Utility.UpdateQueue<Dictionary<Comms.CommandEncoding.CommandFields, short>>(-1);
 
         static void Main(string[] args)
@@ -203,6 +204,10 @@ namespace lunabotics.RCU
                     {
                         break;
                     }
+                    if (input.Contains("start"))
+                    {
+                        autonomy_begin = true;
+                    }
                 }
                 catch (Exception) { }
             }
@@ -235,15 +240,15 @@ namespace lunabotics.RCU
 
         private static void Teardown()
         {
+            foreach (Controllers.RoboteQ r in roboteqs)
+                r.Deactivate();
+
             tokenSource.Cancel();
             //cleanup logic
             if (autonomy != null)
                 autonomy.Deactivate();
             if (receiver != null)
                 receiver.Deactivate();
-
-            foreach (Controllers.RoboteQ r in roboteqs)
-                r.Deactivate();
       
             if (telemetryHandler != null)
                 telemetryHandler.Deactivate();
@@ -293,6 +298,10 @@ namespace lunabotics.RCU
                         case Mode.Autonomous:
                             if (!autonomy.Started)
                                 autonomy.Start();
+
+                            if (autonomy_begin)
+                                autonomy.Begin();
+
                             break;
                         case Mode.ScanLidar:
                             break;

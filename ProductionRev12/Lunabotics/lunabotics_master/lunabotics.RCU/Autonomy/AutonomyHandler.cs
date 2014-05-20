@@ -93,7 +93,8 @@ namespace lunabotics.RCU.Autonomy
         private Stopwatch stopwatch;
         private Stopwatch dumpClock;
         private System.Timers.Timer timer;
-        
+        private bool begin = false;
+
         // Create output state
         private Dictionary<CommandFields, short> outputState = new Dictionary<CommandFields, short>();
         //Create telemetry state
@@ -194,8 +195,6 @@ namespace lunabotics.RCU.Autonomy
             started = true;
             //Reset Hall Counts From previous runs
             ResetCounters();
-            //Turn to Zero
-            //turnToThetaZero();
             /*Test of Pose Telemetry
             while (true)
             {
@@ -208,6 +207,12 @@ namespace lunabotics.RCU.Autonomy
                 i++;
             }
             */
+            SetArmSwingAndScoopPitch(5, 0);
+        }
+
+        public void Begin()
+        {
+            begin = true;
         }
 
         public void Stop()
@@ -270,7 +275,7 @@ namespace lunabotics.RCU.Autonomy
                             EthernetSensorData = utm.EthernetScan();
 
                             //Loop to try and converge particles
-                            while (Swarm.swarm_converged() == 0 && tries < 200)
+                            while (Swarm.swarm_converged() == 0 && tries < 10)
                             {
                                 Swarm.swarm_move(0, 0, 0);
                                 Swarm.swarm_update(EthernetSensorData);
@@ -279,7 +284,7 @@ namespace lunabotics.RCU.Autonomy
                                 tries++;
                             }
 
-                            if (tries == 200)
+                            if (tries == 10 && Swarm.swarm_converged() == 0)
                             {
                                 currentPose[Pose.Xpos] = 9999;
                                 currentPose[Pose.Ypos] = 9999;
@@ -295,7 +300,9 @@ namespace lunabotics.RCU.Autonomy
                             outputTelemetry[Configuration.Telemetry.LocalizationY] = (int)currentPose[Pose.Ypos];
                             outputTelemetry[Configuration.Telemetry.LocalizationPsi] = (int)currentPose[Pose.Heading];
                             OnTelemetryUpdated(new TelemetryEventArgs((int)configuration.Interval, outputTelemetry));
-                            Thread.Sleep(5000);
+                         //   while (!begin)
+                           //     Thread.Sleep(100);
+                            Console.WriteLine("Begin deteted, robot on the loose.");                    
                             //turnToGivenHeading(0);
                             state = State.TraverseClearPath;
                             //state = State.TemporaryTesting;
@@ -339,7 +346,7 @@ namespace lunabotics.RCU.Autonomy
                             break;
 
                         case State.TraverseClearPath:
-                            SetBucketAngle(0);
+                            //SetBucketAngle(0);
                             SetArmSwingAndScoopPitch(145, 0);
                             while (currentPose[Pose.Xpos] < configuration.ArenaMiningArea + configuration.SafetyLength)
                             {
@@ -453,11 +460,11 @@ namespace lunabotics.RCU.Autonomy
                             }
 
                             Move(50, direction.reverse);
-                            SetBucketAngle(90);
+                            //SetBucketAngle(90);
                             Thread.Sleep(20000);
                             Move(50, direction.forward);
                             Move(50, direction.reverse);
-                            SetBucketAngle(0);
+                            //SetBucketAngle(0);
                             forwardPower = oldForwardPower;
                             reversePower = oldReversePower;
 
@@ -661,7 +668,7 @@ namespace lunabotics.RCU.Autonomy
 
                 arm_pivot_error = arm_angle - (int)robot.TelemetryFeedback.ArmSwingAngle;
                 scoop_pitch_error = scoop_angle - (int)robot.TelemetryFeedback.ScoopPitchAngle;
-                if (Math.Abs(arm_pivot_error) < 4)
+                if (Math.Abs(arm_pivot_error) < 2)
                     arm_pivot_error = 0;
                 if (Math.Abs(scoop_pitch_error) < 1)
                     scoop_pitch_error = 0;
@@ -753,18 +760,18 @@ namespace lunabotics.RCU.Autonomy
 
             //Scan Hokuyo
             EthernetSensorData = utm.EthernetScan();
-            while (Swarm.swarm_converged() == 0 && tries < 200)
+            while (Swarm.swarm_converged() == 0 && tries < 10)
             {
                 Swarm.swarm_update(EthernetSensorData);
                 EthernetSensorData = utm.EthernetScan();
                 Swarm.swarm_update_finalize();
                 tries++;
-                if (Swarm.swarm_converged() == 0 && tries < 200)
+                if (Swarm.swarm_converged() == 0 && tries < 10)
                     Swarm.swarm_move(0, 0, 0);
             }
 
             //Update Current Pose to Particle filter outputs
-            if (tries == 200)
+            if (tries == 10 && Swarm.swarm_converged() == 0)
             {
                 currentPose[Pose.Xpos] = 9999;
                 currentPose[Pose.Ypos] = 9999;
