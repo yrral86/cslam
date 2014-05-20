@@ -42,7 +42,7 @@ int main (int argc, char **argv) {
 
     switch(current_command) {
     case SLAMD_INIT:
-      swarm_init(parsed_line[1], parsed_line[2], parsed_line[3], parsed_line[4], parsed_line[5], 600);
+      swarm_init(parsed_line[1], parsed_line[2], parsed_line[3], parsed_line[4], parsed_line[5], parsed_line[6]);
 
       // allocate buffers
       for (i = 0; i < BUFFER_HISTORY; i++)
@@ -54,16 +54,24 @@ int main (int argc, char **argv) {
       initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 1.75*buffer_get_width(), 1.75*buffer_get_height());
       break;
     case SLAMD_MOVE:
-      swarm_move(parsed_line[1], parsed_line[2], parsed_line[3]);
+      //      swarm_move(parsed_line[1], parsed_line[2], parsed_line[3]);
+      swarm_move(1, 0, 0);
       break;
     case SLAMD_UPDATE:
-      swarm_update(parsed_line + 1);
-      scan_count++;
-      if ((scan_count == 5 && init == 1) || scan_count == 6) {
-	if (init == 1) init = 0;
-	swarm_map(parsed_line + 1);
-	scan_count = 0;
+      i = 0;
+      while (!swarm_converged() && i < 5) {
+	i++;
+	swarm_update(parsed_line + 1);
+	if (!swarm_converged() && i < 5)
+	  swarm_move(0, 0, 0);
       }
+      printf("%d\n", i);
+      scan_count++;
+      //if ((scan_count == 5 && init == 1) || scan_count == 6) {
+      //if (init == 1) init = 0;
+	swarm_map(parsed_line + 1);
+	//scan_count = 0;
+	//}
       update_display();
       break;
     case SLAMD_X:

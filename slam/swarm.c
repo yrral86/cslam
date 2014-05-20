@@ -201,7 +201,7 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
       y *= 3;
     theta = rand_limit(360) - 180;
     //theta = 180;
-	t = theta*M_PI/180;
+    t = theta*M_PI/180;
     particles[i] = particle_init(x + sensor_radius*cos(t), y + sensor_radius*sin(t), theta);
     particles[i].map = initial_map.map;
     landmark_map_reference(particles[i].map);
@@ -279,6 +279,7 @@ void swarm_update(int *distances) {
   double posterior, distance, theta, degrees, s, c, total, min, p, step;
   //  double xyt[3];
   particle temp;
+  int weight;
 
 #ifndef LINUX
   ReleaseSemaphore(return_sem, 1, NULL);
@@ -297,6 +298,10 @@ void swarm_update(int *distances) {
 
     // evaluate the particle's relative probability
     for (j = 0; j < m; j++) {
+      if (abs((j - m/2)*spacing) < 5)
+	weight = 1;
+      else
+	weight = 1;
       distance = distances[j];
       // skip any distances that are more than 8 meters in case we shoot over the walls
       if (distance < 8000) {
@@ -315,8 +320,8 @@ void swarm_update(int *distances) {
 			if (in_arena(x, y)) {
 				k = buffer_index_from_x_y(x, y);
 				p = landmark_unseen_probability(particles[i].map, k);
-				posterior += -log(p);
-			} else posterior += -log(0.05);
+				posterior += -log(p)/weight;
+			} else posterior += -log(0.05)/weight;
 		}
 
 		// check and record seen
@@ -327,8 +332,8 @@ void swarm_update(int *distances) {
 		if (in_arena(x, y)) {
 			k = buffer_index_from_x_y(x, y);
 			p = landmark_seen_probability(particles[i].map, k);
-			posterior += -log(p);
-		} else posterior += -log(0.05);
+			posterior += -log(p)/weight;
+		} else posterior += -log(0.05)/weight;
       }
     }
 
@@ -534,11 +539,11 @@ int swarm_get_best_theta() {
 }
 
 int swarm_get_x(int i) {
-  return particles[i].x - sensor_radius*cos(particles[i].theta*M_PI/180) - 150;
+  return particles[i].x - sensor_radius*cos(particles[i].theta*M_PI/180) - BORDER_WIDTH;
 }
 
 int swarm_get_y(int i) {
-  return short_side - (particles[i].y - sensor_radius*sin(particles[i].theta*M_PI/180)) - 150;
+  return short_side - (particles[i].y - sensor_radius*sin(particles[i].theta*M_PI/180)) - BORDER_WIDTH;
 }
 
 int swarm_get_theta(int i) {

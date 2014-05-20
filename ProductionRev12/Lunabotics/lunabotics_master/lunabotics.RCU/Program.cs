@@ -184,7 +184,7 @@ namespace lunabotics.RCU
                 stateProcessor = new Thread(new ThreadStart(StateProcessorDoWork));
                 stateProcessor.Start();
 
-                filtering = new Autonomy.Localization.Filtering((int)configuration.AutonomyConfiguration.SensorRadius);
+//                filtering = new Autonomy.Localization.Filtering((int)configuration.AutonomyConfiguration.SensorRadius);
 
             }
             catch (Exception ex)
@@ -284,12 +284,8 @@ namespace lunabotics.RCU
                             // Stop autonomy if active
 
                             if (autonomy.Started)
-                            {
-                                Console.WriteLine("AHhhhh");
                                 autonomy.Stop();
-                                
-                                filtering.startFiltering();
-                            }
+
                             // Enqueue current state from controller
                             stateQueue.Enqueue(state);
                             

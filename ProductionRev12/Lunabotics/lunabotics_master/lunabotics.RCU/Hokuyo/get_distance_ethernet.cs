@@ -21,8 +21,8 @@ namespace lunabotics.RCU.Hokuyo
         {
 //            const int start_step = 0;
 //            const int end_step = 1080;
-            const int start_step = 180; //left-most (Robot perspective)
-            const int end_step = 900; //right-most
+            const int start_step = 200; //left-most (Robot perspective)
+            const int end_step = 880; //right-most
 
 
             //List to hold all 1080 distance values
