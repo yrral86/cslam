@@ -31,7 +31,8 @@ int main (int argc, char **argv) {
     if (strncmp(int_string, "init", 4) == 0)
       continue;
     sscanf(int_string, "%d", parsed_line);
-    for (i = 1; i < 722; i++) {
+    //for (i = 1; i < 722; i++) {
+    for (i = 1; i < 682; i++) {
       int_string = strtok(NULL, ",");
       sscanf(int_string, "%d", parsed_line + i);
     }
@@ -51,16 +52,16 @@ int main (int argc, char **argv) {
       glutInit(&argc, argv);
       // pass size of buffer, then window size
       //      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 0.75*buffer_get_width(), 0.75*buffer_get_height());
-      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 1.75*buffer_get_width(), 1.75*buffer_get_height());
+      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 4*buffer_get_width(), 4*buffer_get_height());
       break;
     case SLAMD_MOVE:
-      //      swarm_move(parsed_line[1], parsed_line[2], parsed_line[3]);
-      swarm_move(1, 0, 0);
+      swarm_move(parsed_line[1], parsed_line[2], parsed_line[3]);
+      //swarm_move(1, 0, 0);
       break;
     case SLAMD_UPDATE:
       i = 0;
       while (!swarm_converged() && i < 5) {
-	i++;
+     	i++;
 	swarm_update(parsed_line + 1);
 	if (!swarm_converged() && i < 5)
 	  swarm_move(0, 0, 0);
@@ -69,6 +70,7 @@ int main (int argc, char **argv) {
       scan_count++;
       //if ((scan_count == 5 && init == 1) || scan_count == 6) {
       //if (init == 1) init = 0;
+      if(swarm_converged())
 	swarm_map(parsed_line + 1);
 	//scan_count = 0;
 	//}

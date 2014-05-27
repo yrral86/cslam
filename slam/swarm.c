@@ -311,8 +311,8 @@ void swarm_update(int *distances) {
 		s = sin(theta);
 		c = cos(theta);
 
-		// check and record unseen every 2000 mm
-		for (l = distance - 2000; l > 0; l -= 2000) {
+		// check and record unseen every 200 mm, within 1 meter of obstacle
+		for (l = distance - 200; l > distance - 1000; l -= 200) {
 			x = l*c + particles[i].x;
 			y = l*s + short_side - particles[i].y;
 
