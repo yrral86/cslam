@@ -1,5 +1,0 @@
-Name: slam
-Description: 
-Version: 0.1
-Libs: -L"/raid/ext4/home/larry/class/WVU-Lunabotics/slam/bin/Debug" -lslam
-Cflags: -I"/raid/ext4/home/larry/class/WVU-Lunabotics/slam"
