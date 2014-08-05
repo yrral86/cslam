@@ -31,8 +31,8 @@ int main (int argc, char **argv) {
     if (strncmp(int_string, "init", 4) == 0)
       continue;
     sscanf(int_string, "%d", parsed_line);
-    //for (i = 1; i < 722; i++) {
-    for (i = 1; i < 682; i++) {
+    for (i = 1; i < 722; i++) {
+    //for (i = 1; i < 682; i++) {
       int_string = strtok(NULL, ",");
       sscanf(int_string, "%d", parsed_line + i);
     }
@@ -55,8 +55,8 @@ int main (int argc, char **argv) {
       initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 4*buffer_get_width(), 4*buffer_get_height());
       break;
     case SLAMD_MOVE:
-      swarm_move(parsed_line[1], parsed_line[2], parsed_line[3]);
-      //swarm_move(1, 0, 0);
+      //swarm_move(parsed_line[1], parsed_line[2], parsed_line[3]);
+      swarm_move(0, 0, 360);
       break;
     case SLAMD_UPDATE:
       i = 0;
