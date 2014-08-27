@@ -2,18 +2,21 @@
 
 int main(int argc, char **argv) {
   urg_t connection;
-  urg_connection_type_t type = URG_ETHERNET;
-  char *device = "192.168.0.10";
+  urg_connection_type_t type = URG_SERIAL;
+  char *device = "/dev/ttyACM0";
   int direction_count, max_data_size, i;
   long timestamp;
   long *data;
 
   // open connection
-  if (urg_open(&connection, type, device, 10940) < 0)
+  if (urg_open(&connection, type, device, 115200) < 0) {
+    printf("failed to open device: %s\n", device);
     return 1;
+  }
 
   max_data_size = urg_max_data_size(&connection);
   data = malloc(sizeof(long)*max_data_size);
+
 
   // start measurement
   // (connection, type, scan times (0 is keep going), skip)
@@ -24,8 +27,7 @@ int main(int argc, char **argv) {
     for (i = 0; i < max_data_size; i++) {
       printf("%i ", data[i]);
     }
-    printf("\nmax_data_size: %i\n", max_data_size);
-    sleep(1);
+    printf("\nmax_data_size: %i, direction_count: %i\n", max_data_size, direction_count);
   }
 
   return 0;

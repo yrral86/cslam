@@ -81,6 +81,32 @@ void landmark_write_map_subtree(landmark_map *node, uint8_t *buffer) {
     buffer[i] = 255*landmark_seen_probability(node, i);
 }
 
+int landmark_observations(landmark_map *node, int index) {
+ landmark l;
+ assert(node != NULL);
+  l = node->map[index];
+  return l.seen + l.unseen;
+}
+
+double landmark_information(landmark_map *node, int index) {
+  int sum;
+  double p, ret;
+  landmark l;
+  assert(node != NULL);
+  l = node->map[index];
+  // binomial random variable
+  // fisher information
+  sum = l.seen + l.unseen;
+  p = landmark_seen_probability(node, index);
+
+  if (p == 0 || p == 1  || sum == 0)
+    ret = 0.01;
+  else
+    ret = sum/(p*(1-p));
+ 
+  return ret;
+}
+
 double landmark_seen_probability(landmark_map *node, int index) {
   landmark l;
   double p, sum;
@@ -88,8 +114,8 @@ double landmark_seen_probability(landmark_map *node, int index) {
   l = node->map[index];
 
   sum = l.seen + l.unseen;
-  // default to 5% probability if we have no data
-  p = 0.05;
+  // default to 50% probability if we have no data
+  p = 0.5;
   if (sum > 0)
     p = l.seen/sum;
 

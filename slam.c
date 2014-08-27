@@ -8,10 +8,12 @@ static uint8_t* map[BUFFER_HISTORY];
 
 static raw_sensor_scan *scans;
 static particle current_particle;
-static int arena_width = 3960;
-static int arena_height = 3400;
-//static int arena_width = 9000;
-//static int arena_height = 6500;
+//static int arena_width = 14940;
+//static int arena_height = 6400;
+//static int arena_width = 3740;
+//static int arena_height = 1600;
+static int arena_width = 10000;
+static int arena_height = 10000;
 
 int main (int argc, char **argv) {
   int i, j, iterations;
@@ -35,7 +37,7 @@ int main (int argc, char **argv) {
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), buffer_get_width()*4, buffer_get_height()*4);
+  initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 2*buffer_get_width(), 2*buffer_get_height());
 
   // wait for sensor
   assert(pthread_join(sensor_thread, NULL) == 0);
@@ -46,21 +48,53 @@ int main (int argc, char **argv) {
   iterations = 0;
 
   while(1) {
-    swarm_move(0, 0, 0);
+    do {
+      swarm_move(0, 0, 360);
 
-    // wait for sensor
-    assert(pthread_join(sensor_thread, NULL) == 0);
+      // wait for sensor
+      assert(pthread_join(sensor_thread, NULL) == 0);
 
-    // get samples
-    for (j = 0; j < sample_count; j++) {
-      scans[j] = sensor_fetch_index(j);
-    }
+      // get samples
+      for (j = 0; j < sample_count; j++) {
+	scans[j] = sensor_fetch_index(j);
+      }
 
-    // start a scan
-    sensor_thread = sensor_read_raw_n_thread(sample_count);
+      // start a scan
+      sensor_thread = sensor_read_raw_n_thread(sample_count);
 
-    // give the swarm the new scans and the historical map
-    swarm_update(scans[0].distances);
+      if (iterations == 0) {
+	// map initial location 10 times
+	for (i = 0; i < 10; i++) {
+	  // record each scan with the certainty of 50 observations
+	  for (j = 0; j < 50*sample_count; j++)
+	    swarm_map(scans[j % sample_count].distances);
+
+	  // wait for sensor
+	  assert(pthread_join(sensor_thread, NULL) == 0);
+
+	  // get samples
+	  for (j = 0; j < sample_count; j++) {
+	    scans[j] = sensor_fetch_index(j);
+	  }
+
+	  // start a scan
+	  sensor_thread = sensor_read_raw_n_thread(sample_count);
+	}
+	printf("initial scan completed\n");
+      }
+
+      // give the swarm the new scans and the historical map
+      swarm_update(scans[0].distances);
+    } while (swarm_converged() == 0);
+
+    printf("converged, mapping\n");
+    // update map
+    for (j = 0; j < sample_count; j++)
+      swarm_map(scans[j].distances);
+    // update current map
+    swarm_map_reset_current();
+    for (j = 0; j < sample_count; j++)
+      swarm_map_current(scans[j].distances);
 
     // update localization
     current_particle.x = swarm_get_best_x();
@@ -69,14 +103,15 @@ int main (int argc, char **argv) {
 
     // copy best map to buffer
     swarm_get_best_buffer(map[0]);
+    swarm_get_map_buffer(map[2]);
 
     // draw position
     double s, c, t;
     t = current_particle.theta*M_PI/180;
     s = sin(t);
     c = cos(t);
-    for (i = -50; i < 51; i++)
-      for (j = -50; j < 51; j++ ) {
+    for (i = -5; i < 6; i++)
+      for (j = -5; j < 6; j++ ) {
 	record_map_position(0, current_particle.x + i*c - j*s,
 			    current_particle.y + i*s + j*c, 255);
 	record_map_position(2, current_particle.x + i*c - j*s,
@@ -87,8 +122,8 @@ int main (int argc, char **argv) {
     display();
 
     // clear position
-    for (i = -50; i < 51; i++)
-      for (j = -50; j < 51; j++ ) {
+    for (i = -5; i < 6; i++)
+      for (j = -5; j < 6; j++ ) {
 	record_map_position(0, current_particle.x + i*c - j*s,
 			    current_particle.y + i*s + j*c, 0);
 	if (!x_y_protected(current_particle.x + i*c - j*s, current_particle.y + i*s + j*c))
@@ -98,7 +133,8 @@ int main (int argc, char **argv) {
 
     // update historical map
     // and display map
-    //    bzero(map[2], buffer_get_size()*sizeof(uint8_t));
+    // bzero(map[2], buffer_get_size()*sizeof(uint8_t));
+    
     /*
     for (i = 0; i < BUFFER_SIZE; i++) {
       // j is our current value minus a threshold (200)

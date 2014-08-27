@@ -33,6 +33,7 @@ all:
 	done
 	gcc -o slam slam.c $(OBJ_FILES) urg_driver/*.o $(CFLAGS)
 	gcc -o replay replay.c $(OBJ_FILES) urg_driver/*.o $(CFLAGS)
+	gcc -o test_sensor test_sensor.c $(OBJ_FILES) urg_driver/*.o $(CFLAGS)
 
 clean:
 	rm -f *~ $(OBJ_FILES) slam replay

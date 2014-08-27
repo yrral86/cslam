@@ -24,7 +24,7 @@
 
 // use max for all sensors
 typedef struct raw_sensor_scan {
-  int distances[RAW_SENSOR_DISTANCES_ETH];
+  int distances[RAW_SENSOR_DISTANCES_USB];
 } raw_sensor_scan;
 
 pthread_t sensor_init_thread();

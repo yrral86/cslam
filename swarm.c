@@ -152,7 +152,7 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   map = landmark_map_copy(NULL);
 
   // draw initial border
-  for (k = 0; k < long_side; k += BUFFER_FACTOR)
+  /*  for (k = 0; k < long_side; k += BUFFER_FACTOR)
     for (j = 0; j < BORDER_WIDTH; j += BUFFER_FACTOR) {
       landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(k, j), 10000);
       landmark_set_seen_value(initial_map.map,
@@ -165,6 +165,9 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
             landmark_set_seen_value(initial_map.map,
       			      buffer_index_from_x_y(long_side - 1 - j, k), 10000);
     }
+  */
+
+
   /*
   // load map
   map_file = fopen("slamd_map.csv", "r");
@@ -194,11 +197,13 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   free(str);
   */
   // initialize first round of particles
-  x = start/2;
+  //x = start/2;
+  x = long_side/2;
   for (i = 0; i < INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT; i++) {
-    y = short_side/4;
-    if (rand_limit(2))
-      y *= 3;
+    //y = short_side/4;
+    y = short_side/2;
+    //    if (rand_limit(2))
+    //y *= 3;
     theta = rand_limit(360) - 180;
     //theta = 180;
     t = theta*M_PI/180;
@@ -273,13 +278,13 @@ void swarm_update_internal(int *distances) {
 #ifdef LINUX
 void swarm_update(int *distances) {
 #endif
-  int i, j, k, l, best_index, p_count;
+  int i, j, k, l, best_index, p_count, new_observations;
   int swap, x, y, count;
   double mean[3], stddev[3];
   double posterior, distance, theta, degrees, s, c, total, min, p, step;
   //  double xyt[3];
   particle temp;
-  int weight;
+  double weight;
 
 #ifndef LINUX
   ReleaseSemaphore(return_sem, 1, NULL);
@@ -295,49 +300,63 @@ void swarm_update(int *distances) {
   // evaulate each direction for each particle
   for (i = 0; i < p_count; i++) {
     posterior = 0.0;
+    new_observations = 1;
 
     // evaluate the particle's relative probability
     for (j = 0; j < m; j++) {
-      if (abs((j - m/2)*spacing) < 5)
-	weight = 1;
-      else
-	weight = 1;
       distance = distances[j];
       // skip any distances that are more than 8 meters in case we shoot over the walls
       if (distance < 8000) {
-		// forward is now 0 degrees, left -, right +
-		degrees = -sensor_degrees/2.0 + j*spacing;
-		theta = (degrees - particles[i].theta)*M_PI/180;
-		s = sin(theta);
-		c = cos(theta);
+	// forward is now 0 degrees, left -, right +
+	degrees = -sensor_degrees/2.0 + j*spacing;
+	theta = (degrees - particles[i].theta)*M_PI/180;
+	s = sin(theta);
+	c = cos(theta);
 
-		// check and record unseen every 200 mm, within 1 meter of obstacle
-		for (l = distance - 200; l > distance - 1000; l -= 200) {
-			x = l*c + particles[i].x;
-			y = l*s + short_side - particles[i].y;
+	// check and record unseen every BUFFER_FACTOR mm, within 10*BUFFER_FACTOR of seen
+	for (l = distance - BUFFER_FACTOR; l > distance - 10 * BUFFER_FACTOR; l -= BUFFER_FACTOR) {
+	  x = l*c + particles[i].x;
+	  y = l*s + short_side - particles[i].y;
 
-			// make sure it is in bounds
-			if (in_arena(x, y)) {
-				k = buffer_index_from_x_y(x, y);
-				p = landmark_unseen_probability(particles[i].map, k);
-				posterior += -log(p)/weight;
-			} else posterior += -log(0.05)/weight;
-		}
+	  // make sure it is in bounds
+	  if (in_arena(x, y)) {
+	    k = buffer_index_from_x_y(x, y);
+	    //	    p = landmark_unseen_probability(particles[i].map, k);
+	    p = landmark_unseen_probability(map, k);
+	    weight = landmark_information(map, k);
+	    //	    if (weight > 0 && weight < (unsigned int)2000000000)
+	    // printf("unseen weight: %u\n", weight);
+	    if (weight < 10000000)
+	      new_observations++;
+	    //else
+	    //  printf("stable observation, unseen weight: %g\n", weight);
+	    posterior += -log(p*weight);
+	  } else posterior += -log(0.0005);
+	}
 
-		// check and record seen
-		x = distance*c + particles[i].x;
-		y = distance*s + short_side - particles[i].y;
+	// check and record seen
+	x = distance*c + particles[i].x;
+	y = distance*s + short_side - particles[i].y;
 
-		// make sure it is in bounds
-		if (in_arena(x, y)) {
-			k = buffer_index_from_x_y(x, y);
-			p = landmark_seen_probability(particles[i].map, k);
-			posterior += -log(p)/weight;
-		} else posterior += -log(0.05)/weight;
+	// make sure it is in bounds
+	if (in_arena(x, y)) {
+	  k = buffer_index_from_x_y(x, y);
+	  //	  p = landmark_seen_probability(particles[i].map, k);
+	  p = landmark_seen_probability(map, k);
+	  weight = landmark_information(map, k);
+	  //if (weight > 0 && weight < (unsigned int)2000000000)
+	  //  printf("seen weight: %u\n", weight);
+	  if (weight < 10000000)
+	    new_observations++;
+	  // else
+	  //  printf("stable observation, seen weight: %g\n", weight);
+	  posterior += -log(p*weight);
+	} else posterior += -log(0.0005);
       }
     }
 
-    particles[i].p += posterior;
+    // new = prior * posterior / (# of new observations)
+    particles[i].p += posterior - log(new_observations);
     if (particles[i].p < min) {
       min = particles[i].p;
       best_index = i;
@@ -348,7 +367,10 @@ void swarm_update(int *distances) {
   if (iterations > 0)
     landmark_map_dereference(best_particle.map);
   best_particle = particles[best_index];
+  //  best_particle.map = landmark_map_copy(best_particle.map);
   best_particle.map = landmark_map_copy(best_particle.map);
+
+  swarm_map_current(distances);
 
   // normalize particle log probabilities, convert to normal probabilities for resampling
   total = 0.0;
@@ -418,8 +440,8 @@ void swarm_update(int *distances) {
     stddev[i] = sqrt(stddev[i]);
   }
 
-  // make sure 99% of particles are within 50mm and 1 degree
-  if (sqrt(pow(stddev[0], 2) + pow(stddev[1], 2)) < 50 && stddev[2] < 2)
+  // make sure 99% of particles are within 5mm and 0.5 degree
+  if (sqrt(pow(stddev[0], 2) + pow(stddev[1], 2)) < 5 && stddev[2] < 0.5)
     converged = 1;
   else
     converged = 0;
@@ -475,8 +497,8 @@ void swarm_map(int *distances) {
     s = sin(theta);
     c = cos(theta);
 
-    // check and record unseen every 10 mm
-    for (l = 0; l < distance; l += 10) {
+    // check and record unseen every BUFFER_FACTOR mm
+    for (l = distance - BUFFER_FACTOR; l > 0; l -= BUFFER_FACTOR) {
       x = l*c + best_particle.x;
       y = l*s + short_side - best_particle.y;
 
@@ -498,6 +520,51 @@ void swarm_map(int *distances) {
     }
   }
 }
+
+#ifdef LINUX
+void swarm_map_reset_current() {
+  // blank map
+  landmark_map_dereference(best_particle.map);
+  best_particle.map = landmark_map_copy(NULL);
+}
+ 
+void swarm_map_current(int *distances) {
+  int j, l, x, y, k;
+  double distance, degrees, theta, s, c;
+
+  for (j = 0; j < m; j++) {
+    distance = distances[j];
+    // forward is now 0 degrees, left -, right +
+    degrees = -sensor_degrees/2.0 + j*spacing;
+    theta = (degrees - best_particle.theta)*M_PI/180;
+    s = sin(theta);
+    c = cos(theta);
+
+    
+    // check and record unseen every BUFFER_FACTOR mm
+    for (l = distance - BUFFER_FACTOR; l > 0;  l -= BUFFER_FACTOR) {
+      x = l*c + best_particle.x;
+      y = l*s + short_side - best_particle.y;
+
+      // make sure it is in bounds
+      if (in_arena(x, y)) {
+	k = buffer_index_from_x_y(x, y);
+	landmark_set_unseen(best_particle.map, k);
+      }
+    }
+    
+    // check and record seen
+    x = distance*c + best_particle.x;
+    y = distance*s + short_side - best_particle.y;
+
+    // make sure it is in bounds
+    if (in_arena(x, y)) {
+      k = buffer_index_from_x_y(x, y);
+      landmark_set_seen(best_particle.map, k);
+    }
+  }
+}
+#endif
 
 #ifndef LINUX
 int swarm_converged_internal() {

@@ -34,6 +34,8 @@ void swarm_init(int, int, int, int, int, int);
 void swarm_move(int, int, int);
 void swarm_update(int*);
 void swarm_map(int*);
+void swarm_map_current(int*);
+void swarm_map_reset_current();
 int swarm_converged();
 int swarm_get_best_x();
 int swarm_get_best_y();
