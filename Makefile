@@ -4,6 +4,7 @@ OBJS = \
 	buffer \
 	landmark \
 	lazygl \
+	map \
 	particle \
 	random \
 	sensor \
@@ -18,6 +19,7 @@ OBJ_FILES = 	\
 		buffer.o \
 		landmark.o \
 		lazygl.o \
+		map.o \
 		particle.o \
 		random.o \
 		sensor.o \
@@ -34,6 +36,7 @@ all:
 	gcc -o slam slam.c $(OBJ_FILES) urg_driver/*.o $(CFLAGS)
 	gcc -o replay replay.c $(OBJ_FILES) urg_driver/*.o $(CFLAGS)
 	gcc -o test_sensor test_sensor.c $(OBJ_FILES) urg_driver/*.o $(CFLAGS)
+	gcc -o test_map test_map.c $(OBJ_FILES) urg_driver/*.o $(CFLAGS)
 
 clean:
 	rm -f *~ $(OBJ_FILES) slam replay

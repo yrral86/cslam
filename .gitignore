@@ -4,3 +4,5 @@ urg_driver/liburg_c.a
 bin/
 obj/
 replay
+test_map
+test_sensor
