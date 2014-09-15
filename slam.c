@@ -37,7 +37,7 @@ int main (int argc, char **argv) {
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 2*buffer_get_width(), 2*buffer_get_height());
+  initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), buffer_get_width(), buffer_get_height());
 
   // wait for sensor
   assert(pthread_join(sensor_thread, NULL) == 0);
@@ -134,7 +134,7 @@ int main (int argc, char **argv) {
     // update historical map
     // and display map
     // bzero(map[2], buffer_get_size()*sizeof(uint8_t));
-    
+
     /*
     for (i = 0; i < BUFFER_SIZE; i++) {
       // j is our current value minus a threshold (200)
