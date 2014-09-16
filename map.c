@@ -83,23 +83,21 @@ void map_node_ranges_from_index(map_node *node, int index, int *x_min, int *x_ma
   }
 }
 
-void map_node_split(map_node *map) {
+void map_node_split(map_node *map, int index) {
   map_node *tmp;
-  int x_min, x_max, y_min, y_max, i;
+  int x_min, x_max, y_min, y_max;
 
-  for (i = 0; i < 4; i++) {
-    // set ranges
-    map_node_ranges_from_index(map, i, &x_min, &x_max, &y_min, &y_max);
+  // set ranges
+  map_node_ranges_from_index(map, index, &x_min, &x_max, &y_min, &y_max);
 
-    // allocate new node
-    tmp = map_node_new(x_min, x_max, y_min, y_max);
+  // allocate new node
+  tmp = map_node_new(x_min, x_max, y_min, y_max);
 
-    // copy landmark
-    tmp->landmark = map->landmarks[i];
+  // copy landmark
+  tmp->landmark = map->landmarks[index];
 
-    // set child to new node
-    map->children[i] = tmp;
-  }
+  // set child to new node
+  map->children[index] = tmp;
 }
 
 void map_deallocate(map_node *map) {
@@ -121,9 +119,10 @@ void map_set_seen(map_node *map, int x, int y) {
   index = map_node_index_from_x_y(map, x, y);
 
   // we are at a leaf, record sublandmark
-  if (map->children[index] == NULL)
-    (map->landmarks[index].seen)++;
-  else
+  if (map->children[index] == NULL) {
+    map->landmarks[index].seen++;
+    map_landmark_check_split(map, index);
+  } else
     // interior node, traverse
     map_set_seen(map->children[index], x, y);
 }
@@ -136,11 +135,40 @@ void map_set_unseen(map_node *map, int x, int y) {
   index = map_node_index_from_x_y(map, x, y);
 
   // we are at a leaf, record sublandmark
-  if (map->children[index] == NULL)
-    (map->landmarks[index].unseen)++;
-  else
+  if (map->children[index] == NULL) {
+    map->landmarks[index].unseen++;
+    map_landmark_check_split(map, index);
+  } else
     // interior node, traverse
     map_set_unseen(map->children[index], x, y);
+}
+
+void map_landmark_check_split(map_node *node, int index) {
+  int sum;
+  double info;
+  landmark *tmp = node->landmarks + index;
+
+  // check for split if more than 5 observations
+  sum = tmp->seen + tmp->unseen;
+  if (sum > 5) {
+    if (tmp->seen == 0 || tmp->unseen == 0)
+      info = 1;
+    else
+      // fisher information
+      // n/(p(1-p))
+      // p = seen/n; 1 - p = unseen/n
+      // n/((seen/n)*(unseen/n))
+      // n/(seen*unseen/n^2)
+      // 1/(seen*unseen/n)
+      info = (double)sum/(tmp->seen*tmp->unseen);
+    printf("seen = %i unseen = %i, sum = %i\n", tmp->seen, tmp->unseen, sum);
+    printf("info = %g\n", info);
+
+    // split if info is less than 1/2
+    if (info < 0.5) {
+      map_node_split(node, index);
+    }
+  }
 }
 
 void map_write_buffer(map_node *map, uint8_t *buffer) {

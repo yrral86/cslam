@@ -39,4 +39,4 @@ all:
 	gcc -o test_map test_map.c $(OBJ_FILES) urg_driver/*.o $(CFLAGS)
 
 clean:
-	rm -f *~ $(OBJ_FILES) slam replay
+	rm -f *~ $(OBJ_FILES) slam replay test_sensor test_map
