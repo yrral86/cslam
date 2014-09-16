@@ -17,6 +17,7 @@ int main(int argc, char **argv) {
   max_data_size = urg_max_data_size(&connection);
   data = malloc(sizeof(long)*max_data_size);
 
+  printf("max data size: %i\n", max_data_size);
 
   // start measurement
   // (connection, type, scan times (0 is keep going), skip)

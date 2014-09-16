@@ -46,6 +46,8 @@ int map_node_index_from_x_y(map_node *node, int x, int y) {
   else if (x > (node->x_min + node->x_max)/2 && y <= (node->y_min + node->y_max)/2)
     // bottom right
     index = 3;
+  else
+    assert(0);
 
   return index;
 }
@@ -148,26 +150,22 @@ void map_landmark_check_split(map_node *node, int index) {
   double info;
   landmark *tmp = node->landmarks + index;
 
-  // check for split if more than 5 observations
+  // check for split if more than 5 observations and there is disagreement
   sum = tmp->seen + tmp->unseen;
-  if (sum > 5) {
-    if (tmp->seen == 0 || tmp->unseen == 0)
-      info = 1;
-    else
-      // fisher information
-      // n/(p(1-p))
-      // p = seen/n; 1 - p = unseen/n
-      // n/((seen/n)*(unseen/n))
-      // n/(seen*unseen/n^2)
-      // 1/(seen*unseen/n)
-      info = (double)sum/(tmp->seen*tmp->unseen);
-    printf("seen = %i unseen = %i, sum = %i\n", tmp->seen, tmp->unseen, sum);
-    printf("info = %g\n", info);
+  if (sum > 10 && tmp->seen != 0 && tmp->unseen != 0) {
+    // fisher information
+    // n/(p(1-p))
+    // p = seen/n; 1 - p = unseen/n
+    // n/((seen/n)*(unseen/n))
+    // n/(seen*unseen/n^2)
+    // 1/(seen*unseen/n)
+    info = (double)sum/(tmp->seen*tmp->unseen);
 
     // split if info is less than 1/2
-    if (info < 0.5) {
+    // and there is resolution to be gained
+    if (info < 0.5 && node->x_max - node->x_min > 0 &&
+	node->y_max - node->y_min > 0)
       map_node_split(node, index);
-    }
   }
 }
 
@@ -204,4 +202,18 @@ void map_node_write_buffer(map_node *node, uint8_t *buffer) {
       map_node_write_buffer(node->children[i], buffer);
     }
   }
+}
+
+int map_get_size(map_node *node) {
+  int size, i;
+
+  size = 0;
+
+  for (i = 0; i < 4; i++)
+    if (node->children[i] == NULL)
+      size++;
+    else
+      size += map_get_size(node->children[i]);
+
+  return size;
 }

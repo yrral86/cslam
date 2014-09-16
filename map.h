@@ -1,6 +1,7 @@
 #ifndef __MAP_H__
 #define __MAP_H__
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -27,5 +28,6 @@ void map_set_unseen(map_node*, int, int);
 void map_landmark_check_split(map_node*, int);
 void map_write_buffer(map_node*, uint8_t*);
 void map_node_write_buffer(map_node*, uint8_t*);
+int map_get_size(map_node*);
 
 #endif
