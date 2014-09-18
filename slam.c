@@ -16,7 +16,7 @@ static particle current_particle;
 static int width = 10000;
 static int height = 10000;
 // sample 10 times (1 sec)
-static int sample_count = 10;
+static int sample_count = 2;
 static int best_x, best_y, best_t;
 
 int main (int argc, char **argv) {
@@ -60,7 +60,7 @@ int main (int argc, char **argv) {
 
   iterations = 0;
 
-  while(1) {
+  while(iterations < 1) {
       /*
     do {
       swarm_move(0, 0, 360);
@@ -171,7 +171,7 @@ int main (int argc, char **argv) {
       //    }
 
     display();
-    glutMainLoopEvent();
+    glutMainLoop();//Event();
 
     iterations++;
   }
@@ -189,17 +189,22 @@ map_node* build_submap(raw_sensor_scan* scans) {
   int chromosomes[population][chromo_size];
   int tmp_chromosome[chromo_size];
   double scores[population];
-
+  /*
   // init population
   for (p = 0; p < population; p++)
     for (i = 0; i < chromo_size; i++)
-      chromosomes[p][i] = rand_limit(100);
-
+      if (i % 3 == 2)
+	// theta
+	chromosomes[p][i] = rand_limit(10);
+      else
+	// x, y
+	chromosomes[p][i] = rand_limit(100);
+  */
   map = map_new(width, height);
 
   o_x = width/2;
   o_y = height/2;
-
+  /*
   // generations
   for (g = 0; g < 100; g++) {
     printf ("generation %i\n", g);
@@ -207,17 +212,18 @@ map_node* build_submap(raw_sensor_scan* scans) {
     best_score = 0;
     // population
     for (p = 0; p < population; p++) {
+  */
       // samples
       for (k = 0; k < sample_count; k++) {
-	if (k == 0) {
+	if (1) {
 	  x = 0;
 	  y = 0;
 	  t = 0;
-	} else {
+	}/* else {
 	  x = chromosomes[p][3*(k-1)];
 	  y = chromosomes[p][3*(k-1)+1];
 	  t = chromosomes[p][3*(k-1)+2];
-	}
+	  }*/
 	// observations
 	for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++) {
 	  theta = (t + -SENSOR_RANGE_USB/2.0 + i*SENSOR_SPACING_USB)*M_PI/180;
@@ -229,7 +235,7 @@ map_node* build_submap(raw_sensor_scan* scans) {
 	    map_set_unseen(map, o_x + x + (d-j)*c, height - (o_y + y) + (d-j)*s);
 	}
       }
-      
+      /*  
       scores[p] = map_get_info(map)/map_get_size(map);
       if (scores[p] > best_score) {
 	map_deallocate(best_map);
@@ -273,6 +279,10 @@ map_node* build_submap(raw_sensor_scan* scans) {
     size = map_get_size(best_map);
     info = map_get_info(best_map);
     printf("best map  size: %i, info: %g, info/size: %g\n", size, info, info/size);
+    printf("best path:\n");
+    printf("(0, 0, 0)\n");
+    for (i = 0; i < chromo_size; i++)
+      printf("(%i, %i, %i)\n", chromosomes[0][3*i], chromosomes[0][3*i+1], chromosomes[0][3*i+2]);
 
     // next generation
   }
@@ -280,6 +290,9 @@ map_node* build_submap(raw_sensor_scan* scans) {
   map_deallocate(map);
 
   return best_map;
+      */
+
+      return map;
 }
 
 void crossover(int *chromosomes, int one, int two, int new, int size) {
