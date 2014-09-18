@@ -60,7 +60,7 @@ int main (int argc, char **argv) {
 
   iterations = 0;
 
-  while(iterations < 1) {
+  while(1) {
       /*
     do {
       swarm_move(0, 0, 360);
@@ -171,7 +171,7 @@ int main (int argc, char **argv) {
       //    }
 
     display();
-    glutMainLoop();//Event();
+    glutMainLoopEvent();
 
     iterations++;
   }
