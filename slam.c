@@ -16,7 +16,7 @@ static particle current_particle;
 static int width = 10000;
 static int height = 10000;
 // sample 10 times (1 sec)
-static int sample_count = 2;
+static int sample_count = 1;
 static int best_x, best_y, best_t;
 
 int main (int argc, char **argv) {
@@ -88,6 +88,13 @@ int main (int argc, char **argv) {
 
       map_write_buffer(map_latest, buffer_latest);
       map_write_buffer(map_all, buffer_all);
+
+      size = map_get_size(map_all);
+      info = map_get_info(map_all);
+      printf("map all size: %i, info: %g, info/size: %g\n", size, info, info/size);
+      size = map_get_size(map_latest);
+      info = map_get_info(map_latest);
+      printf("map latest size: %i, info: %g, info/size: %g\n", size, info, info/size);
 
       map_deallocate(map_latest);
 
@@ -162,12 +169,6 @@ int main (int argc, char **argv) {
 */
 
     //    if (iterations % 100 == 0) {
-      size = map_get_size(map_all);
-      info = map_get_info(map_all);
-      printf("map all size: %i, info: %g, info/size: %g\n", size, info, info/size);
-      size = map_get_size(map_latest);
-      info = map_get_info(map_latest);
-      printf("map latest size: %i, info: %g, info/size: %g\n", size, info, info/size);
       //    }
 
     display();
