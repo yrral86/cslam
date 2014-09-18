@@ -36,5 +36,6 @@ void map_write_buffer(map_node*, uint8_t*);
 void map_node_write_buffer(map_node*, uint8_t*);
 double map_get_info(map_node*);
 int map_get_size(map_node*);
+void map_debug(map_node*);
 
 #endif

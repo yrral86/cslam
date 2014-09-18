@@ -43,20 +43,15 @@ void map_merge(map_node *all, map_node *latest, int dx, int dy, int dt) {
   // copy latest into all
   int i, j, x, y, x_min, x_max, y_min, y_max;
   double r, theta;
-  /*
-  for (i = 0; i < 9; i++) {
+
+  // for now assume aligned: (dx,dy,dt)=(0,0,0)
+  for (i = 0; i < 9; i++)
     if (latest->children[i] == NULL) {
       // leaf
       // find center of region
-      //      map_node_ranges_from_index(latest, i, &x_min, &x_max, &y_min, &y_max);
-      x = (x_max - x_min)/2;
-      y = (y_max - y_min)/2;
-
-      // translate x, y
-      r = sqrt(dx*dx+dy*dy);
-      theta = dt*M_PI/180;
-      x += r*cos(theta);
-      y += r*cos(theta);
+      map_node_ranges_from_index(latest, i, &x_min, &x_max, &y_min, &y_max);
+      x = (x_max + x_min)/2;
+      y = (y_max + y_min)/2;
 
       // plot seen/unseen at (x, y)
       for (j = 0; j < latest->landmarks[i].seen; j++)
@@ -65,21 +60,36 @@ void map_merge(map_node *all, map_node *latest, int dx, int dy, int dt) {
 	map_set_unseen(all, x, y);
     } else
       map_merge(all, latest->children[i], dx, dy, dt);
-  }
-  */
 }
 
 int map_node_index_from_x_y(map_node *node, int x, int y) {
   int index, left, right, top, bottom;
 
+  assert(node->new == 0);
+
   // left = x - 1/6 of width
   left = node->x - (node->x_max - node->x_min)/6;
   // right = x + 1/6 of width
   right = node->x + (node->x_max - node->x_min)/6;
+  if (left - 1 < node->x_min || right > node->x_max) {
+    // left or right edge violated, draw bounds using center point
+    node->x = (node->x_min + node->x_max)/2;
+    left = node->x - (node->x_max - node->x_min)/6;
+    right = node->x + (node->x_max - node->x_min)/6;
+  }
+
   // bottom = y - 1/6 of height
   bottom = node->y - (node->y_max - node->y_min)/6;
   // top = y + 1/6 of height
   top = node->y + (node->y_max - node->y_min)/6;
+  if (bottom - 1 <= node->y_min || top >= node->y_max) {
+    // bottom or top edge violated, draw bounds using center point
+    node->y = (node->y_min + node->y_max)/2;
+    bottom = node->y - (node->y_max - node->y_min)/6;
+    top = node->y + (node->y_max - node->y_min)/6;
+  }
+  assert(x >= node->x_min && x <= node->x_max);
+  assert(y >= node->y_min && y <= node->y_max);
 
   // find quadrant
   if (x < left && y >= top)
@@ -119,19 +129,29 @@ void map_node_ranges_from_index(map_node *node, int index, int *x_min, int *x_ma
   int left, right, bottom, top;
 
   // initialize indices to center (we are plotting an cell with no data)
-  if (node->new) {
-    node->x = (node->x_min + node->x_max)/2;
-    node->y = (node->y_min + node->y_max)/2;
-  }
+  assert(node->new == 0);
 
   // left = x - 1/6 of width
   left = node->x - (node->x_max - node->x_min)/6;
   // right = x + 1/6 of width
   right = node->x + (node->x_max - node->x_min)/6;
+  if (left - 1 < node->x_min || right > node->x_max) {
+    // left or right edge violated, draw bounds using center point
+    node->x = (node->x_min + node->x_max)/2;
+    left = node->x - (node->x_max - node->x_min)/6;
+    right = node->x + (node->x_max - node->x_min)/6;
+  }
+
   // bottom = y - 1/6 of height
   bottom = node->y - (node->y_max - node->y_min)/6;
   // top = y + 1/6 of height
   top = node->y + (node->y_max - node->y_min)/6;
+  if (bottom - 1 <= node->y_min || top >= node->y_max) {
+    // bottom or top edge violated, draw bounds using center point
+    node->y = (node->y_min + node->y_max)/2;
+    bottom = node->y - (node->y_max - node->y_min)/6;
+    top = node->y + (node->y_max - node->y_min)/6;
+  }
 
   switch (index) {
   case 0:
@@ -200,6 +220,11 @@ void map_node_ranges_from_index(map_node *node, int index, int *x_min, int *x_ma
   default:
     assert(0);
   }
+
+  if (*x_min < node->x_min || *x_max > node->x_max)
+    printf("oh noes: x_min: %i x_max: %i node->x_min: %i node->x_max: %i\n", *x_min, *x_max, node->x_min, node->x_max);
+  if (*y_min < node->y_min || *y_max > node->y_max)
+    printf("oh noes: y_min: %i y_max: %i node->y_min: %i node->y_max: %i\n", *y_min, *y_max, node->y_min, node->y_max);
 }
 
 /*
@@ -235,8 +260,14 @@ void map_deallocate(map_node *map) {
 void map_set_seen(map_node *map, int x, int y) {
   int index;
 
+  //  printf("seen: x_min: %i x_max: %i y_min %i y_max: %i x: %i y: %i\n",
+  //	 map->x_min, map->x_max, map->y_min, map->y_max, x, y);
+  assert(x >= map->x_min && x <= map->x_max);
+  assert(y >= map->y_min && y <= map->y_max);
+
   // initialize indices
   if (map->new) {
+    //    printf("new map\n");
     map->x = x;
     map->y = y;
     map->new = 0;
@@ -245,11 +276,13 @@ void map_set_seen(map_node *map, int x, int y) {
   (map->landmark.seen)++;
 
   index = map_node_index_from_x_y(map, x, y);
+  //  printf("index: %i\n", index);
 
   if (map->children[index] == NULL) {
     if (map->x_max - map->x_min > 30 || map->y_max - map->y_min > 30) {
       // need to spawn child
       map_node_spawn_child(map, index);
+      //      printf("spawned child, setting seen\n");
       map_set_seen(map->children[index], x, y);
     } else
       // we are at a leaf, record sublandmark
@@ -261,6 +294,9 @@ void map_set_seen(map_node *map, int x, int y) {
 
 void map_set_unseen(map_node *map, int x, int y) {
   int index;
+
+  //  printf("unseen: x_min: %i x_max: %i y_min %i y_max: %i x: %i y: %i\n",
+  //	 map->x_min, map->x_max, map->y_min, map->y_max, x, y);
 
   // initialize indices
   if (map->new) {
@@ -274,11 +310,12 @@ void map_set_unseen(map_node *map, int x, int y) {
   index = map_node_index_from_x_y(map, x, y);
 
   if (map->children[index] == NULL) {
-    if (map->x_max - map->x_min > 30 || map->y_max - map->y_min > 30) {
+    // do not drill down for unseen
+    /*    if (map->x_max - map->x_min > 30 || map->y_max - map->y_min > 30) {
       // need to spawn child
       map_node_spawn_child(map, index);
       map_set_unseen(map->children[index], x, y);
-    } else
+      } else*/
       // we are at a leaf, record sublandmark
       map->landmarks[index].unseen++;
   } else
@@ -377,4 +414,16 @@ double map_get_info(map_node *node) {
       info += map_get_info(node->children[i]);
 
   return info;
+}
+
+void map_debug(map_node *map) {
+  int i;
+  printf("x_min: %i x_max: %i y_min: %i y_max: %i x: %i y: %i\n",
+	 map->x_min, map->x_max, map->y_min, map->y_max, map->x, map->y);
+
+  for (i = 0; i < 9; i++)
+    if (map->children[i] == NULL)
+      printf("seen: %i unseen: %i\n", map->landmarks[i].seen, map->landmarks[i].unseen);
+    else
+      map_debug(map->children[i]);
 }

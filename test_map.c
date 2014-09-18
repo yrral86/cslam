@@ -2,9 +2,9 @@
 #include "lazygl.h"
 
 int main(int argc, char **argv) {
-  int width = 5000;
-  int height = 5000;
-  int i;
+  int width = 10000;
+  int height = 10000;
+  int i, x_min, x_max, y_min, y_max, index;
   map_node *map;
 
   uint8_t *buffer = malloc((width + 1)*(height + 1));
@@ -13,17 +13,17 @@ int main(int argc, char **argv) {
   
   map = map_new(width, height);
 
-  for (i = 0; i < 25; i++) {
-    map_set_seen(map, 10 + 500, 10 + 500);
-    map_set_unseen(map, 20 + 500, 20 + 500);
-    map_set_seen(map, 100 + 500, 100 + 500);
-    map_set_unseen(map, 150 + 500, 150 + 500);
-    map_set_seen(map, 200 + 500, 200 + 500);
-    map_set_unseen(map, 250 + 500, 250 + 500);
-    map_set_seen(map, 300 + 500, 300 + 500);
-    map_set_unseen(map, 350 + 500, 350 + 500);
-    map_set_seen(map, 400 + 500, 400 + 500);
-  }
+  map_set_seen(map, 3909, 3110);
+
+  index = map_node_index_from_x_y(map, 3912, 3089);
+
+  //  printf("after first plot\n");
+  //  map_debug(map);
+
+  map_set_seen(map, 3912, 3089);
+
+  //  printf("after second plot\n");
+  //  map_debug(map);
 
   map_write_buffer(map, buffer);
 

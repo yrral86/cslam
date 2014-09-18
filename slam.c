@@ -16,7 +16,7 @@ static particle current_particle;
 static int width = 10000;
 static int height = 10000;
 // sample 10 times (1 sec)
-static int sample_count = 1;
+static int sample_count = 10;
 static int best_x, best_y, best_t;
 
 int main (int argc, char **argv) {
@@ -186,45 +186,48 @@ map_node* build_submap(raw_sensor_scan* scans) {
   map_node *best_map, *map;
   // x, y, theta for each position except the first
   int chromo_size = (sample_count-1)*3;
-  int population = 300;
+  int population = 30;
   int chromosomes[population][chromo_size];
   int tmp_chromosome[chromo_size];
   double scores[population];
-  /*
+
   // init population
   for (p = 0; p < population; p++)
     for (i = 0; i < chromo_size; i++)
-      if (i % 3 == 2)
-	// theta
-	chromosomes[p][i] = rand_limit(10);
+      if (p == 0)
+	chromosomes[p][i] = 0;
       else
-	// x, y
-	chromosomes[p][i] = rand_limit(100);
-  */
+	if (i % 3 == 2)
+	  // theta
+	  chromosomes[p][i] = rand_limit(5);
+	else
+	  // x, y
+	  chromosomes[p][i] = rand_limit(10);
+
   map = map_new(width, height);
 
   o_x = width/2;
   o_y = height/2;
-  /*
+
   // generations
-  for (g = 0; g < 100; g++) {
+  for (g = 0; g < 30; g++) {
     printf ("generation %i\n", g);
     best_map = map_new(width, height);
     best_score = 0;
     // population
     for (p = 0; p < population; p++) {
-  */
-      // samples
+
+  // samples
       for (k = 0; k < sample_count; k++) {
 	if (1) {
 	  x = 0;
 	  y = 0;
 	  t = 0;
-	}/* else {
+	} else {
 	  x = chromosomes[p][3*(k-1)];
 	  y = chromosomes[p][3*(k-1)+1];
 	  t = chromosomes[p][3*(k-1)+2];
-	  }*/
+	}
 	// observations
 	for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++) {
 	  theta = (t + -SENSOR_RANGE_USB/2.0 + i*SENSOR_SPACING_USB)*M_PI/180;
@@ -236,7 +239,6 @@ map_node* build_submap(raw_sensor_scan* scans) {
 	    map_set_unseen(map, o_x + x + (d-j)*c, height - (o_y + y) + (d-j)*s);
 	}
       }
-      /*  
       scores[p] = map_get_info(map)/map_get_size(map);
       if (scores[p] > best_score) {
 	map_deallocate(best_map);
@@ -291,9 +293,8 @@ map_node* build_submap(raw_sensor_scan* scans) {
   map_deallocate(map);
 
   return best_map;
-      */
-
-      return map;
+      
+  //      return map;
 }
 
 void crossover(int *chromosomes, int one, int two, int new, int size) {
