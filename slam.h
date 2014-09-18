@@ -11,7 +11,10 @@
 #include "random.h"
 #include "sensor.h"
 #include "swarm.h"
+#include "map.h"
 
-void record_map_position(int, int, int, uint8_t);
+map_node* build_submap(raw_sensor_scan*);
+void crossover(int*, int, int, int, int);
+void mutate(int*, int);
 
 #endif

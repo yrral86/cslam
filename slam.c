@@ -6,28 +6,25 @@
 // 3, one for current, one for history, one for display
 #define BUFFER_HISTORY 3
 //static uint8_t* map[BUFFER_HISTORY];
-static uint8_t* buffer;
-static map_node *map;
+static uint8_t* buffer_latest;
+static uint8_t* buffer_all;
 
 static raw_sensor_scan *scans;
 static particle current_particle;
-//static int arena_width = 14940;
-//static int arena_height = 6400;
-//static int arena_width = 3740;
-//static int arena_height = 1600;
+//static int width = 10000;
+//static int height = 10000;
 static int width = 10000;
 static int height = 10000;
+// sample 10 times (1 sec)
+static int sample_count = 10;
+static int best_x, best_y, best_t;
 
 int main (int argc, char **argv) {
-  int i, j, iterations;
+  int j, iterations;
   pthread_t sensor_thread;
-  // sample 3 times (0.3 sec)
-  int sample_count = 1;
-  double c, s, theta;
-  int x, y, d;
-
-  x = width/2;
-  y = height/2;
+  double info;
+  int x, y, t, size;
+  map_node *map_latest, *map_all;
 
   // connect to sensor in new thread while we
   // initialize everything else
@@ -43,19 +40,23 @@ int main (int argc, char **argv) {
   //  for (i = 0; i < BUFFER_HISTORY; i++)
   // map[i] = buffer_allocate();
 
-  buffer = malloc((width + 1)*(height + 1));
+  buffer_latest = malloc((width + 1)*(height + 1));
+  buffer_all = malloc((width + 1)*(height + 1));
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(buffer, buffer, width + 1, height + 1, (width+1)/32, (height+1)/32);
+  initGL(buffer_latest, buffer_all, width + 1, height + 1, 500, 500);
 
-  map = map_new(width, height);
+  map_latest = map_new(width, height);
+  map_all = map_new(width, height);
 
   // wait for sensor
   assert(pthread_join(sensor_thread, NULL) == 0);
 
   // start a scan
   sensor_thread = sensor_read_raw_n_thread(sample_count);
+
+  x = y = t = 0;
 
   iterations = 0;
 
@@ -76,18 +77,19 @@ int main (int argc, char **argv) {
       // start a scan
       sensor_thread = sensor_read_raw_n_thread(sample_count);
 
-      for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++) {
-	theta = (-SENSOR_RANGE_USB/2.0 + i*SENSOR_SPACING_USB)*M_PI/180;
-	c = cos(theta);
-	s = sin(theta);
-	d = scans[0].distances[i];
-	//printf("i: %i d: %i\n", i, d);
-	map_set_seen(map, x + d*c, height - y + d*s);
-	for (j = 5; j < d; j += 5)
-	  map_set_unseen(map, x + (d-j)*c, height - y + (d-j)*s);
-      }
+      map_latest = build_submap(scans);
 
-      map_write_buffer(map, buffer);
+      printf("merging using (%i, %i, %i)\n", x, y, t);
+      map_merge(map_all, map_latest, x, y, t);
+
+      x += best_x;
+      y += best_y;
+      t += best_t;
+
+      map_write_buffer(map_latest, buffer_latest);
+      map_write_buffer(map_all, buffer_all);
+
+      map_deallocate(map_latest);
 
     /*
       if (iterations == 0) {
@@ -147,7 +149,6 @@ int main (int argc, char **argv) {
       }
 */
     // draw
-    display();
     /*
     // clear position
     for (i = -5; i < 6; i++)
@@ -159,10 +160,18 @@ int main (int argc, char **argv) {
 			      current_particle.y + i*s + j*c, 0);
       }
 */
-    glutMainLoopEvent();
 
-    if (iterations % 100 == 0)
-      printf("map size: %i\n", map_get_size(map));
+    //    if (iterations % 100 == 0) {
+      size = map_get_size(map_all);
+      info = map_get_info(map_all);
+      printf("map all size: %i, info: %g, info/size: %g\n", size, info, info/size);
+      size = map_get_size(map_latest);
+      info = map_get_info(map_latest);
+      printf("map latest size: %i, info: %g, info/size: %g\n", size, info, info/size);
+      //    }
+
+    display();
+    glutMainLoopEvent();
 
     iterations++;
   }
@@ -170,9 +179,128 @@ int main (int argc, char **argv) {
   return 0;
 }
 
-/*
-void record_map_position(int index, int x, int y, uint8_t value) {
-  if (in_arena(x, y))
-    map[index][buffer_index_from_x_y(x, y)] = value;
+map_node* build_submap(raw_sensor_scan* scans) {
+  double c, s, theta, best_score, tmp_score, info;
+  int i, j, k, d, o_x, o_y, x, y, t, g, p, swap, size;
+  map_node *best_map, *map;
+  // x, y, theta for each position except the first
+  int chromo_size = (sample_count-1)*3;
+  int population = 300;
+  int chromosomes[population][chromo_size];
+  int tmp_chromosome[chromo_size];
+  double scores[population];
+
+  // init population
+  for (p = 0; p < population; p++)
+    for (i = 0; i < chromo_size; i++)
+      chromosomes[p][i] = rand_limit(100);
+
+  map = map_new(width, height);
+
+  o_x = width/2;
+  o_y = height/2;
+
+  // generations
+  for (g = 0; g < 100; g++) {
+    printf ("generation %i\n", g);
+    best_map = map_new(width, height);
+    best_score = 0;
+    // population
+    for (p = 0; p < population; p++) {
+      // samples
+      for (k = 0; k < sample_count; k++) {
+	if (k == 0) {
+	  x = 0;
+	  y = 0;
+	  t = 0;
+	} else {
+	  x = chromosomes[p][3*(k-1)];
+	  y = chromosomes[p][3*(k-1)+1];
+	  t = chromosomes[p][3*(k-1)+2];
+	}
+	// observations
+	for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++) {
+	  theta = (t + -SENSOR_RANGE_USB/2.0 + i*SENSOR_SPACING_USB)*M_PI/180;
+	  c = cos(theta);
+	  s = sin(theta);
+	  d = scans[k].distances[i];
+	  map_set_seen(map, o_x + x + d*c, height - (o_y + y) + d*s);
+	  for (j = d - 30; j >= 30; j -= 30)
+	    map_set_unseen(map, o_x + x + (d-j)*c, height - (o_y + y) + (d-j)*s);
+	}
+      }
+      
+      scores[p] = map_get_info(map)/map_get_size(map);
+      if (scores[p] > best_score) {
+	map_deallocate(best_map);
+	best_map = map;
+	best_score = scores[p];
+	best_x = x;
+	best_y = y;
+	best_t = t;
+      } else
+	map_deallocate(map);
+
+      map = map_new(width, height);
+    }
+
+    // bubble sort population by score
+    i = 0;
+    do {
+      swap = 0;
+      for (j = 0; j < population - i - 1; j++)
+	// left is smaller, bubble to the right
+	if (scores[j] < scores[j+1]) {
+	  tmp_score = scores[j];
+	  scores[j] = scores[j+1];
+	  scores[j+1] = tmp_score;
+	  memcpy(tmp_chromosome, chromosomes + j, chromo_size);
+	  memcpy(chromosomes + j, chromosomes + j + 1, chromo_size);
+	  memcpy(chromosomes + j + 1, tmp_chromosome, chromo_size);
+	  swap = 1;
+	}
+      i++;
+    } while (swap);
+
+    // replace lower 1/3rd members of population with new members by crossing top 2/3, highest to lowest
+    for (i = 0; i < population/3; i++) {
+      crossover((int*)chromosomes, i, (2*population/3 - 1)-i, 2*population/3+i, chromo_size);
+    }
+
+    // mutate at 1/10th of random points
+    mutate((int*)chromosomes, chromo_size);
+
+    size = map_get_size(best_map);
+    info = map_get_info(best_map);
+    printf("best map  size: %i, info: %g, info/size: %g\n", size, info, info/size);
+
+    // next generation
+  }
+
+  map_deallocate(map);
+
+  return best_map;
 }
-*/
+
+void crossover(int *chromosomes, int one, int two, int new, int size) {
+  // two point crossover
+  int c_1, c_2, tmp;
+  c_1 = rand_limit(size);
+  c_2 = rand_limit(size);
+  if (c_1 > c_2) {
+    tmp = c_1;
+    c_1 = c_2;
+    c_2 = tmp;
+  }
+
+  memcpy(chromosomes + new*size, chromosomes + one*size, c_1);
+  memcpy(chromosomes + new*size + c_1, chromosomes + two*size + c_1, c_2 - c_1);
+  memcpy(chromosomes + new*size + c_2, chromosomes + one*size + c_2, size - c_2);
+}
+
+void mutate(int *chromosomes, int size) {
+  int i;
+
+  for (i = 0; i < size/10; i++)
+    *(chromosomes + size*rand_limit(size) + rand_limit(3)) += rand_limit(10);
+}

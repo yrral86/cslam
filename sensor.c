@@ -80,18 +80,20 @@ raw_sensor_scan sensor_read_raw() {
   int step_num;
   long timestamp;
 
+  /*
   int sleep_time = poll_time - (utime() - last_poll);
   if (sleep_time > 0)
     usleep(sleep_time);
-  else printf("sleepless for %g seconds\n", -sleep_time/1000000.0);
+    else printf("sleepless for %g seconds\n", -sleep_time/1000000.0);
+
+  last_poll = utime();
+  */  
 
   if (eth)
     step_num = urg_get_distance(&connection, buffer, &timestamp);
   else
     buffer_usb = scip2MeasureScan(connection_usb, start_step, end_step, step_cluster,
 				  scan_interval, scan_num, ENC_3BYTE, &step_num);
-
-  last_poll = utime();
 
   int i, distance;
   for (i = 0 ; i < step_num ; i++) {

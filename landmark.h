@@ -20,6 +20,7 @@ void landmark_write_map(landmark_map*, uint8_t*);
 void landmark_write_map_subtree(landmark_map*, uint8_t*);
 int landmark_observations(landmark_map*, int);
 double landmark_information(landmark_map*, int);
+double landmark_get_info(landmark);
 double landmark_seen_probability(landmark_map*, int);
 double landmark_unseen_probability(landmark_map*, int);
 int landmark_map_find_distance(landmark_map*, int, particle);

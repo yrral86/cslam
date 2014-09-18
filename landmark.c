@@ -107,6 +107,20 @@ double landmark_information(landmark_map *node, int index) {
   return ret;
 }
 
+double landmark_get_info(landmark l) {
+  // fisher information
+  // n/(p(1-p))
+  // p = seen/n; 1 - p = unseen/n
+  // n/((seen/n)*(unseen/n))
+  // n/(seen*unseen/n^2)
+  // 1/(seen*unseen/n)
+  int sum = l.seen + l.unseen;
+  if (sum == 0) return 0;
+  if (l.seen == 0) return sum/(double)l.unseen;
+  if (l.unseen == 0) return sum/(double)l.seen;
+  return sum/(double)(l.seen*l.unseen);
+}
+
 double landmark_seen_probability(landmark_map *node, int index) {
   landmark l;
   double p, sum;

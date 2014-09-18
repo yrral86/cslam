@@ -30,6 +30,35 @@ map_node* map_node_new(int x_min, int x_max, int y_min, int y_max) {
   return n;
 }
 
+void map_merge(map_node *all, map_node *latest, int dx, int dy, int dt) {
+  // copy latest into all
+  int i, j, x, y, x_min, x_max, y_min, y_max;
+  double r, theta;
+
+  for (i = 0; i < 4; i++) {
+    if (latest->children[i] == NULL) {
+      // leaf
+      // find center of region
+      map_node_ranges_from_index(latest, i, &x_min, &x_max, &y_min, &y_max);
+      x = (x_max - x_min)/2;
+      y = (y_max - y_min)/2;
+
+      // translate x, y
+      r = sqrt(dx*dx+dy*dy);
+      theta = dt*M_PI/180;
+      x += r*cos(theta);
+      y += r*cos(theta);
+
+      // plot seen/unseen at (x, y)
+      for (j = 0; j < latest->landmarks[i].seen; j++)
+	map_set_seen(all, x, y);
+      for (j = 0; j < latest->landmarks[i].unseen; j++)
+	map_set_unseen(all, x, y);
+    } else
+      map_merge(all, latest->children[i], dx, dy, dt);
+  }
+}
+
 int map_node_index_from_x_y(map_node *node, int x, int y) {
   int index;
 
@@ -148,24 +177,23 @@ void map_set_unseen(map_node *map, int x, int y) {
 void map_landmark_check_split(map_node *node, int index) {
   int sum;
   double info;
-  landmark *tmp = node->landmarks + index;
+  landmark *tmp;
 
-  // check for split if more than 5 observations and there is disagreement
-  sum = tmp->seen + tmp->unseen;
-  if (sum > 10 && tmp->seen != 0 && tmp->unseen != 0) {
-    // fisher information
-    // n/(p(1-p))
-    // p = seen/n; 1 - p = unseen/n
-    // n/((seen/n)*(unseen/n))
-    // n/(seen*unseen/n^2)
-    // 1/(seen*unseen/n)
-    info = (double)sum/(tmp->seen*tmp->unseen);
+  // max resolution: 10mm
+  if (node->x_max - node->x_min > 10 &&
+      node->y_max - node->y_min > 10) {
+    tmp = node->landmarks + index;
 
-    // split if info is less than 1/2
-    // and there is resolution to be gained
-    if (info < 0.5 && node->x_max - node->x_min > 0 &&
-	node->y_max - node->y_min > 0)
-      map_node_split(node, index);
+    // check for split if more than 10 observations and there is disagreement
+    sum = tmp->seen + tmp->unseen;
+    if (sum > 10 && tmp->seen != 0 && tmp->unseen != 0) {
+      info = landmark_get_info(*tmp);
+
+      // split if info is less than 80% certain
+      // n/(p(1-p)) = n/(0.8*0.2)
+      if (info < sum/0.16)
+	map_node_split(node, index);
+    }
   }
 }
 
@@ -185,9 +213,13 @@ void map_node_write_buffer(map_node *node, uint8_t *buffer) {
 
       // determine value
       sum = node->landmarks[i].seen + node->landmarks[i].unseen;
-      // don't divide by zero
-      if (sum == 0) sum = 1;
-      value = (int)(255 * node->landmarks[i].seen/(double)sum);
+
+      // use parent if new
+      // (same as map_get_info)
+      if (sum < 5)
+	value = (int)(255 * node->landmark.seen/(double)(node->landmark.seen + node->landmark.unseen));
+      else
+	value = (int)(255 * node->landmarks[i].seen/(double)sum);
 
       // write block with value
       if (value > 0) {
@@ -216,4 +248,24 @@ int map_get_size(map_node *node) {
       size += map_get_size(node->children[i]);
 
   return size;
+}
+
+double map_get_info(map_node *node) {
+  int i;
+  double info;
+
+  info = 0.0;
+  for (i = 0; i < 4; i++)
+    if (node->children[i] == NULL) {
+      // leaf node
+      // use parent info if new
+      if (node->landmarks[i].seen + node->landmarks[i].unseen < 5)
+	info += landmark_get_info(node->landmark);
+      else
+	info += landmark_get_info(node->landmarks[i]);
+    } else
+      // interior node
+      info += map_get_info(node->children[i]);
+
+  return info;
 }

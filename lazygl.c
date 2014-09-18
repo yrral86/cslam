@@ -16,6 +16,7 @@ void initGL(uint8_t *b1, uint8_t *b2, int b_w, int b_h, int w_w, int w_h) {
 
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
   glutInitWindowSize(window_width, window_height*2);
+  //glutInitWindowSize(window_width, window_height);
   glutCreateWindow("sensor");
 }
 
