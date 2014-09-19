@@ -210,7 +210,7 @@ map_node* build_submap(raw_sensor_scan* scans) {
   o_y = height/2;
 
   // generations
-  for (g = 0; g < 30; g++) {
+  for (g = 0; g < 1; g++) {
     printf ("generation %i\n", g);
     best_map = map_new(width, height);
     best_score = 0;
