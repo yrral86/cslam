@@ -1,35 +1,49 @@
-#include "urg_driver/urg_sensor.h"
+#include "sensor.h"
+#include <pthread.h>
 
 int main(int argc, char **argv) {
-  urg_t connection;
-  urg_connection_type_t type = URG_SERIAL;
-  char *device = "/dev/ttyACM0";
-  int direction_count, max_data_size, i;
-  long timestamp;
-  long *data;
+  int i, j;
+  pthread_t sensor_thread;
+  raw_sensor_scan *scans;
+  FILE *log;
 
-  // open connection
-  if (urg_open(&connection, type, device, 115200) < 0) {
-    printf("failed to open device: %s\n", device);
-    return 1;
-  }
+  sensor_thread = sensor_init_thread();
 
-  max_data_size = urg_max_data_size(&connection);
-  data = malloc(sizeof(long)*max_data_size);
+  scans = malloc(sizeof(raw_sensor_scan));
 
-  printf("max data size: %i\n", max_data_size);
+  // wait for sensor
+  assert(pthread_join(sensor_thread, NULL) == 0);
 
-  // start measurement
-  // (connection, type, scan times (0 is keep going), skip)
-  urg_start_measurement(&connection, type, 0, 0);
+  // start a scan
+  sensor_thread = sensor_read_raw_n_thread(1);
 
-  while (1) {
-    direction_count = urg_get_distance(&connection, data, &timestamp);
-    for (i = 0; i < max_data_size; i++) {
-      printf("%i ", data[i]);
+  // open log
+  log = fopen("sensor.log", "w");
+
+  i = 0;
+  while (i < 1000) {
+    // wait for sensor
+    assert(pthread_join(sensor_thread, NULL) == 0);
+
+    // get samples
+    for (j = 0; j < 1; j++) {
+      scans[j] = sensor_fetch_index(j);
     }
-    printf("\nmax_data_size: %i, direction_count: %i\n", max_data_size, direction_count);
+
+    for (j = 0; j < RAW_SENSOR_DISTANCES_USB - 1; j++)
+      fprintf(log, "%d,", scans[0].distances[j]);
+    fprintf(log, "%d\n", scans[0].distances[j]);
+
+    // start a scan
+    sensor_thread = sensor_read_raw_n_thread(1);
+
+    i++;
   }
+
+  fclose(log);
+
+  // wait for sensor
+  assert(pthread_join(sensor_thread, NULL) == 0);
 
   return 0;
 }
