@@ -16,7 +16,7 @@ static particle current_particle;
 static int width = 10000;
 static int height = 10000;
 // sample 10 times (1 sec)
-static int sample_count = 10;
+static int sample_count = 1;
 static int best_x, best_y, best_t;
 
 int main (int argc, char **argv) {
@@ -45,7 +45,7 @@ int main (int argc, char **argv) {
 
   glutInit(&argc, argv);
   // pass size of buffer, then window size
-  initGL(buffer_latest, buffer_all, width + 1, height + 1, 500, 500);
+  initGL(buffer_latest, buffer_all, width + 1, height + 1, 700, 700);
 
   map_latest = map_new(width, height);
   map_all = map_new(width, height);
@@ -77,7 +77,9 @@ int main (int argc, char **argv) {
       // start a scan
       sensor_thread = sensor_read_raw_n_thread(sample_count);
 
-      map_latest = build_submap(scans);
+      //      map_latest = build_submap(scans);
+
+      map_latest = map_new_from_observation(scans[0].distances);
 
       printf("merging using (%i, %i, %i)\n", x, y, t);
       map_merge(map_all, map_latest, x, y, t);
@@ -186,7 +188,8 @@ map_node* build_submap(raw_sensor_scan* scans) {
   map_node *best_map, *map;
   // x, y, theta for each position except the first
   int chromo_size = (sample_count-1)*3;
-  int population = 30;
+  // poulation should be divisble by 6
+  int population = 6;
   int chromosomes[population][chromo_size];
   int tmp_chromosome[chromo_size];
   double scores[population];
@@ -210,7 +213,7 @@ map_node* build_submap(raw_sensor_scan* scans) {
   o_y = height/2;
 
   // generations
-  for (g = 0; g < 30; g++) {
+  for (g = 0; g < 10; g++) {
     printf ("generation %i\n", g);
     best_map = map_new(width, height);
     best_score = 0;
@@ -219,7 +222,7 @@ map_node* build_submap(raw_sensor_scan* scans) {
 
   // samples
       for (k = 0; k < sample_count; k++) {
-	if (1) {
+	if (k == 0) {
 	  x = 0;
 	  y = 0;
 	  t = 0;
@@ -228,7 +231,10 @@ map_node* build_submap(raw_sensor_scan* scans) {
 	  y = chromosomes[p][3*(k-1)+1];
 	  t = chromosomes[p][3*(k-1)+2];
 	}
-	// observations
+
+	// map_new_from_observation
+
+	// record observations
 	for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++) {
 	  theta = (t + -SENSOR_RANGE_USB/2.0 + i*SENSOR_SPACING_USB)*M_PI/180;
 	  c = cos(theta);
@@ -317,5 +323,5 @@ void mutate(int *chromosomes, int size) {
   int i;
 
   for (i = 0; i < size/10; i++)
-    *(chromosomes + size*rand_limit(size) + rand_limit(3)) += rand_limit(10);
+    *(chromosomes + size*rand_limit(size) + rand_limit(3)) +=  rand_limit(10);
 }
