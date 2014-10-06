@@ -8,6 +8,42 @@ map_node* map_new(int w, int h) {
   return map_node_new(0, w, 0, h);
 }
 
+map_node* map_new_from_observation(int *distances) {
+  map_node* map;
+  int i, j, d, x, y, max = 0;
+  double s, c, theta, dtheta;
+
+  for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++)
+    if (distances[i] > max) max = distances[i];
+
+  max += 1;
+
+  x = max;
+  y = max;
+
+  max *= 2;
+
+  map = map_new(max, max);
+
+  // record observations
+  //  theta = -SENSOR_RANGE_USB*M_PI/360.0;
+  //  dtheta = SENSOR_SPACING_USB*M_PI/180;
+  for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++) {
+    //    if (i > 0) theta += dtheta;
+    theta = (-SENSOR_RANGE_USB/2.0 + i*SENSOR_SPACING_USB)*M_PI/180;
+    c = cos(theta);
+    s = sin(theta);
+    d = distances[i];
+    printf("d: %i s: %g c: %g theta: %g\n", d, s, c, theta);
+    printf("x,y: (%g, %g)\n", x+d*c, max - y + d*s);
+    map_set_seen(map, x + d*c, max - y + d*s);
+    for (j = d - 30; j >= 30; j -= 30)
+      map_set_unseen(map, x + (d-j)*c, max - y + (d-j)*s);
+  }
+
+  return map;
+}
+
 map_node* map_node_new(int x_min, int x_max, int y_min, int y_max) {
   int i;
   map_node *n = malloc(sizeof(map_node));
@@ -52,6 +88,8 @@ void map_merge(map_node *all, map_node *latest, int dx, int dy, int dt) {
       map_node_ranges_from_index(latest, i, &x_min, &x_max, &y_min, &y_max);
       x = (x_max + x_min)/2;
       y = (y_max + y_min)/2;
+
+      printf("plotting x, y (%i, %i)\n", x, y);
 
       // plot seen/unseen at (x, y)
       for (j = 0; j < latest->landmarks[i].seen; j++)
@@ -260,8 +298,9 @@ void map_deallocate(map_node *map) {
 void map_set_seen(map_node *map, int x, int y) {
   int index;
 
-  //  printf("seen: x_min: %i x_max: %i y_min %i y_max: %i x: %i y: %i\n",
-  //	 map->x_min, map->x_max, map->y_min, map->y_max, x, y);
+  printf("seen: x_min: %i x_max: %i y_min %i y_max: %i x: %i y: %i\n",
+  	 map->x_min, map->x_max, map->y_min, map->y_max, x, y);
+  fflush(stdout);
   assert(x >= map->x_min && x <= map->x_max);
   assert(y >= map->y_min && y <= map->y_max);
 

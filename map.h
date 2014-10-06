@@ -2,11 +2,13 @@
 #define __MAP_H__
 
 #include <assert.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <strings.h>
 #include "landmark_types.h"
 #include "landmark.h"
+#include "sensor.h"
 
 typedef struct map_node {
 uint8_t new;
@@ -22,6 +24,7 @@ struct map_node* children[9];
 } map_node;
 
 map_node* map_new(int, int);
+map_node* map_new_from_observation(int*);
 map_node* map_node_new(int, int, int, int);
 void map_node_spawn_child(map_node*, int);
 void map_merge(map_node*, map_node*, int, int, int);
