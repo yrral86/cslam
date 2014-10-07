@@ -12,7 +12,7 @@ int* next_observation();
 int more_observations();
 
 int main(int argc, char **argv) {
-  int i, x, y, theta;
+  int i, x, y, theta, last_x, last_y, last_theta;
   int width = 20000;
   int height = 20000;
   int *obs;
@@ -36,13 +36,17 @@ int main(int argc, char **argv) {
       swarm_move(0, 0, 360);
       swarm_update(obs);
     } while(swarm_converged() == 0);
+    last_x = x;
+    last_y = y;
+    last_theta = theta;
     x = swarm_get_best_x();
     y = swarm_get_best_y();
     theta = swarm_get_best_theta();
     map_merge(map_all, map, x, y, theta);
     printf("(%d, %d, %d)\n", x, y, theta);
-    printf("iteration, info, size, info/size\n");
-    printf("%d,%g,%d,%g\n", i, map_get_info(map_all), map_get_size(map_all), map_get_info(map_all)/map_get_size(map_all));
+    printf("(%d, %d, %d)\n", x - last_x, y - last_y, theta - last_theta);
+    //    printf("iteration\tinfo\tsize\tinfo/size\n");
+    printf("%d\t%g\t%d\t%g\n", i, map_get_info(map_all), map_get_size(map_all), map_get_info(map_all)/map_get_size(map_all));
     i++;
     map_write_buffer(map, buffer_current);
     map_deallocate(map);

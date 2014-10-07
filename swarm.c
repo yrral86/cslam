@@ -478,8 +478,8 @@ void swarm_update(int *distances) {
   else
     converged = 0;
 
-  if (!converged || count > 1)
-    printf("count: %d, max prob: %g, standard deviations: %g, %g, %g, converged: %d\n", count, particles[0].p, stddev[0], stddev[1], stddev[2], converged);
+  //  if (!converged || count > 1)
+  //    printf("count: %d, max prob: %g, standard deviations: %g, %g, %g, converged: %d\n", count, particles[0].p, stddev[0], stddev[1], stddev[2], converged);
 
   // save old particles before we resample
   memcpy(previous_particles, particles, sizeof(particle)*p_count);
