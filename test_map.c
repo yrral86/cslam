@@ -12,9 +12,9 @@ int* next_observation();
 int more_observations();
 
 int main(int argc, char **argv) {
-  int x, y, theta;
-  int width = 10000;
-  int height = 10000;
+  int i, x, y, theta;
+  int width = 20000;
+  int height = 20000;
   int *obs;
   map_node *map, *map_all;
 
@@ -22,25 +22,28 @@ int main(int argc, char **argv) {
   uint8_t *buffer_all = malloc((width + 1)*(height + 1));
   glutInit(&argc, argv);
   initGL(buffer_current, buffer_all, width + 1, height + 1, 400, 400);
-  map_all = map_new_from_observation(next_observation());
+  map_all = map_new(width, height);
 
-  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, 10001, 10001, 5000, 0);
+  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, width + 1, height + 1, width/2, 0);
 
   swarm_set_map(map_all);
 
+  i = 0;
   while (more_observations()) {
     obs = next_observation();
     map = map_new_from_observation(obs);
     do {
       swarm_move(0, 0, 360);
       swarm_update(obs);
-    } while(swarm_converged() == 0 && 0);
-    x = swarm_get_best_x() - 5000;
-    y = swarm_get_best_y() - 5000;
+    } while(swarm_converged() == 0);
+    x = swarm_get_best_x();
+    y = swarm_get_best_y();
     theta = swarm_get_best_theta();
     map_merge(map_all, map, x, y, theta);
     printf("(%d, %d, %d)\n", x, y, theta);
-
+    printf("iteration, info, size, info/size\n");
+    printf("%d,%g,%d,%g\n", i, map_get_info(map_all), map_get_size(map_all), map_get_info(map_all)/map_get_size(map_all));
+    i++;
     map_write_buffer(map, buffer_current);
     map_deallocate(map);
     map_write_buffer(map_all, buffer_all);
@@ -51,6 +54,8 @@ int main(int argc, char **argv) {
   }
 
   fclose(data);
+
+  glutMainLoop();
 
   return 0;
 }

@@ -318,8 +318,8 @@ void swarm_update(int *distances) {
     //	   particles[i].y,
     //	   particles[i].theta);
     temp_map = map_dup(map);
-    map_merge(temp_map, particle_map, particles[i].x - 5000,
-	      particles[i].y - 5000, particles[i].theta);
+    map_merge(temp_map, particle_map, particles[i].x,
+	      particles[i].y, particles[i].theta);
 
     /*
     posterior = 0.0;
@@ -384,7 +384,7 @@ void swarm_update(int *distances) {
 
     // new = prior * posterior / (# of new observations)
     //    particles[i].p += posterior;// - log(new_observations);
-    particles[i].p = map_get_info(temp_map)/map_get_size(temp_map);
+    particles[i].p = 1/(map_get_info(temp_map)*map_get_size(temp_map));
     map_deallocate(temp_map);
     //    if (particles[i].p < min) {
     if (particles[i].p > max) {
@@ -439,7 +439,7 @@ void swarm_update(int *distances) {
   mean[1] = 0.0;
   mean[2] = 0.0;
   count = 0;
-  while (total < 0.99) {
+  while (total < 0.9) {
     mean[0] += particles[i].x;
     mean[1] += particles[i].y;
     mean[2] += particles[i].theta;
@@ -456,7 +456,7 @@ void swarm_update(int *distances) {
   stddev[2] = 0.0;
   total = 0.0;
   i = 0;
-  while (total < 0.99) {
+  while (total < 0.9) {
     stddev[0] += pow(mean[0] - particles[i].x, 2);
     stddev[1] += pow(mean[1] - particles[i].y, 2);
     stddev[2] += pow(mean[2] - particles[i].theta, 2);
@@ -472,8 +472,8 @@ void swarm_update(int *distances) {
     stddev[i] = sqrt(stddev[i]);
   }
 
-  // make sure 99% of particles are within 5mm and 0.5 degree
-  if (sqrt(pow(stddev[0], 2) + pow(stddev[1], 2)) < 5 && stddev[2] < 0.5)
+  // make sure 99% of particles are within 75mm and 5 degrees
+  if (sqrt(pow(stddev[0], 2) + pow(stddev[1], 2)) < sqrt(INITIAL_POSITION_VARIANCE*INITIAL_POSITION_VARIANCE*2) && stddev[2] < INITIAL_ANGLE_VARIANCE)
     converged = 1;
   else
     converged = 0;

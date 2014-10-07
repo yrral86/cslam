@@ -9,16 +9,17 @@
 #include "landmark_types.h"
 
 typedef struct map_node {
-uint8_t new;
-unsigned int x;
-unsigned int y;
-unsigned int x_min;
-unsigned int x_max;
-unsigned int y_min;
-unsigned int y_max;
-landmark landmarks[9];
-landmark landmark;
-struct map_node* children[9];
+  uint8_t new;
+  unsigned int x;
+  unsigned int y;
+  unsigned int x_min;
+  unsigned int x_max;
+  unsigned int y_min;
+  unsigned int y_max;
+  landmark landmarks[4];
+  landmark landmark;
+  struct map_node* children[4];
+  struct map_node* root;
 } map_node;
 
 #include "landmark.h"

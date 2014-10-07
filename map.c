@@ -37,7 +37,7 @@ map_node* map_new_from_observation(int *distances) {
     map = map_new(max, max);
   */
 
-  map = map_new(10000, 10000);
+  map = map_node_new(0, max, 0, max);
 
   // record observations
   //  theta = -SENSOR_RANGE_USB*M_PI/360.0;
@@ -50,9 +50,9 @@ map_node* map_new_from_observation(int *distances) {
     d = distances[i];
     //    printf("d: %i s: %g c: %g theta: %g\n", d, s, c, theta);
     //    printf("x,y: (%g, %g)\n", x+d*c, max - y + d*s);
-    map_set_seen(map, x + d*c, max - y + d*s);
+    map_set_seen(map, x + d*c, y + d*s);
     for (j = d - 30; j >= 30; j -= 30)
-      map_set_unseen(map, x + (d-j)*c, max - y + (d-j)*s);
+      map_set_unseen(map, x + (d-j)*c, y + (d-j)*s);
   }
 
   return map;
@@ -78,6 +78,8 @@ map_node* map_node_new(int x_min, int x_max, int y_min, int y_max) {
   n->landmark.seen = 0;
   n->landmark.unseen = 0;
 
+  n->root = n;
+
   return n;
 }
 
@@ -92,6 +94,7 @@ map_node* map_dup(map_node *map) {
     } else {
       // interior
       new->children[i] = map_dup(map->children[i]);
+      new->children[i]->root = new->root;
     }
   }
 
@@ -104,6 +107,7 @@ void map_node_spawn_child(map_node *node, int index) {
   map_node_ranges_from_index(node, index, &x_min, &x_max, &y_min, &y_max);
 
   node->children[index] = map_node_new(x_min, x_max, y_min, y_max);
+  node->children[index]->root = node->root;
 }
 
 void map_merge(map_node *all, map_node *latest, int dx, int dy, int dt) {
@@ -125,17 +129,17 @@ void map_merge(map_node *all, map_node *latest, int dx, int dy, int dt) {
       x = (x_max + x_min)/2;
       y = (y_max + y_min)/2;
 
-      // project to origin at middle of buffer
-      x -= x_mid;
-      y -= y_mid;
+      // project to origin at middle of latest map
+      x -= (latest->root->x_min + latest->root->x_max)/2;
+      y -= (latest->root->y_min + latest->root->y_max)/2;
 
       // calculate radius and angle
       r = sqrt(x*x + y*y);
       theta = atan2(y, x);
 
-      // reproject using dx, dy, dt
-      x = x_mid + dx + r*cos(theta + dtheta);
-      y = y_mid + dy + r*sin(theta + dtheta);
+      // reproject to center of all map using dx, dy, dtheta
+      x = dx + r*cos(theta + dtheta);
+      y = dy + r*sin(theta + dtheta);
 
       // plot seen/unseen at (x, y)
       for (j = 0; j < latest->landmarks[i].seen; j++)
@@ -372,7 +376,7 @@ void map_landmark_check_split(map_node *node, int index) {
 
 void map_write_buffer(map_node *map, uint8_t *buffer) {
   // clear buffer
-  bzero(buffer, (map->x_max - map->x_min + 1)*(map->y_max - map->y_min + 1));
+  bzero(buffer, width*height);
   // write nodes
   map_node_write_buffer(map, buffer);
 }
