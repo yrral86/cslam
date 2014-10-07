@@ -9,6 +9,7 @@
 #include "particle.h"
 #include "random.h"
 #include "buffer.h"
+#include "map.h"
 
 #ifndef LINUX
 __declspec(dllexport) void swarm_init(int, int, int, int, int, int);
@@ -46,8 +47,9 @@ int swarm_get_y(int);
 int swarm_get_theta(int);
 void swarm_get_best_buffer(uint8_t*);
 void swarm_get_map_buffer(uint8_t*);
-landmark_map swarm_get_map();
+map_node* swarm_get_map();
 void swarm_get_all_particles(particle**);
 int in_arena(int, int);
+void swarm_set_map(map_node*);
 
 #endif

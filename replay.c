@@ -70,8 +70,8 @@ int main (int argc, char **argv) {
       scan_count++;
       //if ((scan_count == 5 && init == 1) || scan_count == 6) {
       //if (init == 1) init = 0;
-      if(swarm_converged())
-	swarm_map(parsed_line + 1);
+      //      if(swarm_converged())
+      //swarm_map(parsed_line + 1);
 	//scan_count = 0;
 	//}
       update_display();
@@ -102,7 +102,7 @@ void save_map() {
   FILE *map_file = fopen("slamd_map.csv", "w");
   assert(map_file != NULL);
 
-  map = swarm_get_map();
+  //  map = swarm_get_map();
 
   // write swarm map to a file
   s = buffer_get_size();

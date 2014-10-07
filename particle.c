@@ -19,7 +19,7 @@ particle particle_sample_normal(particle parent) {
   p.x_var = parent.x_var;
   p.y_var = parent.y_var;
   p.theta_var = parent.theta_var;
-  p.map = landmark_map_copy(parent.map);
+  //  p.map = landmark_map_copy(parent.map);
 
   return p;
 }

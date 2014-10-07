@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <strings.h>
 #include "landmark_types.h"
-#include "landmark.h"
-#include "sensor.h"
 
 typedef struct map_node {
 uint8_t new;
@@ -23,9 +21,13 @@ landmark landmark;
 struct map_node* children[9];
 } map_node;
 
+#include "landmark.h"
+#include "sensor.h"
+
 map_node* map_new(int, int);
 map_node* map_new_from_observation(int*);
 map_node* map_node_new(int, int, int, int);
+map_node* map_dup(map_node*);
 void map_node_spawn_child(map_node*, int);
 void map_merge(map_node*, map_node*, int, int, int);
 int map_node_index_from_x_y(map_node*, int, int);
@@ -34,6 +36,8 @@ void map_node_ranges_from_index(map_node*, int, int*, int*, int*, int*);
 void map_deallocate(map_node*);
 void map_set_seen(map_node*, int, int);
 void map_set_unseen(map_node*, int, int);
+double map_seen_probability(map_node*, int, int);
+double map_unseen_probability(map_node*, int, int);
 //void map_landmark_check_split(map_node*, int);
 void map_write_buffer(map_node*, uint8_t*);
 void map_node_write_buffer(map_node*, uint8_t*);

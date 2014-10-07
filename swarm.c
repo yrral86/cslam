@@ -5,7 +5,8 @@
 static particle particles[INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT];
 static particle previous_particles[INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT];
 static particle best_particle;
-static landmark_map *map;
+//static landmark_map *map;
+static map_node *map;
 static int iterations = 0;
 static int converged, m, sensor_degrees, long_side, short_side, start;
 static double spacing;
@@ -148,8 +149,9 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
 
   buffer_set_arena_size(long_side, short_side);
 
-  initial_map.map = landmark_map_copy(NULL);
+  /*  initial_map.map = landmark_map_copy(NULL);
   map = landmark_map_copy(NULL);
+  */
 
   // draw initial border
   /*  for (k = 0; k < long_side; k += BUFFER_FACTOR)
@@ -199,22 +201,23 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   // initialize first round of particles
   //x = start/2;
   x = long_side/2;
+  y = short_side/2;
   for (i = 0; i < INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT; i++) {
     //y = short_side/4;
-    y = short_side/2;
+
     //    if (rand_limit(2))
     //y *= 3;
-    theta = rand_limit(360) - 180;
-    //theta = 180;
+    //    theta = rand_limit(360) - 180;
+    theta = 0;
     t = theta*M_PI/180;
     particles[i] = particle_init(x + sensor_radius*cos(t), y + sensor_radius*sin(t), theta);
-    particles[i].map = initial_map.map;
-    landmark_map_reference(particles[i].map);
+    //    particles[i].map = initial_map.map;
+    //    landmark_map_reference(particles[i].map);
   }
 
   best_particle = particles[0];
 
-  landmark_map_dereference(initial_map.map);
+  //  landmark_map_dereference(initial_map.map);
 
 #ifndef LINUX
   return_sem = CreateSemaphore(NULL, 0, 1, return_sem_name);
@@ -247,7 +250,7 @@ void swarm_move(int dx, int dy, int dtheta) {
 	
   // reset convergence if we have a non 0 move
   if (abs(dx) > 0 || abs(dy) > 0 || abs(dtheta) > 0)
-	converged = 0;
+    converged = 0;
 
   // add motion
   for (i = 0; i < p_count; i++) {
@@ -255,20 +258,28 @@ void swarm_move(int dx, int dy, int dtheta) {
     tries = 0;
     do {
       // ignore kinematics 20% of the time
-      if ((rand() / (double)RAND_MAX) < 0.8) {
+      //      if ((rand() / (double)RAND_MAX) < 0.8) {
         // sample motion distribution
-        particles[i] = particle_sample_motion(p, dx, dy, dtheta);
-      } else {
+      //        particles[i] = particle_sample_motion(p, dx, dy, dtheta);
+      //      } else {
         // sample normal distribution
-        particles[i] = particle_sample_normal(p);
-      }
+      particles[i] = particle_sample_normal(p);
+	//      }
       // dereference old map, particle_sample_* copied it already
-      landmark_map_dereference(p.map);
+      //      landmark_map_dereference(p.map);
       tries++;
     } while (!in_arena(particles[i].x, particles[i].y) && tries < 5);
     // if we failed repeatedly, reuse previous pose
     if (tries >= 5)
       particles[i] = p;
+    /*
+    printf("move: (%d, %d, %d)\n", particles[i].x,
+	   particles[i].y,
+	   particles[i].theta);
+
+    printf("move parent: (%d, %d, %d)\n", p.x,
+	   p.y,
+	   p.theta);*/
   }
 }
 
@@ -281,10 +292,11 @@ void swarm_update(int *distances) {
   int i, j, k, l, best_index, p_count, new_observations;
   int swap, x, y, count;
   double mean[3], stddev[3];
-  double posterior, distance, theta, degrees, s, c, total, min, p, step;
+  double posterior, distance, theta, degrees, s, c, total, max, p, step;
   //  double xyt[3];
   particle temp;
   double weight;
+  map_node *temp_map, *particle_map;
 
 #ifndef LINUX
   ReleaseSemaphore(return_sem, 1, NULL);
@@ -295,12 +307,23 @@ void swarm_update(int *distances) {
   else
     p_count = PARTICLE_COUNT;
 
-  min = 10000.0;
+  particle_map = map_new_from_observation(distances);
+
+  //  min = 10000.0;
+  max = 0.0;
   best_index = 0;
   // evaulate each direction for each particle
   for (i = 0; i < p_count; i++) {
+    //    printf("update: (%d, %d, %d)\n", particles[i].x,
+    //	   particles[i].y,
+    //	   particles[i].theta);
+    temp_map = map_dup(map);
+    map_merge(temp_map, particle_map, particles[i].x - 5000,
+	      particles[i].y - 5000, particles[i].theta);
+
+    /*
     posterior = 0.0;
-    new_observations = 1;
+    //    new_observations = 1;
 
     // evaluate the particle's relative probability
     for (j = 0; j < m; j++) {
@@ -320,17 +343,18 @@ void swarm_update(int *distances) {
 
 	  // make sure it is in bounds
 	  if (in_arena(x, y)) {
-	    k = buffer_index_from_x_y(x, y);
+	    //	    k = buffer_index_from_x_y(x, y);
 	    //	    p = landmark_unseen_probability(particles[i].map, k);
-	    p = landmark_unseen_probability(map, k);
-	    weight = landmark_information(map, k);
+	    //	    p = landmark_unseen_probability(map, k);
+	    //	    weight = landmark_information(map, k);
 	    //	    if (weight > 0 && weight < (unsigned int)2000000000)
 	    // printf("unseen weight: %u\n", weight);
-	    if (weight < 10000000)
-	      new_observations++;
+	    //	    if (weight < 10000000)
+	    //	      new_observations++;
 	    //else
 	    //  printf("stable observation, unseen weight: %g\n", weight);
-	    posterior += -log(p*weight);
+	    p = map_unseen_probability(map, x, y);
+	    posterior += -log(p);
 	  } else posterior += -log(0.0005);
 	}
 
@@ -340,43 +364,51 @@ void swarm_update(int *distances) {
 
 	// make sure it is in bounds
 	if (in_arena(x, y)) {
-	  k = buffer_index_from_x_y(x, y);
+	  //	  k = buffer_index_from_x_y(x, y);
 	  //	  p = landmark_seen_probability(particles[i].map, k);
-	  p = landmark_seen_probability(map, k);
-	  weight = landmark_information(map, k);
+	  //	  p = landmark_seen_probability(map, k);
+	  //	  weight = landmark_information(map, k);
 	  //if (weight > 0 && weight < (unsigned int)2000000000)
 	  //  printf("seen weight: %u\n", weight);
-	  if (weight < 10000000)
-	    new_observations++;
+	  //	  if (weight < 10000000)
+	  //	    new_observations++;
 	  // else
 	  //  printf("stable observation, seen weight: %g\n", weight);
-	  posterior += -log(p*weight);
+	  p = map_seen_probability(map, x, y);
+	  posterior += -log(p);
 	} else posterior += -log(0.0005);
       }
     }
 
+    */
+
     // new = prior * posterior / (# of new observations)
-    particles[i].p += posterior - log(new_observations);
-    if (particles[i].p < min) {
-      min = particles[i].p;
+    //    particles[i].p += posterior;// - log(new_observations);
+    particles[i].p = map_get_info(temp_map)/map_get_size(temp_map);
+    map_deallocate(temp_map);
+    //    if (particles[i].p < min) {
+    if (particles[i].p > max) {
+      max = particles[i].p;
       best_index = i;
     }
   }
 
+  map_deallocate(particle_map);
+
   // clear old best, save new best, copy the map we are about to dereference
-  if (iterations > 0)
-    landmark_map_dereference(best_particle.map);
+  //  if (iterations > 0)
+  //    landmark_map_dereference(best_particle.map);
   best_particle = particles[best_index];
   //  best_particle.map = landmark_map_copy(best_particle.map);
-  best_particle.map = landmark_map_copy(best_particle.map);
+  //  best_particle.map = landmark_map_copy(best_particle.map);
 
-  swarm_map_current(distances);
+  //  swarm_map_current(distances);
 
   // normalize particle log probabilities, convert to normal probabilities for resampling
   total = 0.0;
   for (i = 0; i < p_count; i++) {
-    particles[i].p -= min;
-    particles[i].p = pow(M_E, -particles[i].p);
+    //    particles[i].p -= min;
+    //    particles[i].p = pow(M_E, -particles[i].p);
     total += particles[i].p;
   }
 
@@ -462,16 +494,19 @@ void swarm_update(int *distances) {
     while (j++ && total < p)
       total += previous_particles[j - 1].p;
     particles[i] = previous_particles[j - 1];
-    particles[i].map = landmark_map_copy(particles[i].map);
+    //    printf("resample: (%d, %d, %d), i = %d, j = %d\n", particles[i].x,
+    //	   particles[i].y,
+    //	   particles[i].theta, i , j);
+    //    particles[i].map = landmark_map_copy(particles[i].map);
   }
 
   // dereference previous particle maps
-  for (i = 0; i < p_count; i++)
-    landmark_map_dereference(previous_particles[i].map);
+  //  for (i = 0; i < p_count; i++)
+    //    landmark_map_dereference(previous_particles[i].map);
 
   // restore log probabilities
-  for (i = 0; i < p_count; i++)
-    particles[i].p = -log(particles[i].p);
+  //  for (i = 0; i < p_count; i++)
+  //    particles[i].p = -log(particles[i].p);
 
   iterations++;
 
@@ -505,7 +540,7 @@ void swarm_map(int *distances) {
       // make sure it is in bounds
       if (in_arena(x, y)) {
 	k = buffer_index_from_x_y(x, y);
-	landmark_set_unseen(map, k);
+	//	landmark_set_unseen(map, k);
       }
     }
     
@@ -516,7 +551,7 @@ void swarm_map(int *distances) {
     // make sure it is in bounds
     if (in_arena(x, y)) {
       k = buffer_index_from_x_y(x, y);
-      landmark_set_seen(map, k);
+      //      landmark_set_seen(map, k);
     }
   }
 }
@@ -524,8 +559,8 @@ void swarm_map(int *distances) {
 #ifdef LINUX
 void swarm_map_reset_current() {
   // blank map
-  landmark_map_dereference(best_particle.map);
-  best_particle.map = landmark_map_copy(NULL);
+  //  landmark_map_dereference(best_particle.map);
+  //  best_particle.map = landmark_map_copy(NULL);
 }
  
 void swarm_map_current(int *distances) {
@@ -549,7 +584,7 @@ void swarm_map_current(int *distances) {
       // make sure it is in bounds
       if (in_arena(x, y)) {
 	k = buffer_index_from_x_y(x, y);
-	landmark_set_unseen(best_particle.map, k);
+	//	landmark_set_unseen(best_particle.map, k);
       }
     }
     
@@ -560,7 +595,7 @@ void swarm_map_current(int *distances) {
     // make sure it is in bounds
     if (in_arena(x, y)) {
       k = buffer_index_from_x_y(x, y);
-      landmark_set_seen(best_particle.map, k);
+      //      landmark_set_seen(best_particle.map, k);
     }
   }
 }
@@ -590,7 +625,7 @@ int swarm_get_best_y_internal() {
 #ifdef LINUX
 int swarm_get_best_y() {
 #endif
-  return short_side - (best_particle.y - sensor_radius*sin(best_particle.theta*M_PI/180));
+  return best_particle.y - sensor_radius*sin(best_particle.theta*M_PI/180);
 }
 
 #ifndef LINUX
@@ -599,7 +634,7 @@ int swarm_get_best_theta_internal() {
 #ifdef LINUX
 int swarm_get_best_theta() {
 #endif
-  int t =-1*(best_particle.theta + 180) % 360;
+  int t = best_particle.theta % 360;
   if (t <= -180) t += 360;
   else if (t > 180) t -= 360;
   return t;
@@ -618,15 +653,15 @@ int swarm_get_theta(int i) {
 }
 
 void swarm_get_best_buffer(uint8_t *buffer) {
-  landmark_write_map(best_particle.map, buffer);
+  //  landmark_write_map(best_particle.map, buffer);
 }
 
 void swarm_get_map_buffer(uint8_t *buffer) {
-  landmark_write_map(map, buffer);
+  //  landmark_write_map(map, buffer);
 }
 
-landmark_map swarm_get_map() {
-  return *map;
+map_node* swarm_get_map() {
+  return map;
 }
 
 void swarm_get_all_particles(particle **p) {
@@ -637,4 +672,8 @@ int in_arena(int x, int y) {
   if (x >= 0 && x < long_side && y >= 0 && y < short_side)
     return 1;
   else return 0;
+}
+
+void swarm_set_map(map_node *new_map) {
+  map = new_map;
 }

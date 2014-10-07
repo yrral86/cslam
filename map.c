@@ -2,6 +2,15 @@
 
 static int width, height;
 
+map_node* map_expand(map_node *map) {
+  int w, h;
+  w = width;
+  h = height;
+  map_node *new = map_new(w * 2, h * 2);
+  map_merge(new, map, w, h, 0);
+  return new;
+}
+
 map_node* map_new(int w, int h) {
   width = w + 1;
   height = h + 1;
@@ -11,7 +20,7 @@ map_node* map_new(int w, int h) {
 map_node* map_new_from_observation(int *distances) {
   map_node* map;
   int i, j, d, x, y, max = 0;
-  double s, c, theta, dtheta;
+  double s, c, theta;
 
 
   for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++)
@@ -72,6 +81,23 @@ map_node* map_node_new(int x_min, int x_max, int y_min, int y_max) {
   return n;
 }
 
+map_node* map_dup(map_node *map) {
+  int i;
+  map_node *new = map_node_new(map->x_min, map->x_max, map->y_min, map->y_max);
+
+  for (i = 0; i < 4; i++) {
+    if (map->children[i] == NULL) {
+      // leaf
+      new->landmarks[i] = map->landmarks[i];
+    } else {
+      // interior
+      new->children[i] = map_dup(map->children[i]);
+    }
+  }
+
+  return new;
+}
+
 void map_node_spawn_child(map_node *node, int index) {
   int x_min, x_max, y_min, y_max;
 
@@ -82,8 +108,13 @@ void map_node_spawn_child(map_node *node, int index) {
 
 void map_merge(map_node *all, map_node *latest, int dx, int dy, int dt) {
   // copy latest into all
-  int i, j, x, y, x_min, x_max, y_min, y_max;
-  double r, theta;
+  int i, j, x, y, x_min, x_max, y_min, y_max, x_mid, y_mid;
+  double r, theta, dtheta;
+
+  dtheta = dt*M_PI/180;
+
+  x_mid = (all->x_max - all->x_min)/2;
+  y_mid = (all->y_max - all->y_min)/2;
 
   // for now assume aligned: (dx,dy,dt)=(0,0,0)
   for (i = 0; i < 4; i++)
@@ -94,7 +125,17 @@ void map_merge(map_node *all, map_node *latest, int dx, int dy, int dt) {
       x = (x_max + x_min)/2;
       y = (y_max + y_min)/2;
 
-      //      printf("plotting x, y (%i, %i)\n", x, y);
+      // project to origin at middle of buffer
+      x -= x_mid;
+      y -= y_mid;
+
+      // calculate radius and angle
+      r = sqrt(x*x + y*y);
+      theta = atan2(y, x);
+
+      // reproject using dx, dy, dt
+      x = x_mid + dx + r*cos(theta + dtheta);
+      y = y_mid + dy + r*sin(theta + dtheta);
 
       // plot seen/unseen at (x, y)
       for (j = 0; j < latest->landmarks[i].seen; j++)
@@ -277,6 +318,31 @@ void map_set_unseen(map_node *map, int x, int y) {
   } else
     // interior node, traverse
     map_set_unseen(map->children[index], x, y);
+}
+
+double map_seen_probability(map_node *map, int x, int y) {
+  int index = map_node_index_from_x_y(map, x, y);
+  double sum, p;
+
+  if (map->children[index] == NULL) {
+    // leaf node
+    sum = map->landmarks[index].seen + map->landmarks[index].unseen;
+    // 50/50 when no information
+    p = 0.5;
+    if (sum > 0)
+      p = map->landmarks[index].seen/sum;
+
+    // max certainty is 99%
+    if (p > 0.99) p = 0.99;
+
+    return p;
+  } else
+    // interior
+    return map_seen_probability(map->children[index], x, y);
+}
+
+double map_unseen_probability(map_node *map, int x, int y) {
+  return 1 - map_seen_probability(map, x, y);
 }
 
 /*
