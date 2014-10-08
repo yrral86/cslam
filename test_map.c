@@ -35,7 +35,6 @@ int main(int argc, char **argv) {
   i = 0;
   while (more_observations()) {
     obs = next_observation();
-    cp->observation = map_new_from_observation(obs);
     do {
       swarm_move(0, 0, 360);
       swarm_update(obs);
@@ -46,6 +45,7 @@ int main(int argc, char **argv) {
     x = swarm_get_best_x();
     y = swarm_get_best_y();
     theta = swarm_get_best_theta();
+    cp->observation = map_new_from_observation(obs);
     map_merge(map_all, cp->observation, x, y, theta);
     printf("(%d, %d, %d)\n", x, y, theta);
     printf("(%d, %d, %d)\n", x - last_x, y - last_y, theta - last_theta);
@@ -53,10 +53,7 @@ int main(int argc, char **argv) {
     information = map_get_info(map_all);
     size = map_get_size(map_all);
     printf("%d\t%g\t%d\t%g\n", i, information, size, information/size);
-    map_write_buffer(cp->observation, buffer_current);
-    if (information < 1.1*cp->information && size < 1.1*cp->size)
-      map_deallocate(cp->observation);
-    else {
+    if (information > 1.1*cp->information || size > 1.1*cp->size) {
       // set up checkpoint
       cp->x = x;
       cp->y = y;
@@ -70,10 +67,12 @@ int main(int argc, char **argv) {
       printf("Rewritting map_all from checkpoints\n");
       map_deallocate(map_all);
       map_all = checkpoint_path_write_map(path_end);
-    }
-    map_write_buffer(map_all, buffer_all);
+      map_write_buffer(cp->observation, buffer_current);
+      map_write_buffer(map_all, buffer_all);
 
-    display();
+      display();
+    } else
+      map_deallocate(cp->observation);
 
     glutMainLoopEvent();
 
