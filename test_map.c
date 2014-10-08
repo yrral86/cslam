@@ -64,7 +64,9 @@ int main(int argc, char **argv) {
       path_end = checkpoint_path_append(path_end, cp);
 
       printf("Checkpoint #%d\n", checkpoint_path_length(path_end));
-      printf("Rewritting map_all from checkpoints\n");
+      printf("Running ga to refine path\n");
+      path_end = checkpoint_path_end(checkpoint_path_refine(path_end));
+      printf("Rewritting map_all from refined path checkpoints\n");
       map_deallocate(map_all);
       map_all = checkpoint_path_write_map(path_end);
       map_write_buffer(cp->observation, buffer_current);
