@@ -13,18 +13,14 @@ int* next_observation();
 int more_observations();
 
 int main(int argc, char **argv) {
-  int i, j, x, y, theta, last_x, last_y, last_theta, size;
+  int i, x, y, theta, last_x, last_y, last_theta, size;
   int width = 20000;
   int height = 20000;
   int *obs;
   double information;
   map_node *map_all;
-  checkpoint *cp;
-  checkpoint *path = malloc(sizeof(checkpoint));
-  path->next = NULL;
-  path->previous = NULL;
-  path->information = 0;
-  path->size = 0;
+  checkpoint *cp = checkpoint_path_new();;
+  checkpoint *path_end = checkpoint_path_new();
 
   uint8_t *buffer_current = malloc((width + 1)*(height + 1));
   uint8_t *buffer_all = malloc((width + 1)*(height + 1));
@@ -39,7 +35,7 @@ int main(int argc, char **argv) {
   i = 0;
   while (more_observations()) {
     obs = next_observation();
-    path->observation = map_new_from_observation(obs);
+    cp->observation = map_new_from_observation(obs);
     do {
       swarm_move(0, 0, 360);
       swarm_update(obs);
@@ -50,36 +46,30 @@ int main(int argc, char **argv) {
     x = swarm_get_best_x();
     y = swarm_get_best_y();
     theta = swarm_get_best_theta();
-    map_merge(map_all, path->observation, x, y, theta);
+    map_merge(map_all, cp->observation, x, y, theta);
     printf("(%d, %d, %d)\n", x, y, theta);
     printf("(%d, %d, %d)\n", x - last_x, y - last_y, theta - last_theta);
     //    printf("iteration\tinfo\tsize\tinfo/size\n");
     information = map_get_info(map_all);
     size = map_get_size(map_all);
     printf("%d\t%g\t%d\t%g\n", i, information, size, information/size);
-    map_write_buffer(path->observation, buffer_current);
-    if (information < 1.1*path->information && size < 1.1*path->size)
-      map_deallocate(path->observation);
+    map_write_buffer(cp->observation, buffer_current);
+    if (information < 1.1*cp->information && size < 1.1*cp->size)
+      map_deallocate(cp->observation);
     else {
-      path->x = x;
-      path->y = y;
-      path->theta = theta;
-      path->information = information;
-      path->size = size;
-      path->next = malloc(sizeof(checkpoint));
-      path->next->previous = path;
-      path = path->next;
-      path->next = NULL;
-      path->information = information;
-      path->size = size;
+      // set up checkpoint
+      cp->x = x;
+      cp->y = y;
+      cp->theta = theta;
+      cp->information = information;
+      cp->size = size;
+      // copy cp into new checkpoint after path
+      path_end = checkpoint_path_append(path_end, cp);
 
-      j = 0;
-      cp = path;
-      while(cp->previous != NULL) {
-	cp = cp->previous;
-	j++;
-      }
-      printf("Checkpoint #%d\n", j);
+      printf("Checkpoint #%d\n", checkpoint_path_length(path_end));
+      printf("Rewritting map_all from checkpoints\n");
+      map_deallocate(map_all);
+      map_all = checkpoint_path_write_map(path_end);
     }
     map_write_buffer(map_all, buffer_all);
 
@@ -91,6 +81,9 @@ int main(int argc, char **argv) {
   }
 
   fclose(data);
+
+  checkpoint_path_deallocate(path_end);
+  checkpoint_path_deallocate(cp);
 
   glutMainLoop();
 

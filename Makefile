@@ -2,6 +2,7 @@ CFLAGS = -lglut -lm -lGLU -lGL -lpthread -g -pthread -DLINUX -Wall
 OBJS = \
 	boxmuller \
 	buffer \
+	checkpoint \
 	landmark \
 	lazygl \
 	map \
@@ -17,6 +18,7 @@ OBJS = \
 OBJ_FILES = 	\
 		boxmuller.o \
 		buffer.o \
+		checkpoint.o \
 		landmark.o \
 		lazygl.o \
 		map.o \
