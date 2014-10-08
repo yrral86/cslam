@@ -32,6 +32,10 @@ int main(int argc, char **argv) {
 
   swarm_set_map(map_all);
 
+  x = width/2;
+  y = height/2;
+  theta = 0;
+
   i = 0;
   while (more_observations()) {
     obs = next_observation();
@@ -65,6 +69,7 @@ int main(int argc, char **argv) {
 
       printf("Checkpoint #%d\n", checkpoint_path_length(path_end));
       printf("Running ga to refine path\n");
+      printf("path_end: (%d,%d,%d)\n", path_end->x, path_end->y, path_end->theta);
       path_end = checkpoint_path_end(checkpoint_path_refine(path_end));
       printf("Rewritting map_all from refined path checkpoints\n");
       map_deallocate(map_all);

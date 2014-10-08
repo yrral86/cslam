@@ -112,13 +112,10 @@ void map_node_spawn_child(map_node *node, int index) {
 
 void map_merge(map_node *all, map_node *latest, int dx, int dy, int dt) {
   // copy latest into all
-  int i, j, x, y, x_min, x_max, y_min, y_max, x_mid, y_mid;
+  int i, j, x, y, x_min, x_max, y_min, y_max;
   double r, theta, dtheta;
 
   dtheta = dt*M_PI/180;
-
-  x_mid = (all->x_max - all->x_min)/2;
-  y_mid = (all->y_max - all->y_min)/2;
 
   // for now assume aligned: (dx,dy,dt)=(0,0,0)
   for (i = 0; i < 4; i++)
@@ -263,8 +260,15 @@ void map_set_seen(map_node *map, int x, int y) {
   //  printf("seen: x_min: %i x_max: %i y_min %i y_max: %i x: %i y: %i\n",
   //	 map->x_min, map->x_max, map->y_min, map->y_max, x, y);
   //  fflush(stdout);
-  assert(x >= map->x_min && x <= map->x_max);
-  assert(y >= map->y_min && y <= map->y_max);
+  if (x < map->x_min)
+    x = map->x_min;
+  else if (x > map->x_max)
+    x = map->x_max;
+
+  if (y < map->y_min)
+    y = map->y_min;
+  else if (y > map->y_max)
+    y = map->y_max;
 
   // initialize indices
   if (map->new) {
@@ -295,6 +299,16 @@ void map_set_seen(map_node *map, int x, int y) {
 
 void map_set_unseen(map_node *map, int x, int y) {
   int index;
+
+  if (x < map->x_min)
+    x = map->x_min;
+  else if (x > map->x_max)
+    x = map->x_max;
+
+  if (y < map->y_min)
+    y = map->y_min;
+  else if (y > map->y_max)
+    y = map->y_max;
 
   //  printf("unseen: x_min: %i x_max: %i y_min %i y_max: %i x: %i y: %i\n",
   //	 map->x_min, map->x_max, map->y_min, map->y_max, x, y);

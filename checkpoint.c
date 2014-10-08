@@ -61,6 +61,7 @@ int checkpoint_path_length(checkpoint *cp) {
   cp = cp->head;
   for (i = 0; cp->next != NULL; i++)
     cp = cp->next;
+  i++;
   return i;
 }
 
@@ -121,7 +122,7 @@ checkpoint* checkpoint_path_refine(checkpoint *cp) {
   int chromosomes[population][chromo_size];
   int tmp_chromosome[chromo_size];
   double scores[population];
-  double tmp_score, best_score = 0;
+  double tmp_score, best_score;
   checkpoint *refined_path;
   checkpoint *best_path = checkpoint_path_new();
   map_node *map;
@@ -133,19 +134,21 @@ checkpoint* checkpoint_path_refine(checkpoint *cp) {
 	chromosomes[p][i] = 0;
       else
 	if (i % 3 == 2)
-	  // theta
-	  chromosomes[p][i] = rand_limit(5);
+	  // theta [-2,2]
+	  chromosomes[p][i] = rand_limit(5)-2;
 	else
-	  // x, y
-	  chromosomes[p][i] = rand_limit(10);
+	  // x, y [-5,5]
+	  chromosomes[p][i] = rand_limit(11)-5;
 
   for (g = 0; g < generations; g++) {
+    best_score = 0;
     printf("generation %i\n", g);
-    for (p = 0; i < population; p++) {
+    for (p = 0; p < population; p++) {
       refined_path = checkpoint_path_dup_with_deltas(cp, &(*(chromosomes[p])));
       map = checkpoint_path_write_map(refined_path);
       scores[p] = 1/(map_get_info(map)*map_get_size(map));
       if (scores[p] > best_score) {
+	printf("best score %g\n", scores[p]);
 	checkpoint_path_deallocate(best_path);
 	best_path = refined_path;
 	best_score = scores[p];
@@ -179,9 +182,9 @@ checkpoint* checkpoint_path_refine(checkpoint *cp) {
     // mutate at 1/10th of random points
     checkpoint_path_refine_mutate((int*)chromosomes, chromo_size);
 
-    printf("best path modification:\n");
-    for (i = 0; i < chromo_size; i++)
-      printf("(%i, %i, %i)\n", chromosomes[0][3*i], chromosomes[0][3*i+1], chromosomes[0][3*i+2]);
+    printf("end of generation best path modification (length %d):\n", length);
+    for (i = 0; i < length; i++)
+      printf("path modification %i: (%i, %i, %i)\n", i + 1, chromosomes[0][3*i], chromosomes[0][3*i+1], chromosomes[0][3*i+2]);
 
     // next generation
   }
@@ -209,5 +212,19 @@ void checkpoint_path_refine_mutate(int *chromosomes, int size) {
   int i;
 
   for (i = 0; i < size/10; i++)
-    *(chromosomes + size*rand_limit(size) + rand_limit(3)) +=  rand_limit(10);
+    *(chromosomes + size*rand_limit(size) + rand_limit(3)) +=  rand_limit(10)-5;
+}
+
+void checkpoint_path_debug(checkpoint *cp) {
+  int i;
+
+  cp = cp->head;
+  printf("checkpoint_debug:\n");
+  i = 1;
+  while (cp->next != NULL) {
+    printf("%d: (%d,%d,%d)\n", i, cp->x, cp->y, cp->theta);
+    cp = cp->next;
+    i++;
+  }
+  printf("%d: (%d,%d,%d)\n", i, cp->x, cp->y, cp->theta);
 }
