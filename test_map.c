@@ -68,12 +68,17 @@ int main(int argc, char **argv) {
       path_end = checkpoint_path_append(path_end, cp);
 
       printf("Checkpoint #%d\n", checkpoint_path_length(path_end));
-      printf("Running ga to refine path\n");
-      printf("path_end: (%d,%d,%d)\n", path_end->x, path_end->y, path_end->theta);
-      path_end = checkpoint_path_end(checkpoint_path_refine(path_end));
-      printf("Rewritting map_all from refined path checkpoints\n");
-      map_deallocate(map_all);
-      map_all = checkpoint_path_write_map(path_end);
+      if (checkpoint_path_length(path_end) > 20) {
+	printf("Running ga to refine path\n");
+	printf("path_end: (%d,%d,%d)\n", path_end->x, path_end->y, path_end->theta);
+	path_end = checkpoint_path_end(checkpoint_path_refine(path_end));
+	printf("Rewritting map_all from refined path checkpoints\n");
+	map_deallocate(map_all);
+	map_all = checkpoint_path_write_map(path_end);
+	swarm_set_map(map_all);
+	cp->information = map_get_info(map_all);
+	cp->size = map_get_size(map_all);
+      }
       map_write_buffer(cp->observation, buffer_current);
       map_write_buffer(map_all, buffer_all);
 

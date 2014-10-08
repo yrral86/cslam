@@ -14,7 +14,7 @@ map_node* map_expand(map_node *map) {
 map_node* map_new(int w, int h) {
   width = w + 1;
   height = h + 1;
-  return map_node_new(0, w, 0, h);
+  return map_node_new(0, width, 0, height);
 }
 
 map_node* map_new_from_observation(int *distances) {
@@ -66,6 +66,7 @@ map_node* map_node_new(int x_min, int x_max, int y_min, int y_max) {
   n->x_max = x_max;
   n->y_min = y_min;
   n->y_max = y_max;
+  n->out_of_bounds = 0;
   n->new = 1;
 
   // init landmarks and children
@@ -260,15 +261,21 @@ void map_set_seen(map_node *map, int x, int y) {
   //  printf("seen: x_min: %i x_max: %i y_min %i y_max: %i x: %i y: %i\n",
   //	 map->x_min, map->x_max, map->y_min, map->y_max, x, y);
   //  fflush(stdout);
-  if (x < map->x_min)
-    x = map->x_min;
-  else if (x > map->x_max)
-    x = map->x_max;
+  if (x < 0) {
+    x = 0;
+    map->out_of_bounds++;
+  } else if (x > width) {
+    x = width;
+    map->out_of_bounds++;
+  }
 
-  if (y < map->y_min)
-    y = map->y_min;
-  else if (y > map->y_max)
-    y = map->y_max;
+  if (y < 0) {
+    y = 0;
+    map->out_of_bounds++;
+  } else if (y > height) {
+    y = height;
+    map->out_of_bounds++;
+  }
 
   // initialize indices
   if (map->new) {
@@ -300,15 +307,21 @@ void map_set_seen(map_node *map, int x, int y) {
 void map_set_unseen(map_node *map, int x, int y) {
   int index;
 
-  if (x < map->x_min)
-    x = map->x_min;
-  else if (x > map->x_max)
-    x = map->x_max;
+  if (x < 0) {
+    x = 0;
+    map->out_of_bounds++;
+  } else if (x > width) {
+    x = width;
+    map->out_of_bounds++;
+  }
 
-  if (y < map->y_min)
-    y = map->y_min;
-  else if (y > map->y_max)
-    y = map->y_max;
+  if (y < 0) {
+    y = 0;
+    map->out_of_bounds++;
+  } else if (y > height) {
+    y = height;
+    map->out_of_bounds++;
+  }
 
   //  printf("unseen: x_min: %i x_max: %i y_min %i y_max: %i x: %i y: %i\n",
   //	 map->x_min, map->x_max, map->y_min, map->y_max, x, y);
@@ -430,6 +443,10 @@ int map_get_size(map_node *node) {
   int size, i;
 
   size = 0;
+
+  // we plotted over the edge
+  if (node->out_of_bounds > 0)
+    size += 1000*node->out_of_bounds;
 
   for (i = 0; i < 4; i++)
     if (node->children[i] == NULL)

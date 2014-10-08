@@ -66,7 +66,7 @@ int checkpoint_path_length(checkpoint *cp) {
 }
 
 map_node* checkpoint_path_write_map(checkpoint *cp) {
-  map_node *map = map_new(20000,20000);
+  map_node *map = map_new(20000, 20000);
   cp = cp->head;
   while (cp->next != NULL) {
     map_merge(map, cp->observation, cp->x, cp->y, cp->theta);
@@ -130,7 +130,7 @@ checkpoint* checkpoint_path_refine(checkpoint *cp) {
   // init population
   for (p = 0; p < population; p++)
     for (i = 0; i < chromo_size; i++)
-      if (p == 0)
+      if (p < 5)
 	chromosomes[p][i] = 0;
       else
 	if (i % 3 == 2)
@@ -174,13 +174,13 @@ checkpoint* checkpoint_path_refine(checkpoint *cp) {
       i++;
     } while (swap);
 
-    // replace lower 1/3rd members of population with new members by crossing top 2/3, highest to lowest
+    // replace lower 1/3rd members of population two randomly selected members of top 1/3
     for (i = 0; i < population/3; i++) {
-      checkpoint_path_refine_crossover((int*)chromosomes, i, (2*population/3 - 1)-i, 2*population/3+i, chromo_size);
+      checkpoint_path_refine_crossover((int*)chromosomes, rand_limit(population/3), rand_limit(population/3), 2*population/3+i, chromo_size);
     }
 
-    // mutate at 1/10th of random points
-    checkpoint_path_refine_mutate((int*)chromosomes, chromo_size);
+    // mutate at 1/10th of random points in back 1/3rd
+    checkpoint_path_refine_mutate((int*)chromosomes, chromo_size*population);
 
     printf("end of generation best path modification (length %d):\n", length);
     for (i = 0; i < length; i++)
@@ -211,8 +211,9 @@ void checkpoint_path_refine_crossover(int *chromosomes, int one, int two, int ne
 void checkpoint_path_refine_mutate(int *chromosomes, int size) {
   int i;
 
-  for (i = 0; i < size/10; i++)
-    *(chromosomes + size*rand_limit(size) + rand_limit(3)) +=  rand_limit(10)-5;
+  for (i = 0; i < size/30; i++)
+    // [-5,5]
+    *(chromosomes + 2*size/3 + rand_limit(size/3)) +=  rand_limit(11)-5;
 }
 
 void checkpoint_path_debug(checkpoint *cp) {

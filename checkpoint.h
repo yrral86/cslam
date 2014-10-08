@@ -2,6 +2,7 @@
 #define __CHECKPOINT_H__
 
 #include "map.h"
+#include "random.h"
 
 typedef struct checkpoint {
   unsigned int x;

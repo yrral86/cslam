@@ -16,6 +16,7 @@ typedef struct map_node {
   unsigned int x_max;
   unsigned int y_min;
   unsigned int y_max;
+  unsigned int out_of_bounds;
   landmark landmarks[4];
   landmark landmark;
   struct map_node* children[4];
