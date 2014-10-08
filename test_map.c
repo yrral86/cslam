@@ -1,5 +1,6 @@
 #include "map.h"
 #include "lazygl.h"
+#include "checkpoint.h"
 
 static FILE *data;
 static int initialized = 0;
@@ -12,11 +13,18 @@ int* next_observation();
 int more_observations();
 
 int main(int argc, char **argv) {
-  int i, x, y, theta, last_x, last_y, last_theta;
+  int i, j, x, y, theta, last_x, last_y, last_theta, size;
   int width = 20000;
   int height = 20000;
   int *obs;
-  map_node *map, *map_all;
+  double information;
+  map_node *map_all;
+  checkpoint *cp;
+  checkpoint *path = malloc(sizeof(checkpoint));
+  path->next = NULL;
+  path->previous = NULL;
+  path->information = 0;
+  path->size = 0;
 
   uint8_t *buffer_current = malloc((width + 1)*(height + 1));
   uint8_t *buffer_all = malloc((width + 1)*(height + 1));
@@ -31,7 +39,7 @@ int main(int argc, char **argv) {
   i = 0;
   while (more_observations()) {
     obs = next_observation();
-    map = map_new_from_observation(obs);
+    path->observation = map_new_from_observation(obs);
     do {
       swarm_move(0, 0, 360);
       swarm_update(obs);
@@ -42,19 +50,44 @@ int main(int argc, char **argv) {
     x = swarm_get_best_x();
     y = swarm_get_best_y();
     theta = swarm_get_best_theta();
-    map_merge(map_all, map, x, y, theta);
+    map_merge(map_all, path->observation, x, y, theta);
     printf("(%d, %d, %d)\n", x, y, theta);
     printf("(%d, %d, %d)\n", x - last_x, y - last_y, theta - last_theta);
     //    printf("iteration\tinfo\tsize\tinfo/size\n");
-    printf("%d\t%g\t%d\t%g\n", i, map_get_info(map_all), map_get_size(map_all), map_get_info(map_all)/map_get_size(map_all));
-    i++;
-    map_write_buffer(map, buffer_current);
-    map_deallocate(map);
+    information = map_get_info(map_all);
+    size = map_get_size(map_all);
+    printf("%d\t%g\t%d\t%g\n", i, information, size, information/size);
+    map_write_buffer(path->observation, buffer_current);
+    if (information < 1.1*path->information && size < 1.1*path->size)
+      map_deallocate(path->observation);
+    else {
+      path->x = x;
+      path->y = y;
+      path->theta = theta;
+      path->information = information;
+      path->size = size;
+      path->next = malloc(sizeof(checkpoint));
+      path->next->previous = path;
+      path = path->next;
+      path->next = NULL;
+      path->information = information;
+      path->size = size;
+
+      j = 0;
+      cp = path;
+      while(cp->previous != NULL) {
+	cp = cp->previous;
+	j++;
+      }
+      printf("Checkpoint #%d\n", j);
+    }
     map_write_buffer(map_all, buffer_all);
 
     display();
 
     glutMainLoopEvent();
+
+    i++;
   }
 
   fclose(data);
