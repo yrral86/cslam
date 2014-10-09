@@ -23,6 +23,7 @@ checkpoint* checkpoint_path_append(checkpoint*,checkpoint*);
 checkpoint* checkpoint_path_end(checkpoint*);
 int checkpoint_path_length(checkpoint*);
 map_node* checkpoint_path_write_map(checkpoint*);
+map_node* checkpoint_path_write_map_with_path(checkpoint*);
 void checkpoint_path_deallocate(checkpoint*);
 checkpoint* checkpoint_path_dup_with_deltas(checkpoint*, int*);
 checkpoint* checkpoint_path_refine(checkpoint*);

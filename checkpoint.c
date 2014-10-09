@@ -76,6 +76,24 @@ map_node* checkpoint_path_write_map(checkpoint *cp) {
   return map;
 }
 
+map_node* checkpoint_path_write_map_with_path(checkpoint *cp) {
+  int i, j;
+  map_node *map = map_new(20000, 20000);
+  cp = cp->head;
+  while (cp->next != NULL) {
+    map_merge(map, cp->observation, cp->x, cp->y, cp->theta);
+    for (i = -5; i < 6; i++)
+      for (j = -5; j < 6; j++)
+	map_set_seen(map, cp->x+i, cp->y+j);
+    cp = cp->next;
+  }
+  map_merge(map, cp->observation, cp->x, cp->y, cp->theta);
+  for (i = -5; i < 6; i++)
+    for (j = -5; j < 6; j++)
+      map_set_seen(map, cp->x+i, cp->y+j);
+  return map;
+}
+
 void checkpoint_path_deallocate(checkpoint *cp) {
   cp = cp->head;
   while (cp->next != NULL) {

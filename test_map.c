@@ -19,6 +19,7 @@ int main(int argc, char **argv) {
   int *obs;
   double information;
   map_node *map_all;
+  map_node *map_all_with_path;
   checkpoint *cp = checkpoint_path_new();;
   checkpoint *path_end = checkpoint_path_new();
 
@@ -27,6 +28,7 @@ int main(int argc, char **argv) {
   glutInit(&argc, argv);
   initGL(buffer_current, buffer_all, width + 1, height + 1, 400, 400);
   map_all = map_new(width, height);
+  map_all_with_path = map_new(width, height);
 
   swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, width + 1, height + 1, width/2, 0);
 
@@ -82,9 +84,11 @@ int main(int argc, char **argv) {
       map_deallocate(map_all);
       map_all = checkpoint_path_write_map(path_end);
       swarm_set_map(map_all);
+      map_deallocate(map_all_with_path);
+      map_all_with_path = checkpoint_path_write_map_with_path(path_end);
 
       map_write_buffer(cp->observation, buffer_current);
-      map_write_buffer(map_all, buffer_all);
+      map_write_buffer(map_all_with_path, buffer_all);
 
       display();
     } else
