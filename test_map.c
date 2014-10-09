@@ -13,7 +13,7 @@ int* next_observation();
 int more_observations();
 
 int main(int argc, char **argv) {
-  int i, x, y, theta, last_x, last_y, last_theta, size;
+  int i, x, y, theta, last_x, last_y, last_theta, size, length;
   int width = 20000;
   int height = 20000;
   int *obs;
@@ -67,8 +67,9 @@ int main(int argc, char **argv) {
       // copy cp into new checkpoint after path
       path_end = checkpoint_path_append(path_end, cp);
 
-      printf("Checkpoint #%d\n", checkpoint_path_length(path_end));
-      if (checkpoint_path_length(path_end) > 20) {
+      length = checkpoint_path_length(path_end);
+      printf("Checkpoint #%d\n", length);
+      if (length >= 20 && length % 5 == 0) {
 	printf("Running ga to refine path\n");
 	printf("path_end: (%d,%d,%d)\n", path_end->x, path_end->y, path_end->theta);
 	path_end = checkpoint_path_end(checkpoint_path_refine(path_end));

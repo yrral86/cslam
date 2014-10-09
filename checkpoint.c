@@ -147,6 +147,7 @@ checkpoint* checkpoint_path_refine(checkpoint *cp) {
       refined_path = checkpoint_path_dup_with_deltas(cp, &(*(chromosomes[p])));
       map = checkpoint_path_write_map(refined_path);
       scores[p] = 1/(map_get_info(map)*map_get_size(map));
+      map_deallocate(map);
       if (scores[p] > best_score) {
 	printf("best score %g\n", scores[p]);
 	checkpoint_path_deallocate(best_path);
@@ -174,13 +175,14 @@ checkpoint* checkpoint_path_refine(checkpoint *cp) {
       i++;
     } while (swap);
 
-    // replace lower 1/3rd members of population two randomly selected members of top 1/3
+    // replace lower 1/3rd members of population two randomly selected members of top 1/3 and top 2/3
     for (i = 0; i < population/3; i++) {
-      checkpoint_path_refine_crossover((int*)chromosomes, rand_limit(population/3), rand_limit(population/3), 2*population/3+i, chromo_size);
+      checkpoint_path_refine_crossover((int*)chromosomes, rand_limit(population/3), rand_limit(2*population/3), 2*population/3+i, chromo_size);
     }
 
-    // mutate at 1/10th of random points in back 1/3rd
-    checkpoint_path_refine_mutate((int*)chromosomes, chromo_size*population);
+    // mutate at a population/3 random points in back 1/3rd
+    for (i = 0; i < population/6; i++)
+      checkpoint_path_refine_mutate((int*)chromosomes[2*population/3 + rand_limit(population/3)]);
 
     printf("end of generation best path modification (length %d):\n", length);
     for (i = 0; i < length; i++)
@@ -208,12 +210,15 @@ void checkpoint_path_refine_crossover(int *chromosomes, int one, int two, int ne
   memcpy(chromosomes + new*size + c_2, chromosomes + one*size + c_2, size - c_2);
 }
 
-void checkpoint_path_refine_mutate(int *chromosomes, int size) {
+void checkpoint_path_refine_mutate(int *chromosome) {
   int i;
 
-  for (i = 0; i < size/30; i++)
-    // [-5,5]
-    *(chromosomes + 2*size/3 + rand_limit(size/3)) +=  rand_limit(11)-5;
+  for (i = 0; i < 3; i++) {
+    if (i == 2)
+      *(chromosome + i) +=  rand_normal(INITIAL_ANGLE_VARIANCE);
+    else
+      *(chromosome + i) +=  rand_normal(INITIAL_POSITION_VARIANCE);
+  }
 }
 
 void checkpoint_path_debug(checkpoint *cp) {
