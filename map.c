@@ -140,10 +140,8 @@ void map_merge(map_node *all, map_node *latest, int dx, int dy, int dt) {
       y = dy + r*sin(theta + dtheta);
 
       // plot seen/unseen at (x, y)
-      for (j = 0; j < latest->landmarks[i].seen; j++)
-	map_set_seen(all, x, y);
-      for (j = 0; j < latest->landmarks[i].unseen; j++)
-	map_set_unseen(all, x, y);
+      map_increase_seen(all, x, y, latest->landmarks[i].seen);
+      map_increase_unseen(all, x, y, latest->landmarks[i].unseen);	
     } else
       map_merge(all, latest->children[i], dx, dy, dt);
 }
@@ -256,6 +254,10 @@ void map_deallocate(map_node *map) {
 }
 
 void map_set_seen(map_node *map, int x, int y) {
+  map_increase_seen(map, x, y, 1);
+}
+
+void map_set_seen(map_node *map, int x, int y, int increase) {
   int index;
 
   //  printf("seen: x_min: %i x_max: %i y_min %i y_max: %i x: %i y: %i\n",
@@ -285,7 +287,7 @@ void map_set_seen(map_node *map, int x, int y) {
     map->new = 0;
   }
 
-  (map->landmark.seen)++;
+  map->landmark.seen += increase;
 
   index = map_node_index_from_x_y(map, x, y);
   //  printf("index: %i\n", index);
@@ -298,13 +300,17 @@ void map_set_seen(map_node *map, int x, int y) {
       map_set_seen(map->children[index], x, y);
     } else
       // we are at a leaf, record sublandmark
-      map->landmarks[index].seen++;
+      map->landmarks[index].seen + increase;
   } else
     // interior node, traverse
     map_set_seen(map->children[index], x, y);
 }
 
 void map_set_unseen(map_node *map, int x, int y) {
+  map_increase_unseen(map, x, y, 1);
+}
+
+void map_set_unseen(map_node *map, int x, int y, int increase) {
   int index;
 
   if (x < 0) {
@@ -333,7 +339,7 @@ void map_set_unseen(map_node *map, int x, int y) {
     map->new = 0;
   }
 
-  (map->landmark.unseen)++;
+  map->landmark.unseen += increase;
 
   index = map_node_index_from_x_y(map, x, y);
 
@@ -345,7 +351,7 @@ void map_set_unseen(map_node *map, int x, int y) {
       map_set_unseen(map->children[index], x, y);
       } else*/
       // we are at a leaf, record sublandmark
-      map->landmarks[index].unseen++;
+    map->landmarks[index].unseen += increase;
   } else
     // interior node, traverse
     map_set_unseen(map->children[index], x, y);

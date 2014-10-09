@@ -1,4 +1,4 @@
-CFLAGS = -lglut -lm -lGLU -lGL -lpthread -g -pthread -DLINUX -Wall
+CFLAGS = -lglut -lm -lGLU -lGL -lpthread -g -pthread -DLINUX -Wall -pg
 OBJS = \
 	boxmuller \
 	buffer \

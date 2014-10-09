@@ -38,6 +38,8 @@ void map_node_ranges_from_index(map_node*, int, int*, int*, int*, int*);
 void map_deallocate(map_node*);
 void map_set_seen(map_node*, int, int);
 void map_set_unseen(map_node*, int, int);
+void map_increase_seen(map_node*, int, int, int);
+void map_increase_unseen(map_node*, int, int, int);
 double map_seen_probability(map_node*, int, int);
 double map_unseen_probability(map_node*, int, int);
 //void map_landmark_check_split(map_node*, int);
