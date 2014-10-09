@@ -117,8 +117,8 @@ checkpoint* checkpoint_path_refine(checkpoint *cp) {
   int length = checkpoint_path_length(cp);
   int chromo_size = length*3;
   // population shoud be divisible by 6
-  int population = 30;
-  int generations = 30;
+  int population = 1000;
+  int generations = 100;
   int chromosomes[population][chromo_size];
   int tmp_chromosome[chromo_size];
   double scores[population];
@@ -146,7 +146,10 @@ checkpoint* checkpoint_path_refine(checkpoint *cp) {
     for (p = 0; p < population; p++) {
       refined_path = checkpoint_path_dup_with_deltas(cp, &(*(chromosomes[p])));
       map = checkpoint_path_write_map(refined_path);
+
       scores[p] = 1/(map_get_info(map)*map_get_size(map));
+      // maximize info/size
+      //      scores[p] = map_get_info(map)/map_get_size(map);
       map_deallocate(map);
       if (scores[p] > best_score) {
 	printf("best score %g\n", scores[p]);
