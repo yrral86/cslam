@@ -32,6 +32,7 @@ map_node* map_node_new(int, int, int, int);
 map_node* map_dup(map_node*);
 void map_node_spawn_child(map_node*, int);
 void map_merge(map_node*, map_node*, int, int, int);
+void map_merge_aligned(map_node*, map_node*);
 int map_node_index_from_x_y(map_node*, int, int);
 void map_node_ranges_from_index(map_node*, int, int*, int*, int*, int*);
 //void map_node_split(map_node*,int);

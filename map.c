@@ -118,7 +118,6 @@ void map_merge(map_node *all, map_node *latest, int dx, int dy, int dt) {
 
   dtheta = dt*M_PI/180;
 
-  // for now assume aligned: (dx,dy,dt)=(0,0,0)
   for (i = 0; i < 4; i++)
     if (latest->children[i] == NULL) {
       // leaf
@@ -144,6 +143,25 @@ void map_merge(map_node *all, map_node *latest, int dx, int dy, int dt) {
       map_increase_unseen(all, x, y, latest->landmarks[i].unseen);	
     } else
       map_merge(all, latest->children[i], dx, dy, dt);
+}
+
+void map_merge_aligned(map_node *all, map_node *latest) {
+    // copy latest into all
+  int i, j, x, y, x_min, x_max, y_min, y_max;
+  double r, theta;
+
+  for (i = 0; i < 4; i++)
+    if (latest->children[i] == NULL) {
+      // leaf
+      // find center of region
+      map_node_ranges_from_index(latest, i, &x_min, &x_max, &y_min, &y_max);
+      x = (x_max + x_min)/2;
+      y = (y_max + y_min)/2;
+
+      map_increase_seen(all, x, y, latest->landmarks[i].seen);
+      map_increase_unseen(all, x, y, latest->landmarks[i].unseen);
+    } else
+      map_merge_aligned(all, latest->children[i]);
 }
 
 int map_node_index_from_x_y(map_node *node, int x, int y) {
