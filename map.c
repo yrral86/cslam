@@ -149,13 +149,8 @@ void map_merge(map_node *all, map_node *latest, int dx, int dy, int dt) {
 int map_node_index_from_x_y(map_node *node, int x, int y) {
   int index, mid_x, mid_y;
 
-  assert(node->new == 0);
-
   mid_x = (node->x_max + node->x_min)/2;
   mid_y = (node->y_max + node->y_min)/2;
-
-  assert(x >= node->x_min && x <= node->x_max);
-  assert(y >= node->y_min && y <= node->y_max);
 
   // find quadrant
   if (x < mid_x && y >= mid_y)
@@ -257,7 +252,7 @@ void map_set_seen(map_node *map, int x, int y) {
   map_increase_seen(map, x, y, 1);
 }
 
-void map_set_seen(map_node *map, int x, int y, int increase) {
+void map_increase_seen(map_node *map, int x, int y, int increase) {
   int index;
 
   //  printf("seen: x_min: %i x_max: %i y_min %i y_max: %i x: %i y: %i\n",
@@ -297,20 +292,20 @@ void map_set_seen(map_node *map, int x, int y, int increase) {
       // need to spawn child
       map_node_spawn_child(map, index);
       //      printf("spawned child, setting seen\n");
-      map_set_seen(map->children[index], x, y);
+      map_increase_seen(map->children[index], x, y, increase);
     } else
       // we are at a leaf, record sublandmark
-      map->landmarks[index].seen + increase;
+      map->landmarks[index].seen += increase;
   } else
     // interior node, traverse
-    map_set_seen(map->children[index], x, y);
+    map_increase_seen(map->children[index], x, y, increase);
 }
 
 void map_set_unseen(map_node *map, int x, int y) {
   map_increase_unseen(map, x, y, 1);
 }
 
-void map_set_unseen(map_node *map, int x, int y, int increase) {
+void map_increase_unseen(map_node *map, int x, int y, int increase) {
   int index;
 
   if (x < 0) {
@@ -354,7 +349,7 @@ void map_set_unseen(map_node *map, int x, int y, int increase) {
     map->landmarks[index].unseen += increase;
   } else
     // interior node, traverse
-    map_set_unseen(map->children[index], x, y);
+    map_increase_unseen(map->children[index], x, y, increase);
 }
 
 double map_seen_probability(map_node *map, int x, int y) {
