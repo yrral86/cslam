@@ -51,4 +51,6 @@ int swarm_get_best_theta();
 #endif
 int in_arena(int, int);
 void swarm_set_map(uint8_t*);
+void swarm_sort();
+
 #endif

@@ -187,29 +187,21 @@ void map_reheapify_down_root(map_node *map, int parent) {
     // need to swap left or right for parent
     p = map->heap[parent];
     // if we have two children
-    if (child_right < map->current_size) {
-      // check order
-      if (map_pixel_need_swap(map->heap[child_left], map->heap[child_right])) {
-	// child_right should be parent
-	map->heap[parent] = map->heap[child_right];
-	map->heap[child_right] = p;
-	parent = child_right;
-      } else {
-	// child_left should be parent
-	map->heap[parent] = map->heap[child_left];
-	map->heap[child_left] = p;
-	parent = child_left;
-      }
-      child_left = map_left_index(parent);
-      child_right = map_right_index(parent);
+    if (child_right < map->current_size &&
+	// check order
+	map_pixel_need_swap(map->heap[child_left], map->heap[child_right])) {
+      // child_right should be parent
+      map->heap[parent] = map->heap[child_right];
+      map->heap[child_right] = p;
+      parent = child_right;
     } else {
-      // we only have left child, and it needs swapped
+      // child_left should be parent
       map->heap[parent] = map->heap[child_left];
       map->heap[child_left] = p;
       parent = child_left;
-      child_left = map_left_index(parent);
-      child_right = map_right_index(parent);
     }
+    child_left = map_left_index(parent);
+    child_right = map_right_index(parent);
   }
 }
 

@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include "slamd.h"
 
-static particle particles[INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT];
-static particle previous_particles[INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT];
+static particle particles[PARTICLE_COUNT];
+static particle previous_particles[PARTICLE_COUNT];
 static particle best_particle;
 //static landmark_map *map;
 static uint8_t *map;
@@ -202,7 +202,7 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   //x = start/2;
   x = long_side/2;
   y = short_side/2;
-  for (i = 0; i < INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT; i++) {
+  for (i = 0; i < PARTICLE_COUNT; i++) {
     //y = short_side/4;
 
     //    if (rand_limit(2))
@@ -243,10 +243,7 @@ void swarm_move(int dx, int dy, int dtheta) {
   dx += sensor_radius*(cos(t_new) - cos(t_old));
   dy += sensor_radius*(sin(t_new) - sin(t_old));
 
-  if (iterations < 1)
-    p_count = INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT;
-  else
-    p_count = PARTICLE_COUNT;
+  p_count = PARTICLE_COUNT;
 	
   // reset convergence if we have a non 0 move
   if (abs(dx) > 0 || abs(dy) > 0 || abs(dtheta) > 0)
@@ -306,10 +303,7 @@ void swarm_update(observations *obs) {
   ReleaseSemaphore(return_sem, 1, NULL);
 #endif
 
-  if (iterations < 1)
-    p_count = INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT;
-  else
-    p_count = PARTICLE_COUNT;
+  p_count = PARTICLE_COUNT;
 
   obs->hypotheses = malloc(sizeof(hypothesis)*p_count);
 
@@ -418,32 +412,9 @@ void swarm_update(observations *obs) {
   //  swarm_map_current(distances);
 
   // normalize particle log probabilities, convert to normal probabilities for resampling
-  total = 0.0;
-  for (i = 0; i < p_count; i++) {
-    //    particles[i].p -= min;
-    //    particles[i].p = pow(M_E, -particles[i].p);
-    total += particles[i].p;
-  }
+  swarm_normalize();
 
-  for (i = 0; i < p_count; i++) {
-    particles[i].p /= total;
-  }
-
-  // bubblesort particles by p
-  swap = 1;
-  i = 0;
-  do {
-    swap = 0;
-    for (j = 0; j < p_count - i - 1; j++)
-      // if the left particle is smaller probability, bubble it right
-      if (particles[j].p < particles[j + 1].p) {
-	temp = particles[j];
-	particles[j] = particles[j + 1];
-	particles[j + 1] = temp;
-	swap = 1;
-      }
-    i++;
-  } while (swap);
+  swarm_sort();
 
   // calculate standard deviation of top 90%
   i = 0;
@@ -696,4 +667,36 @@ int in_arena(int x, int y) {
 
 void swarm_set_map(uint8_t *new_map) {
   map = new_map;
+}
+
+void swarm_normalize() {
+  int i;
+  double total = 0.0;
+  for (i = 0; i < PARTICLE_COUNT; i++) {
+    total += particles[i].p;
+  }
+
+  for (i = 0; i < PARTICLE_COUNT; i++) {
+    particles[i].p /= total;
+  }
+}
+
+void swarm_sort() {
+  particle temp;
+  int j;
+  // bubblesort particles by p
+  int swap = 1;
+  int i = 0;
+  do {
+    swap = 0;
+    for (j = 0; j < PARTICLE_COUNT - i - 1; j++)
+      // if the left particle is smaller probability, bubble it right
+      if (particles[j].p < particles[j + 1].p) {
+	temp = particles[j];
+	particles[j] = particles[j + 1];
+	particles[j + 1] = temp;
+	swap = 1;
+      }
+    i++;
+  } while (swap);
 }
