@@ -414,7 +414,7 @@ void swarm_update(observations *obs) {
   // normalize particle log probabilities, convert to normal probabilities for resampling
   swarm_normalize();
 
-  swarm_sort();
+  swarm_sort(0, p_count - 1);
 
   // calculate standard deviation of top 90%
   i = 0;
@@ -681,22 +681,35 @@ void swarm_normalize() {
   }
 }
 
-void swarm_sort() {
-  particle temp;
-  int j;
-  // bubblesort particles by p
-  int swap = 1;
-  int i = 0;
-  do {
-    swap = 0;
-    for (j = 0; j < PARTICLE_COUNT - i - 1; j++)
-      // if the left particle is smaller probability, bubble it right
-      if (particles[j].p < particles[j + 1].p) {
-	temp = particles[j];
-	particles[j] = particles[j + 1];
-	particles[j + 1] = temp;
-	swap = 1;
-      }
-    i++;
-  } while (swap);
+void swarm_sort(int left, int right) {
+  int pivot;
+  if (left < right) {
+    pivot = swarm_partition(left, right);
+    swarm_sort(left, pivot - 1);
+    swarm_sort(pivot + 1, right);
+  }
+}
+
+int swarm_partition(int left, int right) {
+  int i, pivot_index = (right + left)/2;
+  particle p, pivot = particles[pivot_index];
+  int index = left;
+
+  p = particles[right];
+  particles[right] = pivot;
+  particles[pivot_index] = p;
+
+  for (i = left; i <= right; i++)
+    if (particles[i].p > pivot.p) {
+      p = particles[i];
+      particles[i] = particles[index];
+      particles[index] = p;
+      index++;
+    }
+
+  p = particles[index];
+  particles[index] = particles[right];
+  particles[right] = p;
+
+  return index;
 }

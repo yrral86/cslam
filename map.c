@@ -92,7 +92,7 @@ map_node* map_new_from_hypothesis(hypothesis h) {
     pixel.h = h;
     pixel.obs_index = i;
     map_add_pixel(map, pixel);
-    for (j = d - 30; j >= 30; j -= 30) {
+    for (j = d - 10; j >= 10; j -= 10) {
       pixel.x = h.x + j*c;
       pixel.y = h.y + j*s;
       pixel.l.seen = 0;
@@ -112,6 +112,8 @@ map_node* map_new_from_hypothesis(hypothesis h) {
 #ifdef __MAP_TYPE_HEAP__
 void map_add_pixel(map_node *map, map_pixel p) {
   if (map->current_size + 1 <= map->max_size) {
+    p.x /= BUFFER_FACTOR;
+    p.y /= BUFFER_FACTOR;
     map->heap[map->current_size] = p;
     map->current_size++;
     map_reheapify_up(map);
@@ -852,21 +854,19 @@ void map_write_buffer(map_node *map, uint8_t *buffer) {
 #endif
 #ifdef __MAP_TYPE_HEAP__
   map_pixel p;
-  int sum, value;
+  int i, j, sum, value;
   map = map_dup(map);
   while(map->current_size > 0) {
     p = map_pop_pixel(map);
 
     sum = p.l.seen + p.l.unseen;
-    // use 0 if no data
-    if (sum < 1)
-      value = 0;
-    else
+    if (sum >= 1) {
       value = (int)(255 * p.l.seen/(double)sum);
 
-    // write pixel with value
-    if (value > 0) {
-      buffer[width*p.y + p.x] = value;
+      // write pixels with value
+      for (i = p.y*BUFFER_FACTOR; i < BUFFER_FACTOR*(p.y + 1); i++)
+	for (j = p.x*BUFFER_FACTOR; j < BUFFER_FACTOR*(p.x + 1); j++)
+	  buffer[width*i + j] = value;
     }
   }
   map_deallocate(map);

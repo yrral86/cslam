@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
     map_deallocate(map_all);
     map_all = checkpoint_path_write_map(path_end);
     map_write_buffer(map_all, buffer_all);
-    swarm_set_map(buffer_all);
+    //    swarm_set_map(buffer_all);
 
     /*
     last_x = x;
