@@ -54,5 +54,6 @@ void swarm_set_map(uint8_t*);
 void swarm_normalize();
 void swarm_sort(int, int);
 int swarm_partition(int, int);
+void swarm_reset_convergence();
 
 #endif

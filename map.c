@@ -91,14 +91,18 @@ map_node* map_new_from_hypothesis(hypothesis h) {
     pixel.l.unseen = 0;
     pixel.h = h;
     pixel.obs_index = i;
+    pixel.x /= BUFFER_FACTOR;
+    pixel.y /= BUFFER_FACTOR;
     map_add_pixel(map, pixel);
-    for (j = d - 10; j >= 10; j -= 10) {
+    for (j = d - BUFFER_FACTOR; j >= BUFFER_FACTOR; j -= BUFFER_FACTOR) {
       pixel.x = h.x + j*c;
       pixel.y = h.y + j*s;
       pixel.l.seen = 0;
       pixel.l.unseen = 1;
       pixel.h = h;
       pixel.obs_index = i;
+      pixel.x /= BUFFER_FACTOR;
+      pixel.y /= BUFFER_FACTOR;
       map_add_pixel(map, pixel);
     }
   }
@@ -112,8 +116,6 @@ map_node* map_new_from_hypothesis(hypothesis h) {
 #ifdef __MAP_TYPE_HEAP__
 void map_add_pixel(map_node *map, map_pixel p) {
   if (map->current_size + 1 <= map->max_size) {
-    p.x /= BUFFER_FACTOR;
-    p.y /= BUFFER_FACTOR;
     map->heap[map->current_size] = p;
     map->current_size++;
     map_reheapify_up(map);
@@ -507,6 +509,7 @@ map_node* map_dup(map_node *map) {
     map_double_max_size(new);
   // copy
   new->heap_sorted = map->heap_sorted;
+  nex->current_size += map->index;
   new->index = 0;
   memcpy(new->heap, map->heap, sizeof(map_pixel)*map->current_size);
   new->current_size = map->current_size;

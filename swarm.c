@@ -236,18 +236,14 @@ void swarm_move(int dx, int dy, int dtheta) {
   int i, tries, p_count;
   double t_old, t_new;
   particle p;
-  t_old = best_particle.theta*M_PI/180;
+  /*  t_old = best_particle.theta*M_PI/180;
   t_new = (best_particle.theta + dtheta)*M_PI/180;
 
   // adjust dx/dy for dtheta using radius and old theta
   dx += sensor_radius*(cos(t_new) - cos(t_old));
   dy += sensor_radius*(sin(t_new) - sin(t_old));
-
+  */
   p_count = PARTICLE_COUNT;
-	
-  // reset convergence if we have a non 0 move
-  if (abs(dx) > 0 || abs(dy) > 0 || abs(dtheta) > 0)
-    converged = 0;
 
   // add motion
   for (i = 0; i < p_count; i++) {
@@ -261,8 +257,8 @@ void swarm_move(int dx, int dy, int dtheta) {
       //      } else {
         // sample normal distribution
       // stay still 20% of the time
-      if (rand_limit(100) >20)
-	particles[i] = particle_sample_normal(p);
+      if (rand_limit(100) > 20)
+	particles[i] = particle_sample_normal(p, iterations);
       else
 	particles[i] = p;
 	//      }
@@ -282,6 +278,11 @@ void swarm_move(int dx, int dy, int dtheta) {
 	   p.y,
 	   p.theta);*/
   }
+}
+
+void swarm_reset_convergence() {
+  converged = 0;
+  iterations = 0;
 }
 
 #ifndef LINUX
@@ -325,7 +326,7 @@ void swarm_update(observations *obs) {
 
     //    printf("particle map size: %i\n", particle_map->current_size);
 
-    particles[i].p = 1.0/buffer_hypothesis_size(map, h);
+    particles[i].p *= 1.0/buffer_hypothesis_size(map, h);
 
     //    printf("escaped map_merge_variance\n");
     //    buffer_deallocate(particle_map);
@@ -416,14 +417,14 @@ void swarm_update(observations *obs) {
 
   swarm_sort(0, p_count - 1);
 
-  // calculate standard deviation of top 90%
+  // calculate standard deviation of top 99%
   i = 0;
   total = 0.0;
   mean[0] = 0.0;
   mean[1] = 0.0;
   mean[2] = 0.0;
   count = 0;
-  while (total < 0.9) {
+  while (total < 0.99) {
     mean[0] += particles[i].x;
     mean[1] += particles[i].y;
     mean[2] += particles[i].theta;
@@ -440,7 +441,7 @@ void swarm_update(observations *obs) {
   stddev[2] = 0.0;
   total = 0.0;
   i = 0;
-  while (total < 0.9) {
+  while (total < 0.99) {
     stddev[0] += pow(mean[0] - particles[i].x, 2);
     stddev[1] += pow(mean[1] - particles[i].y, 2);
     stddev[2] += pow(mean[2] - particles[i].theta, 2);
@@ -453,17 +454,19 @@ void swarm_update(observations *obs) {
       stddev[i] /= count - 1;
     else
       stddev[i] /= count;
-    stddev[i] = sqrt(stddev[i]);
+    if (i == 2)
+      stddev[i] = sqrt(stddev[i]);
   }
 
   // make sure 99% of particles are within 75mm and 5 degrees
-  if (sqrt(pow(stddev[0], 2) + pow(stddev[1], 2)) < sqrt(INITIAL_POSITION_VARIANCE*INITIAL_POSITION_VARIANCE*2) && stddev[2] < INITIAL_ANGLE_VARIANCE)
+  if (stddev[0] + stddev[1] < 2*INITIAL_POSITION_VARIANCE*INITIAL_POSITION_VARIANCE &&
+      stddev[2] < INITIAL_ANGLE_VARIANCE)
     converged = 1;
   else
     converged = 0;
 
-  //  if (!converged || count > 1)
-  //    printf("count: %d, max prob: %g, standard deviations: %g, %g, %g, converged: %d\n", count, particles[0].p, stddev[0], stddev[1], stddev[2], converged);
+  if (!converged || count > 1)
+    printf("count: %d, max prob: %g, standard deviations: %g, %g, %g, converged: %d\n", count, particles[0].p, stddev[0], stddev[1], stddev[2], converged);
 
   // save old particles before we resample
   memcpy(previous_particles, particles, sizeof(particle)*p_count);

@@ -86,23 +86,14 @@ double buffer_hypothesis_size(uint8_t *b, hypothesis h) {
     x = h.x + d*c;
     y = h.y + d*s;
     index = (MAP_SIZE+1)*y + x;
-    if (b[index] == 255) {
-      // solid hit
-      size -= 1;
-    } else if (b[index] < 200 && b[index] > 127) {
-      // already hit, but uncertain
+    if (b[index] <= 200 && b[index] + 74 >= 255)
       size++;
-    } else if (b[index] == 127) {
-      // new
-      size++;
-    } else if (b[index] < 127 && b[index] > 55 ) {
-      // more certain of unseen
-      size += 2;
-    } else if (b[index] <= 55) {
-      // good idea it is unseen
-      size += 3;
-    }
   }
+
+  for (i = 0; i < buffer_size; i++)
+    if (b[index] > 200)
+      size++;
+
   return size;
 }
 

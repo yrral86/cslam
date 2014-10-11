@@ -14,11 +14,11 @@ observations* next_observation();
 int more_observations();
 
 int main(int argc, char **argv) {
-  int i, x, y, theta, last_x, last_y, last_theta, size, length;
+  int i, x, y, theta, last_x, last_y, last_theta, length;
   int width = MAP_SIZE + 1;
   int height = MAP_SIZE + 1;
   observations *obs;
-  double information;
+  double old_size, size;
   map_node *map_all;
   map_node *map_current;
   checkpoint *cp = checkpoint_path_new();;
@@ -43,6 +43,7 @@ int main(int argc, char **argv) {
   cp->h.y = y;
   cp->h.theta = theta;
   cp->h.obs = obs;
+
   // copy cp into new checkpoint after path
   path_end = checkpoint_path_append(path_end, cp);
 
@@ -55,27 +56,30 @@ int main(int argc, char **argv) {
   map_all = checkpoint_path_write_map(path_end);
   map_write_buffer(map_all, buffer_all);
   swarm_set_map(buffer_all);
+  size = buffer_hypothesis_size(buffer_all, cp->h);
 
   display();
   glutMainLoopEvent();
 
   while (more_observations()) {
     obs = next_observation();
+    swarm_reset_convergence();
     do {
-      swarm_move(0, 0, 360);
+      swarm_move(0, 0, 0);
       swarm_update(obs);
-      x = swarm_get_best_x();
-      y = swarm_get_best_y();
-      theta = swarm_get_best_theta();
-      printf("(%d, %d, %d)\n", x, y, theta);
-      printf("converged: %i\n", swarm_converged());
+      //     x = swarm_get_best_x();
+      //      y = swarm_get_best_y();
+      //      theta = swarm_get_best_theta();
+      //      printf("(%d, %d, %d)\n", x, y, theta);
+      //printf("converged: %i\n", swarm_converged());
     } while(swarm_converged() == 0);
 
     // set up checkpoint
-    cp->h.x = x;
-    cp->h.y = y;
-    cp->h.theta = theta;
-    cp->h.obs = obs;
+    cp->h = obs->hypotheses[0];
+    old_size = size;
+    size = buffer_hypothesis_size(buffer_all, cp->h);
+
+    printf("size: %g change: %g\n", size, size - old_size);
 
     map_current = map_new_from_hypothesis(cp->h);
     map_write_buffer(map_current, buffer_current);
