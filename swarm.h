@@ -29,19 +29,6 @@ int swarm_converged_internal();
 int swarm_get_best_x_internal();
 int swarm_get_best_y_internal();
 int swarm_get_best_theta_internal();
-#endif
-#ifdef LINUX
-void swarm_init(int, int, int, int, int, int);
-void swarm_move(int, int, int);
-void swarm_update(int*);
-void swarm_map(int*);
-void swarm_map_current(int*);
-void swarm_map_reset_current();
-int swarm_converged();
-int swarm_get_best_x();
-int swarm_get_best_y();
-int swarm_get_best_theta();
-#endif
 int swarm_get_x(int);
 int swarm_get_y(int);
 int swarm_get_theta(int);
@@ -49,7 +36,19 @@ void swarm_get_best_buffer(uint8_t*);
 void swarm_get_map_buffer(uint8_t*);
 map_node* swarm_get_map();
 void swarm_get_all_particles(particle**);
+void swarm_map(int*);
+void swarm_map_current(int*);
+void swarm_map_reset_current();
+#endif
+#ifdef LINUX
+void swarm_init(int, int, int, int, int, int);
+void swarm_move(int, int, int);
+void swarm_update(observations*);
+int swarm_converged();
+int swarm_get_best_x();
+int swarm_get_best_y();
+int swarm_get_best_theta();
+#endif
 int in_arena(int, int);
 void swarm_set_map(map_node*);
-
 #endif

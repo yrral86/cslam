@@ -4,14 +4,10 @@
 #include "const.h"
 #include "map.h"
 #include "random.h"
+#include "hypothesis.h"
 
 typedef struct checkpoint {
-  unsigned int x;
-  unsigned int y;
-  int theta;
-  double information;
-  unsigned int size;
-  map_node *observation;
+  hypothesis h;
   struct checkpoint *next;
   struct checkpoint *previous;
   struct checkpoint *head;

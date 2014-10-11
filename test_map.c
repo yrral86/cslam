@@ -1,6 +1,7 @@
 #include "map.h"
 #include "lazygl.h"
 #include "checkpoint.h"
+#include "hypothesis.h"
 
 static FILE *data;
 static int initialized = 0;
@@ -9,17 +10,17 @@ static size_t length = 0;
 static char *line = NULL;
 static int parsed_line[RAW_SENSOR_DISTANCES_USB];
 
-int* next_observation();
+observations* next_observation();
 int more_observations();
 
 int main(int argc, char **argv) {
   int i, x, y, theta, last_x, last_y, last_theta, size, length;
   int width = 20000;
   int height = 20000;
-  int *obs;
+  observations *obs;
   double information;
   map_node *map_all;
-  map_node *map_all_with_path;
+  map_node *map_current;
   checkpoint *cp = checkpoint_path_new();;
   checkpoint *path_end = checkpoint_path_new();
 
@@ -28,7 +29,6 @@ int main(int argc, char **argv) {
   glutInit(&argc, argv);
   initGL(buffer_current, buffer_all, width + 1, height + 1, 400, 400);
   map_all = map_new(width, height);
-  map_all_with_path = map_new(width, height);
 
   swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, width + 1, height + 1, width/2, 0);
 
@@ -39,38 +39,83 @@ int main(int argc, char **argv) {
   theta = 0;
 
   i = 0;
+  obs = next_observation();
+  // set up checkpoint
+  cp->h.x = MAP_SIZE/2;
+  cp->h.y = MAP_SIZE/2;
+  cp->h.theta = 0;
+  cp->h.obs = obs;
+  // copy cp into new checkpoint after path
+  path_end = checkpoint_path_append(path_end, cp);
+
+  length = checkpoint_path_length(path_end);
+  printf("Checkpoint #%d\n", length);
+
+  // rewrite from checkpoints
+  printf("Rewritting map_all from refined path checkpoints\n");
+  map_deallocate(map_all);
+  map_all = checkpoint_path_write_map(path_end);
+  swarm_set_map(map_all);
+  map_write_buffer(map_all, buffer_all);
+  display();
+  glutMainLoopEvent();
+
   while (more_observations()) {
     obs = next_observation();
-    do {
+    /*    do {
       swarm_move(0, 0, 360);
-      swarm_update(obs);
+      swarm_update(&obs);
+      x = swarm_get_best_x();
+      y = swarm_get_best_y();
+      theta = swarm_get_best_theta();
+      printf("(%d, %d, %d)\n", x, y, theta);
+      printf("converged: %i\n", swarm_converged());
     } while(swarm_converged() == 0);
+    */
+    // set up checkpoint
+    /*
+    cp->h.x = x;
+    cp->h.y = y;
+    cp->h.theta = theta;
+    cp->h.obs = &obs;
+    */
+
+    cp->h.x = MAP_SIZE/2;
+    cp->h.y = MAP_SIZE/2;
+    cp->h.theta = 0;
+    cp->h.obs = obs;
+
+    map_current = map_new_from_hypothesis(cp->h);
+    map_write_buffer(map_current, buffer_current);
+    map_deallocate(map_current);
+
+    // copy cp into new checkpoint after path
+    path_end = checkpoint_path_append(path_end, cp);
+
+    length = checkpoint_path_length(path_end);
+    printf("Checkpoint #%d\n", length);
+
+    // rewrite from checkpoints
+    printf("Rewritting map_all from refined path checkpoints\n");
+    map_deallocate(map_all);
+    map_all = checkpoint_path_write_map(path_end);
+    swarm_set_map(map_all);
+    map_write_buffer(map_all, buffer_all);
+
+    /*
     last_x = x;
     last_y = y;
     last_theta = theta;
-    x = swarm_get_best_x();
-    y = swarm_get_best_y();
-    theta = swarm_get_best_theta();
+
     cp->observation = map_new_from_observation(obs);
     map_merge(map_all, cp->observation, x, y, theta);
-    printf("(%d, %d, %d)\n", x, y, theta);
     printf("(%d, %d, %d)\n", x - last_x, y - last_y, theta - last_theta);
     //    printf("iteration\tinfo\tsize\tinfo/size\n");
     information = map_get_info(map_all);
     size = map_get_size(map_all);
     printf("%d\t%g\t%d\t%g\n", i, information, size, information/size);
     if (information > 1.1*cp->information || size > 1.1*cp->size) {
-      // set up checkpoint
-      cp->x = x;
-      cp->y = y;
-      cp->theta = theta;
-      cp->information = information;
-      cp->size = size;
-      // copy cp into new checkpoint after path
-      path_end = checkpoint_path_append(path_end, cp);
 
-      length = checkpoint_path_length(path_end);
-      printf("Checkpoint #%d\n", length);
       // refine with ga
       if (0 && length >= 20 && length % 5 == 0) {
 	printf("Running ga to refine path\n");
@@ -79,21 +124,18 @@ int main(int argc, char **argv) {
 	cp->information = map_get_info(map_all);
 	cp->size = map_get_size(map_all);
       }
-      // rewrite from checkpoints
-      printf("Rewritting map_all from refined path checkpoints\n");
-      map_deallocate(map_all);
-      map_all = checkpoint_path_write_map(path_end);
-      swarm_set_map(map_all);
+
       map_deallocate(map_all_with_path);
       map_all_with_path = checkpoint_path_write_map_with_path(path_end);
 
       map_write_buffer(cp->observation, buffer_current);
       map_write_buffer(map_all_with_path, buffer_all);
 
-      display();
     } else
       map_deallocate(cp->observation);
+    */
 
+    display();
     glutMainLoopEvent();
 
     i++;
@@ -102,15 +144,11 @@ int main(int argc, char **argv) {
   fclose(data);
 
   printf("Running ga to refine path\n");
-  printf("path_end: (%d,%d,%d)\n", path_end->x, path_end->y, path_end->theta);
+  printf("path_end: (%d,%d,%d)\n", path_end->h.x, path_end->h.y, path_end->h.theta);
   path_end = checkpoint_path_end(checkpoint_path_refine(path_end));
-  printf("Rewritting map_all from refined path checkpoints\n");
-  cp->information = map_get_info(map_all);
-  cp->size = map_get_size(map_all);
   printf("Rewritting map_all from refined path checkpoints\n");
   map_deallocate(map_all);
   map_all = checkpoint_path_write_map(path_end);
-
   map_write_buffer(map_all, buffer_all);
   display();
 
@@ -124,8 +162,9 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-int* next_observation() {
+observations* next_observation() {
   char *int_string;
+  observations *obs = malloc(sizeof(observations));
   int i;
 
   if (initialized == 0) {
@@ -144,9 +183,14 @@ int* next_observation() {
   int_string = strtok(NULL, ",");
   sscanf(int_string, "%d\n", parsed_line + i);
 
+  for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++) {
+    obs->list[i].r = parsed_line[i];
+    obs->list[i].theta = (-SENSOR_RANGE_USB/2.0 + i*SENSOR_SPACING_USB);
+  }
+
   read_status = getline(&line, &length, data);
 
-  return &(*parsed_line);
+  return obs;
 }
 
 int more_observations() {

@@ -1,7 +1,7 @@
 #include "map.h"
 
 static int width, height;
-
+/*
 map_node* map_expand(map_node *map) {
   int w, h;
   w = width;
@@ -10,19 +10,40 @@ map_node* map_expand(map_node *map) {
   map_merge(new, map, w, h, 0);
   return new;
 }
+*/
 
 map_node* map_new(int w, int h) {
+  map_node *map;
   width = w + 1;
   height = h + 1;
-  return map_node_new(0, width, 0, height);
+#ifdef __MAP_TYPE_TREE__
+  map = map_node_new(0, width, 0, height);
+#endif
+#ifdef __MAP_TYPE_HEAP__
+  map = malloc(sizeof(map_node));
+  // initial max size 1/10 of possible pixels
+  map->max_size = MAP_SIZE*MAP_SIZE/10;
+  map->current_size = 0;
+  map->heap_sorted = 0;
+  map->heap = malloc(sizeof(map_pixel)*map->max_size);
+  bzero(map->heap, sizeof(map_pixel)*map->max_size);
+#endif
+  return map;
 }
 
+#ifdef __MAP_TYPE_TREE__
 map_node* map_new_from_observation(int *distances) {
+  int x, y, max = 0;
+#endif
+#ifdef __MAP_TYPE_HEAP__
+map_node* map_new_from_hypothesis(hypothesis h) {
+  map_pixel pixel;
+#endif
   map_node* map;
-  int i, j, d, x, y, max = 0;
+  int i, j, d;
   double s, c, theta;
 
-
+#ifdef __MAP_TYPE_TREE__
   for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++)
     if (distances[i] > max) max = distances[i];
 
@@ -38,7 +59,6 @@ map_node* map_new_from_observation(int *distances) {
   */
 
   map = map_node_new(0, max, 0, max);
-
   // record observations
   //  theta = -SENSOR_RANGE_USB*M_PI/360.0;
   //  dtheta = SENSOR_SPACING_USB*M_PI/180;
@@ -52,12 +72,386 @@ map_node* map_new_from_observation(int *distances) {
     //    printf("x,y: (%g, %g)\n", x+d*c, max - y + d*s);
     map_set_seen(map, x + d*c, y + d*s);
     for (j = d - 30; j >= 30; j -= 30)
-      map_set_unseen(map, x + (d-j)*c, y + (d-j)*s);
+      map_set_unseen(map, x + j*c, y + j*s);
   }
+
+#endif
+#ifdef __MAP_TYPE_HEAP__
+  map = map_new(width - 1, height - 1);
+
+  for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++) {
+    // observation theta + pose theta
+    theta = (h.obs->list[i].theta + h.theta)*M_PI/180;
+    c = cos(theta);
+    s = sin(theta);
+    d = h.obs->list[i].r;
+    pixel.x = h.x + d*c;
+    pixel.y = h.y + d*s;
+    pixel.l.seen = 1;
+    pixel.l.unseen = 0;
+    map_add_pixel(map, pixel);
+    for (j = d - 30; j >= 30; j -= 30) {
+      pixel.x = h.x + j*c;
+      pixel.y = h.y + j*s;
+      pixel.l.seen = 0;
+      pixel.l.unseen = 1;
+      map_add_pixel(map, pixel);
+    }
+  }
+
+  map = map_sort(map);
+#endif
 
   return map;
 }
 
+#ifdef __MAP_TYPE_HEAP__
+void map_add_pixel(map_node *map, map_pixel p) {
+  if (map->current_size + 1 <= map->max_size) {
+    map->heap[map->current_size] = p;
+    map->current_size++;
+    map_reheapify_up(map);
+    map->heap_sorted = 0;
+  } else {
+    map_double_max_size(map);
+    map_add_pixel(map, p);
+  }
+}
+
+void map_double_max_size(map_node *map) {
+  int new_size = 2*map->max_size;
+  map_pixel *heap = map->heap;
+
+  // shouldn't modify heap when sorted
+  assert(map->heap_sorted == 0);
+
+  map->heap = malloc(sizeof(map_pixel)*new_size);
+  bzero(map->heap, sizeof(map_pixel)*new_size);
+  memcpy(map->heap, heap, sizeof(map_pixel)*map->max_size);
+  map->max_size = new_size;
+}
+
+void map_reheapify_up(map_node *map) {
+  int child = map->current_size - 1;
+  int parent = map_parent_index(child);
+
+  // shouldn't modify heap when sorted
+  assert(map->heap_sorted == 0);  
+
+  map_pixel pixel;
+  while (child > 0 && map_pixel_need_swap(map->heap[parent], map->heap[child])) {
+    if (map->heap[child].x == map->heap[parent].x &&
+	map->heap[child].y == map->heap[parent].y) {
+      // merge child into parent
+      pixel = map->heap[child];
+      pixel.l.seen += map->heap[parent].l.seen;
+      pixel.l.unseen += map->heap[parent].l.unseen;
+      map->heap[parent] = pixel;
+
+      // copy last element into child
+      map->current_size--;
+      map->heap[child] = map->heap[map->current_size];
+
+      // reheapify_down starting at child
+      map_reheapify_down_root(map, child);
+    } else {
+      pixel = map->heap[parent];
+      map->heap[parent] = map->heap[child];
+      map->heap[child] = pixel;
+      child = parent;
+      parent = map_parent_index(child);
+    }
+  }
+}
+
+void map_reheapify_down(map_node *map) {
+  map_reheapify_down_root(map, 0);
+}
+
+void map_reheapify_down_root(map_node *map, int parent) {
+  map_pixel p;
+
+  // shouldn't modify heap when sorted
+  assert(map->heap_sorted == 0);
+
+  int child_left = map_left_index(parent);
+  int child_right = map_right_index(parent);
+  while ((child_left < map->current_size &&
+	  map_pixel_need_swap(map->heap[parent], map->heap[child_left])) ||
+	 (child_right < map->current_size &&
+	  map_pixel_need_swap(map->heap[parent], map->heap[child_right]))) {
+    // need to swap left or right for parent
+    p = map->heap[parent];
+    // if we have two children
+    if (child_right < map->current_size) {
+      // check order
+      if (map_pixel_need_swap(map->heap[child_left], map->heap[child_right])) {
+	// child_right should be parent
+	map->heap[parent] = map->heap[child_right];
+	map->heap[child_right] = p;
+	parent = child_right;
+      } else {
+	// child_left should be parent
+	map->heap[parent] = map->heap[child_left];
+	map->heap[child_left] = p;
+	parent = child_left;
+      }
+      child_left = map_left_index(parent);
+      child_right = map_right_index(parent);
+    } else {
+      // we only have left child, and it needs swapped
+      map->heap[parent] = map->heap[child_left];
+      map->heap[child_left] = p;
+      parent = child_left;
+      child_left = map_left_index(parent);
+      child_right = map_right_index(parent);
+    }
+  }
+}
+
+inline int map_pixel_need_swap(map_pixel parent, map_pixel child) {
+  if (parent.x > child.x ||
+      (parent.x == child.x &&
+       parent.y > child.y))
+    return 1;
+  else
+    return 0;
+}
+
+inline int map_parent_index(int i) {
+  return i/2;
+}
+
+inline int map_left_index(int i) {
+  return 2*i+1;
+}
+
+inline int map_right_index(int i) {
+  return 2*i + 2;
+}
+
+map_pixel map_pop_pixel(map_node *map) {
+  // can't pop from empty heap
+  assert(map->current_size > 0);
+  map_pixel p;
+  map->current_size--;
+  if (map->heap_sorted == 1)
+    p = map->heap[map->index++];
+  else {
+    p = map->heap[0];
+    map->heap[0] = map->heap[map->current_size];
+    map_reheapify_down(map);
+  }
+  return p;
+}
+/*
+double map_merge_variance(map_node *m1, map_node *m2) {
+  double variance = 0.0;
+  int one_done = 0, two_done = 0, merge = 0;
+  map_pixel one, two, merged;
+  m1 = map_dup(m1);
+  m2 = map_dup(m2);
+
+  if (m1->current_size > 0)
+    one = map_pop_pixel(m1);
+  else {
+    one_done = 1;
+    one.x = MAP_SIZE+10;
+    one.y = MAP_SIZE+10;
+    one.l.seen = 0;
+    one.l.unseen = 0;
+  }
+
+  if (m2->current_size > 0)
+    two = map_pop_pixel(m2);
+  else {
+    two_done = 1;
+    two.x = MAP_SIZE+10;
+    two.y = MAP_SIZE+10;
+    two.l.seen = 0;
+    two.l.unseen = 0;
+  }
+
+  merged.x = 0;
+  merged.y = 0;
+  merged.l.seen = 0;
+  merged.l.unseen = 0;
+  while (one_done == 0 || two_done == 0) {
+    printf("m1->current_size: %i\nm2->current_size: %i\n", m1->current_size, m2->current_size);
+    printf("one = (%d,%d,%d,%d) two = (%d,%d,%d,%d) merged = (%d,%d,%d,%d)\n",
+	   one.x, one.y, one.l.seen, one.l.unseen,
+	   two.x, two.y, two.l.seen, two.l.unseen,
+	   merged.x, merged.y, merged.l.seen, merged.l.unseen);
+    if (one_done == 0 && one.x == merged.x &&
+	one.y == merged.y) {
+      merged.l.seen += one.l.seen;
+      merged.l.unseen += one.l.unseen;
+      if (m1->current_size > 0)
+	one = map_pop_pixel(m1);
+      else {
+	one_done = 1;
+	one.x = MAP_SIZE+10;
+	one.y = MAP_SIZE+10;
+	one.l.seen = 0;
+	one.l.unseen = 0;
+      }
+      merge = 1;
+    }
+
+    if (two_done == 0 && two.x == merged.x &&
+	two.y == merged.y) {
+      merged.l.seen += two.l.seen;
+      merged.l.unseen += two.l.unseen;
+      if (m2->current_size > 0)
+	two = map_pop_pixel(m2);
+      else {
+	two_done = 1;
+	two.x = MAP_SIZE+10;
+	two.y = MAP_SIZE+10;
+	two.l.seen = 0;
+	two.l.unseen = 0;
+      }
+      merge = 1;
+    }
+
+    if (merge == 0) {
+      // nothing matched, record variance
+      if (merged.l.seen + merged.l.unseen > 0)
+	variance += merged.l.seen*merged.l.unseen/(double)(merged.l.seen+merged.l.unseen);
+
+      // set next merged target to smallest of one/two
+      if (one_done || map_pixel_need_swap(one, two)) {
+	// two should be merged next
+	merged = two;
+	if (m2->current_size > 0)
+	  two = map_pop_pixel(m2);
+	else {
+	  two_done = 1;
+	  two.x = MAP_SIZE+10;
+	  two.y = MAP_SIZE+10;
+	  two.l.seen = 0;
+	  two.l.unseen = 0;
+	}
+      } else if (one_done == 0) {
+	// one should be merged next
+	merged = one;
+	if (m1->current_size > 0)
+	  one = map_pop_pixel(m1);
+	else {
+	  one_done = 1;
+	  one.x = MAP_SIZE+10;
+	  one.y = MAP_SIZE+10;
+	  one.l.seen = 0;
+	  one.l.unseen = 0;
+	}
+      }
+    } else
+      merge = 0;
+  }
+
+  if (merged.l.seen + merged.l.unseen > 0)
+    variance += merged.l.seen*merged.l.unseen/(double)(merged.l.seen+merged.l.unseen);
+
+  map_deallocate(m1);
+  map_deallocate(m2);
+
+  return variance;
+}
+*/
+map_node* map_sort(map_node *map) {
+  map_node *new = map_new(width -1, height - 1);
+  while (map->current_size > 0)
+    map_add_pixel(new, map_pop_pixel(map));
+
+  new->heap_sorted = 1;
+  new->index = 0;
+
+  map_deallocate(map);
+
+  return new;
+}
+
+map_node* map_merge(map_node *m1, hypothesis h) {
+  map_node *new;
+  map_node *m2 = map_new_from_hypothesis(h);
+  map_pixel next;
+
+  if (m1->current_size == 0) {
+    map_deallocate(m1);
+    return m2;
+  }
+
+  assert(m1->heap_sorted == 1);
+
+  new = map_new(width - 1, height - 1);
+
+  do {
+    // find next target
+    if (m1->current_size > 0 && m2->current_size == 0) {
+      // m2 empty, use m1
+      next = m1->heap[m1->index++];
+      m1->current_size--;
+    } else if (m1->current_size == 0 && m2->current_size > 0) {
+      // m1 empty, use m2
+      next = m2->heap[m2->index++];
+      m2->current_size--;
+    } else if (map_pixel_need_swap(m1->heap[m1->index], m2->heap[m2->index])) {
+      // m2 lower or equal
+      next = m2->heap[m2->index++];
+      m2->current_size--;
+    } else {
+      // m1 lower
+      next = m1->heap[m1->index++];
+      m1->current_size--;
+    }
+
+    // check for m1 merge targets
+    while (m1->current_size > 0 &&
+	   m1->heap[m1->index].x == next.x &&
+	   m1->heap[m1->index].y == next.y) {
+      next.l.seen += m1->heap[m1->index].l.seen;
+      next.l.unseen += m1->heap[m1->index].l.unseen;
+      m1->index++;
+      m1->current_size--;
+    }
+
+    // check for m2 merge targets
+    while (m2->current_size > 0 &&
+	   m2->heap[m2->index].x == next.x &&
+	   m2->heap[m2->index].y == next.y) {
+      next.l.seen += m2->heap[m2->index].l.seen;
+      next.l.unseen += m2->heap[m2->index].l.unseen;
+      m2->index++;
+      m2->current_size--;
+    }
+
+    map_add_pixel(new, next);
+  } while (m1->current_size > 0 || m2->current_size > 0);
+
+  map_deallocate(m1);
+  map_deallocate(m2);
+
+  new->heap_sorted = 1;
+  new->index = 0;
+
+  return new;
+}
+
+double map_variance(map_node *map) {
+  int i;
+  double variance = 0.0;
+
+  for (i = 0; i < map->current_size; i++) {
+    if (map->heap[i].l.seen + map->heap[i].l.unseen > 0)
+      variance += map->heap[i].l.seen*map->heap[i].l.unseen/(double)(map->heap[i].l.seen + map->heap[i].l.unseen);
+  }
+
+  return variance;
+}
+
+#endif
+
+#ifdef __MAP_TYPE_TREE__
 map_node* map_node_new(int x_min, int x_max, int y_min, int y_max) {
   int i;
   map_node *n = malloc(sizeof(map_node));
@@ -83,10 +477,14 @@ map_node* map_node_new(int x_min, int x_max, int y_min, int y_max) {
 
   return n;
 }
+#endif
 
 map_node* map_dup(map_node *map) {
+  map_node *new;
+#ifdef __MAP_TYPE_TREE__
   int i;
-  map_node *new = map_node_new(map->x_min, map->x_max, map->y_min, map->y_max);
+
+  new = map_node_new(map->x_min, map->x_max, map->y_min, map->y_max);
 
   for (i = 0; i < 4; i++) {
     if (map->children[i] == NULL) {
@@ -98,10 +496,23 @@ map_node* map_dup(map_node *map) {
       new->children[i]->root = new->root;
     }
   }
+#endif
+#ifdef __MAP_TYPE_HEAP__
+  new = map_new(width - 1, height - 1);
+  // make it big enough
+  while (new->max_size < map->max_size)
+    map_double_max_size(new);
+  // copy
+  new->heap_sorted = map->heap_sorted;
+  new->index = 0;
+  memcpy(new->heap, map->heap, sizeof(map_pixel)*map->current_size);
+  new->current_size = map->current_size;
+#endif
 
   return new;
 }
 
+#ifdef __MAP_TYPE_TREE__
 void map_node_spawn_child(map_node *node, int index) {
   int x_min, x_max, y_min, y_max;
 
@@ -110,7 +521,9 @@ void map_node_spawn_child(map_node *node, int index) {
   node->children[index] = map_node_new(x_min, x_max, y_min, y_max);
   node->children[index]->root = node->root;
 }
+#endif
 
+#ifdef __MAP_TYPE_TREE__
 void map_merge(map_node *all, map_node *latest, int dx, int dy, int dt) {
   // copy latest into all
   int i, j, x, y, x_min, x_max, y_min, y_max;
@@ -254,18 +667,24 @@ void map_node_split(map_node *map, int index) {
   map->children[index] = tmp;
 }
 */
+#endif
 
 void map_deallocate(map_node *map) {
+#ifdef __MAP_TYPE_TREE__
   int i;
 
   // deallocate children
   for (i = 0; i < 4; i++)
     if (map->children[i] != NULL)
       map_deallocate(map->children[i]);
-
+#endif
+#ifdef __MAP_TYPE_HEAP__
+  free(map->heap);
+#endif
   free(map);
 }
 
+#ifdef __MAP_TYPE_TREE__
 void map_set_seen(map_node *map, int x, int y) {
   map_increase_seen(map, x, y, 1);
 }
@@ -419,14 +838,38 @@ void map_landmark_check_split(map_node *node, int index) {
   }
 }
 */
+#endif
 
 void map_write_buffer(map_node *map, uint8_t *buffer) {
   // clear buffer
   bzero(buffer, width*height);
+#ifdef __MAP_TYPE_TREE__
   // write nodes
   map_node_write_buffer(map, buffer);
+#endif
+#ifdef __MAP_TYPE_HEAP__
+  map_pixel p;
+  int sum, value;
+  map = map_dup(map);
+  while(map->current_size > 0) {
+    p = map_pop_pixel(map);
+
+    sum = p.l.seen + p.l.unseen;
+    // use 0 if no data
+    if (sum < 1)
+      value = 0;
+    else
+      value = (int)(255 * p.l.seen/(double)sum);
+
+    // write pixel with value
+    if (value > 0)
+      buffer[width*p.y + p.x] = value;
+  }
+  map_deallocate(map);
+#endif
 }
 
+#ifdef __MAP_TYPE_TREE__
 void map_node_write_buffer(map_node *node, uint8_t *buffer) {
   int x_min, x_max, y_min, y_max, sum, value, i, x, y;
 
@@ -503,3 +946,4 @@ void map_debug(map_node *map) {
     else
       map_debug(map->children[i]);
 }
+#endif

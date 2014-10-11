@@ -6,3 +6,4 @@ obj/
 replay
 test_map
 test_sensor
+gmon.out

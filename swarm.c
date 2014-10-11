@@ -287,7 +287,7 @@ void swarm_move(int dx, int dy, int dtheta) {
 void swarm_update_internal(int *distances) {
 #endif
 #ifdef LINUX
-void swarm_update(int *distances) {
+void swarm_update(observations *obs) {
 #endif
   int i, j, k, l, best_index, p_count, new_observations;
   int swap, x, y, count;
@@ -297,6 +297,7 @@ void swarm_update(int *distances) {
   particle temp;
   double weight;
   map_node *temp_map, *particle_map;
+  hypothesis h, temp_h;
 
 #ifndef LINUX
   ReleaseSemaphore(return_sem, 1, NULL);
@@ -307,7 +308,7 @@ void swarm_update(int *distances) {
   else
     p_count = PARTICLE_COUNT;
 
-  particle_map = map_new_from_observation(distances);
+  obs->hypotheses = malloc(sizeof(hypothesis)*p_count);
 
   //  min = 10000.0;
   max = 0.0;
@@ -317,9 +318,23 @@ void swarm_update(int *distances) {
     //    printf("update: (%d, %d, %d)\n", particles[i].x,
     //	   particles[i].y,
     //	   particles[i].theta);
-    temp_map = map_dup(map);
-    map_merge(temp_map, particle_map, particles[i].x,
-	      particles[i].y, particles[i].theta);
+    h.x = particles[i].x;
+    h.y = particles[i].y;
+    h.theta = particles[i].theta;
+    h.obs = obs;
+    obs->hypotheses[i] = h;
+    //    particle_map = map_new_from_hypothesis(h);
+
+    //    printf("map size: %i\n", map->current_size);
+
+    //    printf("particle map size: %i\n", particle_map->current_size);
+
+    particle_map = map_merge(map, h);
+
+    particles[i].p = 1.0/map_variance(particle_map);
+
+    //    printf("escaped map_merge_variance\n");
+    map_deallocate(particle_map);
 
     /*
     posterior = 0.0;
@@ -384,16 +399,14 @@ void swarm_update(int *distances) {
 
     // new = prior * posterior / (# of new observations)
     //    particles[i].p += posterior;// - log(new_observations);
-    particles[i].p = 1/(map_get_info(temp_map)*map_get_size(temp_map));
-    map_deallocate(temp_map);
+    //    particles[i].p = 1/(map_get_info(temp_map)*map_get_size(temp_map));
+    //    map_deallocate(temp_map);
     //    if (particles[i].p < min) {
     if (particles[i].p > max) {
       max = particles[i].p;
       best_index = i;
     }
   }
-
-  map_deallocate(particle_map);
 
   // clear old best, save new best, copy the map we are about to dereference
   //  if (iterations > 0)
@@ -424,6 +437,9 @@ void swarm_update(int *distances) {
     for (j = 0; j < p_count - i - 1; j++)
       // if the left particle is smaller probability, bubble it right
       if (particles[j].p < particles[j + 1].p) {
+	temp_h = obs->hypotheses[j];
+	obs->hypotheses[j] = obs->hypotheses[j + 1];
+	obs->hypotheses[j + 1] = temp_h;
 	temp = particles[j];
 	particles[j] = particles[j + 1];
 	particles[j + 1] = temp;
@@ -517,10 +533,10 @@ void swarm_update(int *distances) {
 
 #ifndef LINUX
 void swarm_map_internal(int *distances) {
-#endif
+  /*#endif
 #ifdef LINUX
 void swarm_map(int *distances) {
-#endif
+#endif*/
   int j, l, x, y, k;
   double distance, degrees, theta, s, c;
 
@@ -556,7 +572,7 @@ void swarm_map(int *distances) {
   }
 }
 
-#ifdef LINUX
+//#ifdef LINUX
 void swarm_map_reset_current() {
   // blank map
   //  landmark_map_dereference(best_particle.map);
@@ -640,6 +656,7 @@ int swarm_get_best_theta() {
   return t;
 }
 
+#ifndef LINUX
 int swarm_get_x(int i) {
   return particles[i].x - sensor_radius*cos(particles[i].theta*M_PI/180) - BORDER_WIDTH;
 }
@@ -667,6 +684,7 @@ map_node* swarm_get_map() {
 void swarm_get_all_particles(particle **p) {
   *p = particles;
 }
+#endif
 
 int in_arena(int x, int y) {
   if (x >= 0 && x < long_side && y >= 0 && y < short_side)
