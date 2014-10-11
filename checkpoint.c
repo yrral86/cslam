@@ -63,10 +63,10 @@ map_node* checkpoint_path_write_map(checkpoint *cp) {
   map_node *map = map_new(MAP_SIZE, MAP_SIZE);
   cp = cp->head;
   while (cp->next != NULL) {
-    printf("merging hypothesis (%d,%d,%d) with observations (%d,%d,%d...)\n", cp->h.x,
-	   cp->h.y, cp->h.theta, cp->h.obs->list[0].r, cp->h.obs->list[1].r, cp->h.obs->list[2].r);
+    /*    printf("merging hypothesis (%d,%d,%d) with observations (%d,%d,%d...)\n", cp->h.x,
+	  cp->h.y, cp->h.theta, cp->h.obs->list[0].r, cp->h.obs->list[1].r, cp->h.obs->list[2].r);*/
     map = map_merge(map, cp->h);
-    printf("after merge, size: %i, variance: %g\n", map->current_size, map_variance(map));
+    //    printf("after merge, size: %i, variance: %g\n", map->current_size, map_variance(map));
     cp = cp->next;
   }
   map = map_merge(map, cp->h);

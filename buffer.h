@@ -8,9 +8,9 @@
 
 #include "const.h"
 #include "particle.h"
+#include "hypothesis.h"
 
-void buffer_set_arena_size(int, int);
-int buffer_get_size();
+/*
 int buffer_get_width();
 int buffer_get_height();
 uint8_t* buffer_allocate();
@@ -20,5 +20,13 @@ int x_from_buffer_index(int);
 int y_from_buffer_index(int);
 int index_protected(int);
 int x_y_protected(int, int);
+
+*/
+
+void buffer_set_arena_size(int, int);
+int buffer_get_size();
+
+double buffer_hypothesis_size(uint8_t*, hypothesis);
+void buffer_deallocate(uint8_t*);
 
 #endif

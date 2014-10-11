@@ -15,6 +15,7 @@ int buffer_get_size() {
   return buffer_size;
 }
 
+/*
 int buffer_get_width() {
   return buffer_width;
 }
@@ -68,4 +69,43 @@ int x_y_protected(int x, int y) {
       y < BORDER_WIDTH || y > arena_height - BORDER_WIDTH)
     protected = 1;
   return protected;
+}
+*/
+
+double buffer_hypothesis_size(uint8_t *b, hypothesis h) {
+  int i, index;
+  double c, s, d, x, y, theta, size;
+
+  size = 0.0;
+  for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++) {
+    // observation theta + pose theta
+    theta = (h.obs->list[i].theta + h.theta)*M_PI/180;
+    c = cos(theta);
+    s = sin(theta);
+    d = h.obs->list[i].r;
+    x = h.x + d*c;
+    y = h.y + d*s;
+    index = (MAP_SIZE+1)*y + x;
+    if (b[index] == 255) {
+      // solid hit
+      size -= 1;
+    } else if (b[index] < 200 && b[index] > 127) {
+      // already hit, but uncertain
+      size++;
+    } else if (b[index] == 127) {
+      // new
+      size++;
+    } else if (b[index] < 127 && b[index] > 55 ) {
+      // more certain of unseen
+      size += 2;
+    } else if (b[index] <= 55) {
+      // good idea it is unseen
+      size += 3;
+    }
+  }
+  return size;
+}
+
+void buffer_deallocate(uint8_t *b) {
+  free(b);
 }

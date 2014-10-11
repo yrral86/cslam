@@ -6,7 +6,7 @@ static particle particles[INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT];
 static particle previous_particles[INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT];
 static particle best_particle;
 //static landmark_map *map;
-static map_node *map;
+static uint8_t *map;
 static int iterations = 0;
 static int converged, m, sensor_degrees, long_side, short_side, start;
 static double spacing;
@@ -263,7 +263,11 @@ void swarm_move(int dx, int dy, int dtheta) {
       //        particles[i] = particle_sample_motion(p, dx, dy, dtheta);
       //      } else {
         // sample normal distribution
-      particles[i] = particle_sample_normal(p);
+      // stay still 20% of the time
+      if (rand_limit(100) >20)
+	particles[i] = particle_sample_normal(p);
+      else
+	particles[i] = p;
 	//      }
       // dereference old map, particle_sample_* copied it already
       //      landmark_map_dereference(p.map);
@@ -297,7 +301,6 @@ void swarm_update(observations *obs) {
   //  double xyt[3];
   particle temp;
   double weight;
-  map_node *map_copy, *particle_map;
 
 #ifndef LINUX
   ReleaseSemaphore(return_sem, 1, NULL);
@@ -328,14 +331,10 @@ void swarm_update(observations *obs) {
 
     //    printf("particle map size: %i\n", particle_map->current_size);
 
-    map_copy = map_dup(map);
-    particle_map = map_merge(map_copy, h);
-
-    //    particles[i].p = 1.0/(map_variance(particle_map)*particle_map->current_size);
-    particles[i].p = 1.0/particle_map->current_size;
+    particles[i].p = 1.0/buffer_hypothesis_size(map, h);
 
     //    printf("escaped map_merge_variance\n");
-    map_deallocate(particle_map);
+    //    buffer_deallocate(particle_map);
 
     /*
     posterior = 0.0;
@@ -695,6 +694,6 @@ int in_arena(int x, int y) {
   else return 0;
 }
 
-void swarm_set_map(map_node *new_map) {
+void swarm_set_map(uint8_t *new_map) {
   map = new_map;
 }

@@ -50,5 +50,5 @@ int swarm_get_best_y();
 int swarm_get_best_theta();
 #endif
 int in_arena(int, int);
-void swarm_set_map(map_node*);
+void swarm_set_map(uint8_t*);
 #endif
