@@ -92,7 +92,7 @@ map_node* map_new_from_hypothesis(hypothesis h) {
     pixel.h = h;
     pixel.obs_index = i;
     map_add_pixel(map, pixel);
-    for (j = d - 30; j >= 30; j -= 30) {
+    /*    for (j = d - 30; j >= 30; j -= 30) {
       pixel.x = h.x + j*c;
       pixel.y = h.y + j*s;
       pixel.l.seen = 0;
@@ -100,7 +100,7 @@ map_node* map_new_from_hypothesis(hypothesis h) {
       pixel.h = h;
       pixel.obs_index = i;
       map_add_pixel(map, pixel);
-    }
+      }*/
   }
 
   map = map_sort(map);

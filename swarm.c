@@ -331,7 +331,8 @@ void swarm_update(observations *obs) {
     map_copy = map_dup(map);
     particle_map = map_merge(map_copy, h);
 
-    particles[i].p = 1.0/map_variance(particle_map);
+    //    particles[i].p = 1.0/(map_variance(particle_map)*particle_map->current_size);
+    particles[i].p = 1.0/particle_map->current_size;
 
     //    printf("escaped map_merge_variance\n");
     map_deallocate(particle_map);
