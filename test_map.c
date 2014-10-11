@@ -15,8 +15,8 @@ int more_observations();
 
 int main(int argc, char **argv) {
   int i, x, y, theta, last_x, last_y, last_theta, size, length;
-  int width = 20000;
-  int height = 20000;
+  int width = MAP_SIZE + 1;
+  int height = MAP_SIZE + 1;
   observations *obs;
   double information;
   map_node *map_all;
@@ -24,15 +24,13 @@ int main(int argc, char **argv) {
   checkpoint *cp = checkpoint_path_new();;
   checkpoint *path_end = checkpoint_path_new();
 
-  uint8_t *buffer_current = malloc((width + 1)*(height + 1));
-  uint8_t *buffer_all = malloc((width + 1)*(height + 1));
+  uint8_t *buffer_current = malloc(width*height);
+  uint8_t *buffer_all = malloc(width*height);
   glutInit(&argc, argv);
-  initGL(buffer_current, buffer_all, width + 1, height + 1, 400, 400);
-  map_all = map_new(width, height);
+  initGL(buffer_all, buffer_all, width, height, 1200, 1200);
+  map_all = map_new(width-1, height-1);
 
   swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, width + 1, height + 1, width/2, 0);
-
-  swarm_set_map(map_all);
 
   x = width/2;
   y = height/2;
@@ -41,9 +39,9 @@ int main(int argc, char **argv) {
   i = 0;
   obs = next_observation();
   // set up checkpoint
-  cp->h.x = MAP_SIZE/2;
-  cp->h.y = MAP_SIZE/2;
-  cp->h.theta = 0;
+  cp->h.x = x;
+  cp->h.y = y;
+  cp->h.theta = theta;
   cp->h.obs = obs;
   // copy cp into new checkpoint after path
   path_end = checkpoint_path_append(path_end, cp);
@@ -57,32 +55,26 @@ int main(int argc, char **argv) {
   map_all = checkpoint_path_write_map(path_end);
   swarm_set_map(map_all);
   map_write_buffer(map_all, buffer_all);
+
   display();
   glutMainLoopEvent();
 
   while (more_observations()) {
     obs = next_observation();
-    /*    do {
+    do {
       swarm_move(0, 0, 360);
-      swarm_update(&obs);
+      swarm_update(obs);
       x = swarm_get_best_x();
       y = swarm_get_best_y();
       theta = swarm_get_best_theta();
       printf("(%d, %d, %d)\n", x, y, theta);
       printf("converged: %i\n", swarm_converged());
     } while(swarm_converged() == 0);
-    */
+
     // set up checkpoint
-    /*
     cp->h.x = x;
     cp->h.y = y;
     cp->h.theta = theta;
-    cp->h.obs = &obs;
-    */
-
-    cp->h.x = MAP_SIZE/2;
-    cp->h.y = MAP_SIZE/2;
-    cp->h.theta = 0;
     cp->h.obs = obs;
 
     map_current = map_new_from_hypothesis(cp->h);

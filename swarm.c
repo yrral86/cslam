@@ -288,6 +288,7 @@ void swarm_update_internal(int *distances) {
 #endif
 #ifdef LINUX
 void swarm_update(observations *obs) {
+  hypothesis h;
 #endif
   int i, j, k, l, best_index, p_count, new_observations;
   int swap, x, y, count;
@@ -296,8 +297,7 @@ void swarm_update(observations *obs) {
   //  double xyt[3];
   particle temp;
   double weight;
-  map_node *temp_map, *particle_map;
-  hypothesis h, temp_h;
+  map_node *map_copy, *particle_map;
 
 #ifndef LINUX
   ReleaseSemaphore(return_sem, 1, NULL);
@@ -322,14 +322,14 @@ void swarm_update(observations *obs) {
     h.y = particles[i].y;
     h.theta = particles[i].theta;
     h.obs = obs;
-    obs->hypotheses[i] = h;
     //    particle_map = map_new_from_hypothesis(h);
 
     //    printf("map size: %i\n", map->current_size);
 
     //    printf("particle map size: %i\n", particle_map->current_size);
 
-    particle_map = map_merge(map, h);
+    map_copy = map_dup(map);
+    particle_map = map_merge(map_copy, h);
 
     particles[i].p = 1.0/map_variance(particle_map);
 
@@ -437,9 +437,6 @@ void swarm_update(observations *obs) {
     for (j = 0; j < p_count - i - 1; j++)
       // if the left particle is smaller probability, bubble it right
       if (particles[j].p < particles[j + 1].p) {
-	temp_h = obs->hypotheses[j];
-	obs->hypotheses[j] = obs->hypotheses[j + 1];
-	obs->hypotheses[j + 1] = temp_h;
 	temp = particles[j];
 	particles[j] = particles[j + 1];
 	particles[j + 1] = temp;
@@ -510,6 +507,11 @@ void swarm_update(observations *obs) {
     while (j++ && total < p)
       total += previous_particles[j - 1].p;
     particles[i] = previous_particles[j - 1];
+    h.x = particles[i].x;
+    h.y = particles[i].y;
+    h.theta = particles[i].theta;
+    h.obs = obs;
+    obs->hypotheses[i] = h;
     //    printf("resample: (%d, %d, %d), i = %d, j = %d\n", particles[i].x,
     //	   particles[i].y,
     //	   particles[i].theta, i , j);

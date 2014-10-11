@@ -41,6 +41,8 @@ typedef struct map_pixel {
   unsigned int x;
   unsigned int y;
   landmark l;
+  hypothesis h;
+  unsigned int obs_index;
 } map_pixel;
 
 map_node* map_new_from_hypothesis(hypothesis);
@@ -84,12 +86,12 @@ double map_unseen_probability(map_node*, int, int);
 void map_node_write_buffer(map_node*, uint8_t*);
 double map_get_info(map_node*);
 int map_get_size(map_node*);
-void map_debug(map_node*);
 #endif
 
 map_node* map_new(int, int);
 map_node* map_dup(map_node*);
 void map_deallocate(map_node*);
 void map_write_buffer(map_node*, uint8_t*);
+void map_debug(map_node*);
 
 #endif

@@ -89,12 +89,16 @@ map_node* map_new_from_hypothesis(hypothesis h) {
     pixel.y = h.y + d*s;
     pixel.l.seen = 1;
     pixel.l.unseen = 0;
+    pixel.h = h;
+    pixel.obs_index = i;
     map_add_pixel(map, pixel);
     for (j = d - 30; j >= 30; j -= 30) {
       pixel.x = h.x + j*c;
       pixel.y = h.y + j*s;
       pixel.l.seen = 0;
       pixel.l.unseen = 1;
+      pixel.h = h;
+      pixel.obs_index = i;
       map_add_pixel(map, pixel);
     }
   }
@@ -213,6 +217,8 @@ inline int map_pixel_need_swap(map_pixel parent, map_pixel child) {
   if (parent.x > child.x ||
       (parent.x == child.x &&
        parent.y > child.y))
+    //    if (parent.h.obs->list[parent.obs_index].r >
+    //	child.h.obs->list[child.obs_index].r)
     return 1;
   else
     return 0;
@@ -421,6 +427,9 @@ map_node* map_merge(map_node *m1, hypothesis h) {
 	   m2->heap[m2->index].y == next.y) {
       next.l.seen += m2->heap[m2->index].l.seen;
       next.l.unseen += m2->heap[m2->index].l.unseen;
+      // TODO: make list of hypotheses
+      //    pixel.h = h;
+      //    pixel.obs_index = i;
       m2->index++;
       m2->current_size--;
     }
@@ -862,8 +871,9 @@ void map_write_buffer(map_node *map, uint8_t *buffer) {
       value = (int)(255 * p.l.seen/(double)sum);
 
     // write pixel with value
-    if (value > 0)
+    if (value > 0) {
       buffer[width*p.y + p.x] = value;
+    }
   }
   map_deallocate(map);
 #endif
@@ -934,9 +944,19 @@ double map_get_info(map_node *node) {
 
   return info;
 }
+#endif
 
 void map_debug(map_node *map) {
   int i;
+#ifdef __MAP_TYPE_HEAP__
+  map_pixel p;
+  for (i = 0; i < map->current_size; i++) {
+    p = map->heap[i];
+    printf("(%d,%d,%d,%d,%d,%d)\n", p.x, p.y, p.l.seen, p.l.unseen,
+	     p.h.obs->list[p.obs_index].r, p.h.obs->list[p.obs_index].theta);
+  }
+#endif
+#ifdef __MAP_TYPE_TREE__
   printf("x_min: %i x_max: %i y_min: %i y_max: %i x: %i y: %i\n",
 	 map->x_min, map->x_max, map->y_min, map->y_max, map->x, map->y);
 
@@ -945,5 +965,6 @@ void map_debug(map_node *map) {
       printf("seen: %i unseen: %i\n", map->landmarks[i].seen, map->landmarks[i].unseen);
     else
       map_debug(map->children[i]);
-}
 #endif
+}
+
