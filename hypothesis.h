@@ -4,9 +4,9 @@
 #include "observation.h"
 
 typedef struct hypothesis {
-  unsigned int x;
-  unsigned int y;
-  int theta;
+  double x;
+  double y;
+  double theta;
   observations *obs;
 } hypothesis;
 

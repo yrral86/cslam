@@ -509,7 +509,7 @@ map_node* map_dup(map_node *map) {
     map_double_max_size(new);
   // copy
   new->heap_sorted = map->heap_sorted;
-  nex->current_size += map->index;
+  new->current_size += map->index;
   new->index = 0;
   memcpy(new->heap, map->heap, sizeof(map_pixel)*map->current_size);
   new->current_size = map->current_size;

@@ -26,7 +26,7 @@ int x_y_protected(int, int);
 void buffer_set_arena_size(int, int);
 int buffer_get_size();
 
-double buffer_hypothesis_size(uint8_t*, hypothesis);
+int buffer_hypothesis_size(uint8_t*, hypothesis);
 void buffer_deallocate(uint8_t*);
 
 #endif

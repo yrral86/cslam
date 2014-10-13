@@ -45,9 +45,9 @@ void swarm_init(int, int, int, int, int, int);
 void swarm_move(int, int, int);
 void swarm_update(observations*);
 int swarm_converged();
-int swarm_get_best_x();
-int swarm_get_best_y();
-int swarm_get_best_theta();
+double swarm_get_best_x();
+double swarm_get_best_y();
+double swarm_get_best_theta();
 #endif
 int in_arena(int, int);
 void swarm_set_map(uint8_t*);

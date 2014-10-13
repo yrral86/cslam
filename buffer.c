@@ -72,12 +72,12 @@ int x_y_protected(int x, int y) {
 }
 */
 
-double buffer_hypothesis_size(uint8_t *b, hypothesis h) {
-  int i, index;
-  double c, s, d, x, y, theta, size;
+int buffer_hypothesis_size(uint8_t *b, hypothesis h) {
+  int i, index, size;
+  double c, s, d, x, y, theta;
 
   size = 0.0;
-  for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++) {
+  for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i += 20) {
     // observation theta + pose theta
     theta = (h.obs->list[i].theta + h.theta)*M_PI/180;
     c = cos(theta);
@@ -85,13 +85,22 @@ double buffer_hypothesis_size(uint8_t *b, hypothesis h) {
     d = h.obs->list[i].r;
     x = h.x + d*c;
     y = h.y + d*s;
-    index = (MAP_SIZE+1)*y + x;
-    if (b[index] <= 200 && b[index] + 74 >= 255)
-      size++;
+
+    if (x > 0 && x < MAP_SIZE + 1 &&
+	y > 0 && y < MAP_SIZE + 1) {
+      index = (MAP_SIZE+1)*y + x;
+
+      // if this would be new or contradictory data
+      if (b[index] <= 127)
+	size++;
+    } else
+      // out of bounds
+      size += 10;
   }
 
   for (i = 0; i < buffer_size; i++)
-    if (b[index] > 200)
+    if (b[index] != 127)
+      // if we have data
       size++;
 
   return size;

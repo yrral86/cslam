@@ -606,7 +606,7 @@ int swarm_converged() {
 int swarm_get_best_x_internal() {
 #endif
 #ifdef LINUX
-int swarm_get_best_x() {
+double swarm_get_best_x() {
 #endif
   return best_particle.x - sensor_radius*cos(best_particle.theta*M_PI/180);
 }
@@ -615,7 +615,7 @@ int swarm_get_best_x() {
 int swarm_get_best_y_internal() {
 #endif
 #ifdef LINUX
-int swarm_get_best_y() {
+double swarm_get_best_y() {
 #endif
   return best_particle.y - sensor_radius*sin(best_particle.theta*M_PI/180);
 }
@@ -624,12 +624,13 @@ int swarm_get_best_y() {
 int swarm_get_best_theta_internal() {
 #endif
 #ifdef LINUX
-int swarm_get_best_theta() {
+double swarm_get_best_theta() {
 #endif
-  int t = best_particle.theta % 360;
+  double r = best_particle.theta - (int)best_particle.theta;
+  double t = (int)best_particle.theta % 360;
   if (t <= -180) t += 360;
   else if (t > 180) t -= 360;
-  return t;
+  return t + r;
 }
 
 #ifndef LINUX

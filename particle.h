@@ -5,9 +5,9 @@
 
 typedef struct particle {
   double p;
-  int x;
-  int y;
-  int theta;
+  double x;
+  double y;
+  double theta;
   double x_var;
   double y_var;
   double theta_var;
