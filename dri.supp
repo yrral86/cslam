@@ -14,3 +14,10 @@
    obj:/usr/lib/libdl-2.20.so
    ...
 }
+{
+   libGL-catchall
+   Memcheck:Leak
+   ...
+   obj:/usr/lib/mesa/libGL.so.1.2.0
+   ...
+}

@@ -13,9 +13,8 @@ particle particle_sample_normal(particle parent, int iterations) {
   p.p = parent.p;
   p.x = parent.x + rand_normal(parent.x_var);
   p.y = parent.y + rand_normal(parent.y_var);
-  p.theta = (int)p.theta % 360;
   p.theta = parent.theta + rand_normal(parent.theta_var);
-  if (iterations == 0) {
+  /*  if (iterations == 0) {
     p.x_var = INITIAL_POSITION_VARIANCE;
     p.y_var = INITIAL_POSITION_VARIANCE;
     p.theta_var = INITIAL_ANGLE_VARIANCE;
@@ -23,11 +22,12 @@ particle particle_sample_normal(particle parent, int iterations) {
     p.x_var = 0.8*parent.x_var;
     p.y_var = 0.8*parent.y_var;
     p.theta_var = 0.8*parent.theta_var;
-  } else {
+    } else {*/
     p.x_var = parent.x_var;
     p.y_var = parent.y_var;
     p.theta_var = parent.theta_var;
-  }
+    p.h = parent.h;
+  // }
   //  p.map = landmark_map_copy(parent.map);
 
   return p;
@@ -43,6 +43,7 @@ particle particle_init(int x, int y, int theta) {
   p.x_var = INITIAL_POSITION_VARIANCE;
   p.y_var = INITIAL_POSITION_VARIANCE;
   p.theta_var = INITIAL_ANGLE_VARIANCE;
+  p.resampled = 0;
 
   return p;
 }

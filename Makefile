@@ -1,8 +1,10 @@
-CFLAGS = -lglut -lm -lGLU -lGL -lpthread -g -pthread -DLINUX -Wall -pg -O2
+CFLAGS = -lglut -lm -lGLU -lGL -lpthread -g -pthread -DLINUX -Wall -pg
+# -O2
 OBJS = \
 	boxmuller \
 	buffer \
 	checkpoint \
+	hypothesis \
 	landmark \
 	lazygl \
 	map \
@@ -19,6 +21,7 @@ OBJ_FILES = 	\
 		boxmuller.o \
 		buffer.o \
 		checkpoint.o \
+		hypothesis.o \
 		landmark.o \
 		lazygl.o \
 		map.o \

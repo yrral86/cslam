@@ -21,18 +21,22 @@ int main(int argc, char **argv) {
   double x, y, theta;
   double last_x, last_y, last_theta;
   map_node *map_all;
+  map_node *h_map, *mask_map;
   map_node *map_current;
-  checkpoint *cp = checkpoint_path_new();;
+  hypothesis *latest_h;
   checkpoint *path_end = checkpoint_path_new();
 
   uint8_t *buffer_current = malloc(width*height);
   uint8_t *buffer_all = malloc(width*height);
   glutInit(&argc, argv);
   initGL(buffer_all, buffer_all, width, height, 1200, 1200);
-  map_all = map_new(width-1, height-1);
+
+  printf("before swarm init\n");
 
   swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, width, height, width/2, 0);
   swarm_set_map(buffer_all);
+
+  printf("after swarm init\n");
 
   last_x = x = width/2;
   last_y = y = height/2;
@@ -41,71 +45,71 @@ int main(int argc, char **argv) {
   i = 0;
   obs = next_observation();
   // set up checkpoint
-  cp->h.x = x;
-  cp->h.y = y;
-  cp->h.theta = theta;
-  cp->h.obs = obs;
+  latest_h = hypothesis_new(NULL, x, y, theta);
+  latest_h->obs = obs;
 
   // copy cp into new checkpoint after path
-  path_end = checkpoint_path_append(path_end, cp);
+  path_end = checkpoint_path_append(path_end, latest_h);
+  hypothesis_dereference(latest_h);
 
   length = checkpoint_path_length(path_end);
   printf("Checkpoint #%d\n", length);
 
   // rewrite from checkpoints
   printf("Rewritting map_all from refined path checkpoints\n");
-  map_deallocate(map_all);
   map_all = checkpoint_path_write_map(path_end);
   map_write_buffer(map_all, buffer_all);
-  size = buffer_hypothesis_distance(buffer_all, cp->h, 0, 10);
+  size = buffer_hypothesis_distance(buffer_all, latest_h, 0, 10);
 
   display();
+  /*
   glutMainLoopEvent();
 
   while (more_observations()) {
+    printf("iteration: %i\n", i);
     obs = next_observation();
     //    swarm_reset_convergence();
     //    do {
-      swarm_move(0, 0, 0);
-      swarm_update(obs);
-      /*      x = swarm_get_best_x();
-      y = swarm_get_best_y();
-      theta = swarm_get_best_theta();
-      printf("(%g, %g, %g)\n", x, y, theta);*/
+    swarm_move(0, 0, 0);
+    swarm_update(obs);
       //      printf("converged: %i\n", swarm_converged());
       //    } while(swarm_converged() == 0);
 
     // set up checkpoint
-    cp->h = obs->hypotheses[0];
-    printf("(%g, %g, %g)\n", cp->h.x, cp->h.y, cp->h.theta);
+    latest_h = obs->hypotheses;
+    printf("(%g, %g, %g)\n", latest_h->x, latest_h->y, latest_h->theta);
     old_size = size;
-    size = buffer_hypothesis_distance(buffer_all, cp->h, 0, 10);
+    size = buffer_hypothesis_distance(buffer_all, latest_h, 0, 10);
 
     printf("size: %d change: %d\n", size, size - old_size);
-    /*
-    map_current = map_new_from_hypothesis(cp->h);
-    map_write_buffer(map_current, buffer_current);
-    map_deallocate(map_current);
-    */
+
+ //   map_current = map_new_from_hypothesis(latest_h);
+//    map_write_buffer(map_current, buffer_current);
+  //  map_deallocate(map_current);
+
     // copy cp into new checkpoint after path if more than
     // 10 cm or 3 degrees
     // checkpoint based on size <= 12
-    //    if ((cp->h.x-last_x)*(cp->h.x-last_x) +
-    //	(cp->h.y-last_y)*(cp->h.y-last_y) > 10000 ||
-    //	abs(cp->h.theta-last_theta) > 3) {
+    //    if ((latest_h.x-last_x)*(latest_h.x-last_x) +
+    //	(latest_h.y-last_y)*(latest_h.y-last_y) > 10000 ||
+    //	abs(latest_h.theta-last_theta) > 3) {
     if (size <= 12) {
-      last_x = cp->h.x;
-      last_y = cp->h.y;
-      last_theta = cp->h.theta;
+      last_x = latest_h->x;
+      last_y = latest_h->y;
+      last_theta = latest_h->theta;
 
-      path_end = checkpoint_path_append(path_end, cp);
+      path_end = checkpoint_path_append(path_end, latest_h);
 
       length = checkpoint_path_length(path_end);
       printf("Checkpoint #%d\n", length);
 
       printf("adding best hypothesis to map\n");
       //    map_deallocate(map_all);
-      map_all = map_merge(map_all, cp->h);
+      mask_map = map_get_shifted_mask(latest_h->x, latest_h->y);
+      h_map = map_from_mask_and_hypothesis(mask_map, latest_h);
+      map_deallocate(mask_map);
+      map_all = map_merge(map_all, h_map);
+      // map merge frees previous map_all and h_map
       printf("merged, writing buffer\n");
       map_write_buffer(map_all, buffer_all);
       printf("buffer written, uploading and looping\n");
@@ -114,13 +118,12 @@ int main(int argc, char **argv) {
     //    swarm_set_map(buffer_all);
 
     // rewrite from checkpoints
-    /*    printf("Rewritting map_all from refined path checkpoints\n");
-    map_deallocate(map_all);
-    map_all = checkpoint_path_write_map(path_end);
-    map_write_buffer(map_all, buffer_all);*/
+    //  printf("Rewritting map_all from refined path checkpoints\n");
+    //  map_deallocate(map_all);
+    //  map_all = checkpoint_path_write_map(path_end);
+    //  map_write_buffer(map_all, buffer_all);
     //    swarm_set_map(buffer_all);
 
-    /*
     last_x = x;
     last_y = y;
     last_theta = theta;
@@ -151,7 +154,6 @@ int main(int argc, char **argv) {
 
     } else
       map_deallocate(cp->observation);
-    */
 
     display();
     glutMainLoopEvent();
@@ -162,7 +164,7 @@ int main(int argc, char **argv) {
   fclose(data);
 
   printf("Running ga to refine path\n");
-  printf("path_end: (%g,%g,%g)\n", path_end->h.x, path_end->h.y, path_end->h.theta);
+  printf("path_end: (%g,%g,%g)\n", path_end->h->x, path_end->h->y, path_end->h->theta);
   path_end = checkpoint_path_end(checkpoint_path_refine(path_end));
   printf("Rewritting map_all from refined path checkpoints\n");
   map_deallocate(map_all);
@@ -171,9 +173,8 @@ int main(int argc, char **argv) {
   display();
 
   glutMainLoopEvent();
-
+*/
   checkpoint_path_deallocate(path_end);
-  checkpoint_path_deallocate(cp);
 
   glutMainLoop();
 

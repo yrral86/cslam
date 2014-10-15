@@ -1,6 +1,7 @@
 #include "map.h"
 
 static int width, height;
+static int initial_max = (int)(M_PI*SENSOR_MAX_USB*SENSOR_MAX_USB)/(BUFFER_FACTOR*BUFFER_FACTOR);
 /*
 map_node* map_expand(map_node *map) {
   int w, h;
@@ -21,8 +22,8 @@ map_node* map_new(int w, int h) {
 #endif
 #ifdef __MAP_TYPE_HEAP__
   map = malloc(sizeof(map_node));
-  // initial max size 1/10 of possible pixels
-  map->max_size = MAP_SIZE*MAP_SIZE/10;
+  // initial max size enough for one scan
+  map->max_size = initial_max;
   map->current_size = 0;
   map->heap_sorted = 0;
   map->heap = malloc(sizeof(map_pixel)*map->max_size);
@@ -34,14 +35,14 @@ map_node* map_new(int w, int h) {
 #ifdef __MAP_TYPE_TREE__
 map_node* map_new_from_observation(int *distances) {
   int x, y, max = 0;
+  int i, j, d;
+  double s, c, theta;
 #endif
 #ifdef __MAP_TYPE_HEAP__
 map_node* map_new_from_hypothesis(hypothesis h) {
-  map_pixel pixel;
+//  map_pixel pixel;
 #endif
   map_node* map;
-  int i, j, d;
-  double s, c, theta;
 
 #ifdef __MAP_TYPE_TREE__
   for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++)
@@ -77,8 +78,10 @@ map_node* map_new_from_hypothesis(hypothesis h) {
 
 #endif
 #ifdef __MAP_TYPE_HEAP__
-  map = map_new(width - 1, height - 1);
+  printf("deprecated map_new_from_hypothesis, use from_mask_and_hypothesis\n");
 
+  map = map_new(width - 1, height - 1);
+/*
   for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++) {
     // observation theta + pose theta
     theta = (h.obs->list[i].theta + h.theta)*M_PI/180;
@@ -108,12 +111,49 @@ map_node* map_new_from_hypothesis(hypothesis h) {
   }
 
   map = map_sort(map);
+*/
 #endif
 
   return map;
 }
 
 #ifdef __MAP_TYPE_HEAP__
+static map_node* mask;
+void map_generate_mask(int r) {
+  int i, x, y;
+  map_pixel p;
+  mask = map_new(width - 1, height - 1);
+  i = 0;
+  for (y = -r/BUFFER_FACTOR; y <= r/BUFFER_FACTOR; y += BUFFER_FACTOR)
+    for (x = -r/BUFFER_FACTOR; x <= r/BUFFER_FACTOR; x += BUFFER_FACTOR) {
+      p.x = x/BUFFER_FACTOR;
+      p.y = y/BUFFER_FACTOR;
+      p.l.seen = 0;
+      p.l.unseen = 0;
+      mask->heap[i++] = p;
+    }
+
+  mask->heap_sorted = 0;
+  mask->index = 0;
+  mask->current_size = i;
+}
+
+map_node* map_get_shifted_mask(int x, int y) {
+  int i;
+  map_pixel p;
+  map_node *shifted_mask = map_dup(mask);
+
+  for (i = 0; i < mask->current_size; i++) {
+    p = mask->heap[i];
+    p.x += x/BUFFER_FACTOR;
+    p.y += y/BUFFER_FACTOR;
+    shifted_mask->heap[i] = p;
+  }
+
+  return shifted_mask;
+}
+
+
 void map_add_pixel(map_node *map, map_pixel p) {
   if (map->current_size + 1 <= map->max_size) {
     map->heap[map->current_size] = p;
@@ -207,6 +247,162 @@ void map_reheapify_down_root(map_node *map, int parent) {
     child_left = map_left_index(parent);
     child_right = map_right_index(parent);
   }
+}
+
+// intersects mask m with map
+map_node* map_intersection(map_node *m, map_node *map) {
+  int mask_i, map_i, int_i;
+  map_pixel mask_p, map_p;
+  map_node *intersection = map_new(width - 1, height - 1);
+
+  map_i = 0;
+  int_i = 0;
+  // for each mask element
+  for (mask_i = 0; mask_i < m->current_size; mask_i++) {
+    mask_p = m->heap[mask_i];
+    map_p = map->heap[map_i];
+    // skip over all map elements less than this one
+    while (map_pixel_need_swap(mask_p, map_p) && map_i + 1 < map->current_size) {
+      map_i++;
+      map_p = map->heap[map_i];
+    }
+
+    // check if we have a match pixel
+    if (map_p.x == mask_p.x &&
+	map_p.y == mask_p.y) {
+      // if we do add it
+      intersection->heap[int_i] = map_p;
+      int_i++;
+    }
+
+    // next mask element
+  }
+
+  intersection->index = 0;
+  intersection->heap_sorted = 1;
+  intersection->current_size = int_i;
+  assert(intersection->current_size <= intersection->max_size);
+
+  return intersection;
+}
+
+map_node* map_from_mask_and_hypothesis(map_node *m, hypothesis *h) {
+  int mask_i, map_i, theta_i, measured_d, mask_d;
+  map_pixel map_p, mask_p;
+  double theta, dx, dy, sq2;
+  map_node *map = map_new(width - 1, height - 1);
+
+  sq2 = sqrt(2)/2.0;
+
+  map_i = 0;
+  for (mask_i = 0; mask_i < m->current_size; mask_i++) {
+    // for each mask element
+    mask_p = m->heap[mask_i];
+    // find the closest theta
+    theta = atan2(mask_p.y, mask_p.x);
+    // convert to degrees
+    theta *= 180/M_PI;
+    // adjust for hypothesis
+    theta -= h->theta;
+    // adjust for 0 being center of sensor
+    theta += (SENSOR_RANGE_USB/2);
+    theta_i = theta/SENSOR_SPACING_USB;
+    // compare distance using center of grid square for x, y
+    dx = (BUFFER_FACTOR*(mask_p.x + sq2) - h->x);
+    dy = (BUFFER_FACTOR*(mask_p.y + sq2) - h->y);
+    mask_d = (int)sqrt(dx*dx + dy*dy);
+    measured_d = h->obs->list[theta_i].r;
+    // if within measured distance
+    if (mask_d - measured_d < BUFFER_FACTOR*sq2) {
+      map_p = mask_p;
+      map_p.h = h;
+      map_p.obs_index = theta_i;
+      // if at measured distance
+      if (abs(mask_d - measured_d) < BUFFER_FACTOR*sq2) {
+	// mark seen
+	map_p.l.seen = 1;
+	map_p.l.unseen = 0;
+      } else {
+	// if closer than measured distance
+	// mark unseen
+	map_p.l.seen = 0;
+	map_p.l.unseen = 1;
+      }
+      // mark
+      map->heap[map_i]= map_p;
+
+      // marked, increase map_i
+      map_i++;
+    }
+  }
+
+  map->heap_sorted = 1;
+  map->index = 0;
+  map->current_size = map_i;
+
+  return map;
+}
+
+map_node* map_merge(map_node *one, map_node *two) {
+  int merged_i, one_i, two_i;
+  map_pixel next;
+  map_node *merged = map_new(width - 1, height - 1);
+
+  one_i = 0;
+  two_i = 0;
+  merged_i = 0;
+  while (one_i < one->current_size ||
+	 two_i < two->current_size) {
+    // find next
+    // first check for one map being empty
+    if (one_i == one->current_size) {
+      next = two->heap[two_i];
+      two_i++;
+    } else if (two_i == two->current_size) {
+      next = one->heap[one_i];
+      one_i++;
+    // we have both, check order
+    } else if (map_pixel_need_swap(one->heap[one_i], two->heap[two_i])) {
+      // two is smaller, take it next
+      next = two->heap[two_i];
+      two_i++;
+    } else {
+      // one is smaller
+      next = one->heap[one_i];
+      one_i++;
+    }
+
+    // merge duplicate x,y from one
+    while (one_i < one->current_size &&
+	   one->heap[one_i].x == next.x &&
+	   one->heap[one_i].y == next.y) {
+      next.l.seen += one->heap[one_i].l.seen;
+      next.l.unseen += one->heap[one_i].l.unseen;
+      one_i++;
+    }
+
+    // merge duplicate x,y from two
+    while (two_i < two->current_size &&
+	   two->heap[two_i].x == next.x &&
+	   two->heap[two_i].y == next.y) {
+      next.l.seen += two->heap[two_i].l.seen;
+      next.l.unseen += two->heap[two_i].l.unseen;
+      two_i++;
+    }
+
+    // add next to merged
+    merged->heap[merged_i++] = next;
+  }
+
+  merged->heap_sorted = 1;
+  merged->index = 0;
+  merged->current_size = merged_i;
+
+  // free old maps
+  map_deallocate(one);
+  map_deallocate(two);
+
+  return merged;
 }
 
 inline int map_pixel_need_swap(map_pixel parent, map_pixel child) {
@@ -373,10 +569,12 @@ map_node* map_sort(map_node *map) {
   return new;
 }
 
-map_node* map_merge(map_node *m1, hypothesis h) {
+map_node* map_merge_hypothesis(map_node *m1, hypothesis h) {
   map_node *new;
   map_node *m2 = map_new_from_hypothesis(h);
   map_pixel next;
+
+  printf("deprecated, O(a log(a)), use map_from_mask_and_hypothesis for O(a)\n");
 
   if (m1->current_size == 0) {
     map_deallocate(m1);
@@ -950,7 +1148,7 @@ void map_debug(map_node *map) {
   for (i = 0; i < map->current_size; i++) {
     p = map->heap[i];
     printf("(%d,%d,%d,%d,%d,%d)\n", p.x, p.y, p.l.seen, p.l.unseen,
-	     p.h.obs->list[p.obs_index].r, p.h.obs->list[p.obs_index].theta);
+	     p.h->obs->list[p.obs_index].r, p.h->obs->list[p.obs_index].theta);
   }
 #endif
 #ifdef __MAP_TYPE_TREE__

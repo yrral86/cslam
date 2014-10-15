@@ -11,9 +11,14 @@ typedef struct particle {
   double x_var;
   double y_var;
   double theta_var;
-  landmark_map *map;
+  //  landmark_map *map;
+  struct map_node *map;
+  int resampled;
+  struct hypothesis* h;
 } particle;
 
+#include "hypothesis.h"
+#include "map.h"
 #include "swarm.h"
 #include "landmark.h"
 

@@ -72,23 +72,29 @@ int x_y_protected(int x, int y) {
 }
 */
 
-int buffer_hypothesis_distance(uint8_t *b, hypothesis h, int offset, int divisor) {
+int buffer_hypothesis_distance(uint8_t *b, hypothesis *h, int offset, int divisor) {
   int i, j, index, distance;
   double c, s, d, x, y, theta;
+  double h_theta, h_x, h_y;
+  observation *list = h->obs->list;
+  h_theta = h->theta;
+  h_x = h->x;
+  h_y = h->y;
 
   distance = 0;
+  j = 0;
   for (i = offset; i < RAW_SENSOR_DISTANCES_USB; i += divisor) {
       // observation theta + pose theta
-      theta = (h.obs->list[i].theta + h.theta)*M_PI/180;
+      theta = (list[i].theta + h_theta)*M_PI/180;
       c = cos(theta);
       s = sin(theta);
 
     // find distance
     for (j = -5; j < 6; j++) {
       // adjust distance by BUFFER_FACTOR to enable line trace
-      d = h.obs->list[i].r + j*BUFFER_FACTOR;
-      x = h.x + d*c;
-      y = h.y + d*s;
+      d = list[i].r + j*BUFFER_FACTOR;
+      x = h_x + d*c;
+      y = h_y + d*s;
 
       if (x > 0 && x < MAP_SIZE + 1 &&
 	  y > 0 && y < MAP_SIZE + 1) {

@@ -5,7 +5,7 @@
 
 typedef struct observation {
   unsigned int r;
-  int theta;
+  double theta;
 } observation;
 
 typedef struct observations {
