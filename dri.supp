@@ -1,0 +1,16 @@
+{
+   dri-catchall
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   obj:/usr/lib/xorg/modules/dri/r600_dri.so
+   ...
+}
+{
+   libdl-catchall
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   obj:/usr/lib/libdl-2.20.so
+   ...
+}
