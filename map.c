@@ -210,9 +210,9 @@ void map_reheapify_down_root(map_node *map, int parent) {
 }
 
 inline int map_pixel_need_swap(map_pixel parent, map_pixel child) {
-  if (parent.x > child.x ||
-      (parent.x == child.x &&
-       parent.y > child.y))
+  if (parent.y > child.y ||
+      (parent.y == child.y &&
+       parent.x > child.x))
     //    if (parent.h.obs->list[parent.obs_index].r >
     //	child.h.obs->list[child.obs_index].r)
     return 1;
