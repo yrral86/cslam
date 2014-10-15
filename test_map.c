@@ -89,9 +89,11 @@ int main(int argc, char **argv) {
     */
     // copy cp into new checkpoint after path if more than
     // 10 cm or 3 degrees
-    if ((cp->h.x-last_x)*(cp->h.x-last_x) +
-	(cp->h.y-last_y)*(cp->h.y-last_y) > 10000 ||
-	abs(cp->h.theta-last_theta) > 3) {
+    // checkpoint based on size <= 12
+    //    if ((cp->h.x-last_x)*(cp->h.x-last_x) +
+    //	(cp->h.y-last_y)*(cp->h.y-last_y) > 10000 ||
+    //	abs(cp->h.theta-last_theta) > 3) {
+    if (size <= 12) {
       last_x = cp->h.x;
       last_y = cp->h.y;
       last_theta = cp->h.theta;

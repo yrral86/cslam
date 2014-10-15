@@ -78,12 +78,13 @@ int buffer_hypothesis_distance(uint8_t *b, hypothesis h, int offset, int divisor
 
   distance = 0;
   for (i = offset; i < RAW_SENSOR_DISTANCES_USB; i += divisor) {
-    // find distance
-    for (j = -5; j < 6; j++) {
       // observation theta + pose theta
       theta = (h.obs->list[i].theta + h.theta)*M_PI/180;
       c = cos(theta);
       s = sin(theta);
+
+    // find distance
+    for (j = -5; j < 6; j++) {
       // adjust distance by BUFFER_FACTOR to enable line trace
       d = h.obs->list[i].r + j*BUFFER_FACTOR;
       x = h.x + d*c;
@@ -107,6 +108,10 @@ int buffer_hypothesis_distance(uint8_t *b, hypothesis h, int offset, int divisor
       }
     }
   }
+
+  if (j == 6)
+    // we didn't find an obstacle
+    distance += abs(j);
 
   return distance;
 }
