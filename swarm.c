@@ -291,6 +291,7 @@ void swarm_update_internal(int *distances) {
 #ifdef LINUX
 void swarm_update(observations *obs) {
   hypothesis h;
+  int offset;
 #endif
   int i, j, k, l, best_index, p_count, new_observations;
   int swap, x, y, count;
@@ -305,28 +306,35 @@ void swarm_update(observations *obs) {
 #endif
 
   p_count = PARTICLE_COUNT;
+  int culled[p_count];
+  for (i = 0; i < p_count; i++)
+    culled[i] = 0;
 
   obs->hypotheses = malloc(sizeof(hypothesis)*p_count);
 
   //  min = 10000.0;
   max = 0.0;
   best_index = 0;
-  // evaulate each direction for each particle
-  for (i = 0; i < p_count; i++) {
-    //    printf("update: (%d, %d, %d)\n", particles[i].x,
-    //	   particles[i].y,
-    //	   particles[i].theta);
-    h.x = particles[i].x;
-    h.y = particles[i].y;
-    h.theta = particles[i].theta;
-    h.obs = obs;
+  // use the same observations for all particles
+  //  offset = rand_limit(20);
+  for (offset = 0; offset < 20; offset++) {
+    // evaulate each direction for each particle
+    for (i = 0; i < p_count; i++) {
+      if (culled[i] == 0) {
+      //    printf("update: (%d, %d, %d)\n", particles[i].x,
+      //	   particles[i].y,
+      //	   particles[i].theta);
+	h.x = particles[i].x;
+	h.y = particles[i].y;
+	h.theta = particles[i].theta;
+	h.obs = obs;
     //    particle_map = map_new_from_hypothesis(h);
 
     //    printf("map size: %i\n", map->current_size);
 
     //    printf("particle map size: %i\n", particle_map->current_size);
 
-    particles[i].p *= 1.0/buffer_hypothesis_size(map, h);
+	particles[i].p *= 1.0/buffer_hypothesis_distance(map, h, offset, 20);
 
     //    printf("escaped map_merge_variance\n");
     //    buffer_deallocate(particle_map);
@@ -397,10 +405,21 @@ void swarm_update(observations *obs) {
     //    particles[i].p = 1/(map_get_info(temp_map)*map_get_size(temp_map));
     //    map_deallocate(temp_map);
     //    if (particles[i].p < min) {
-    if (particles[i].p > max) {
-      max = particles[i].p;
-      best_index = i;
+	if (particles[i].p > max) {
+	  max = particles[i].p;
+	  best_index = i;
+	}
+      }
     }
+
+    // cull terrible particles
+    swarm_normalize();
+    for (i = 0; i < p_count; i++)
+      if (culled[i] == 0)
+	if (particles[i].p < 1.0/p_count) {
+	  culled[i] = 1;
+	  particles[i].p = 0;
+	}
   }
 
   // clear old best, save new best, copy the map we are about to dereference
@@ -412,7 +431,7 @@ void swarm_update(observations *obs) {
 
   //  swarm_map_current(distances);
 
-  // normalize particle log probabilities, convert to normal probabilities for resampling
+  // normalize particles
   swarm_normalize();
 
   swarm_sort(0, p_count - 1);
@@ -459,7 +478,7 @@ void swarm_update(observations *obs) {
   }
 
   // make sure 99% of particles are within 75mm and 5 degrees
-  if (stddev[0] + stddev[1] < 2*INITIAL_POSITION_VARIANCE*INITIAL_POSITION_VARIANCE &&
+  if (stddev[0] + stddev[1] < INITIAL_POSITION_VARIANCE*INITIAL_POSITION_VARIANCE &&
       stddev[2] < INITIAL_ANGLE_VARIANCE)
     converged = 1;
   else

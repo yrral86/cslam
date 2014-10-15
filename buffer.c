@@ -72,38 +72,43 @@ int x_y_protected(int x, int y) {
 }
 */
 
-int buffer_hypothesis_size(uint8_t *b, hypothesis h) {
-  int i, index, size;
+int buffer_hypothesis_distance(uint8_t *b, hypothesis h, int offset, int divisor) {
+  int i, j, index, distance;
   double c, s, d, x, y, theta;
 
-  size = 0.0;
-  for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i += 20) {
-    // observation theta + pose theta
-    theta = (h.obs->list[i].theta + h.theta)*M_PI/180;
-    c = cos(theta);
-    s = sin(theta);
-    d = h.obs->list[i].r;
-    x = h.x + d*c;
-    y = h.y + d*s;
+  distance = 0;
+  for (i = offset; i < RAW_SENSOR_DISTANCES_USB; i += divisor) {
+    // find distance
+    for (j = -5; j < 6; j++) {
+      // observation theta + pose theta
+      theta = (h.obs->list[i].theta + h.theta)*M_PI/180;
+      c = cos(theta);
+      s = sin(theta);
+      // adjust distance by BUFFER_FACTOR to enable line trace
+      d = h.obs->list[i].r + j*BUFFER_FACTOR;
+      x = h.x + d*c;
+      y = h.y + d*s;
 
-    if (x > 0 && x < MAP_SIZE + 1 &&
-	y > 0 && y < MAP_SIZE + 1) {
-      index = (MAP_SIZE+1)*y + x;
+      if (x > 0 && x < MAP_SIZE + 1 &&
+	  y > 0 && y < MAP_SIZE + 1) {
+	index = (MAP_SIZE+1)*y + x;
 
-      // if this would be new or contradictory data
-      if (b[index] <= 127)
-	size++;
-    } else
-      // out of bounds
-      size += 10;
+	// if we are fairly certain about this location being hit
+	if (b[index] > 200) {
+	  distance += abs(j);
+	  // next theta
+	  break;
+	}
+      } else {
+	// out of bounds
+	distance += 10;
+	// next theta
+	break;
+      }
+    }
   }
 
-  for (i = 0; i < buffer_size; i++)
-    if (b[index] != 127)
-      // if we have data
-      size++;
-
-  return size;
+  return distance;
 }
 
 void buffer_deallocate(uint8_t *b) {
