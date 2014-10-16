@@ -545,7 +545,7 @@ void swarm_update(observations *obs) {
 	parent_map = map_intersection(h->parent->map, h->map);
 	// merge map and parent map
 	h->map = map_merge(h->map, parent_map);
-	// merge frees h->map and parent_map
+	// merge frees prior h->map and parent_map
       }
 
       // store this hypothesis in parent's h for resampling
@@ -554,6 +554,7 @@ void swarm_update(observations *obs) {
       hypothesis_dereference(particles[j - 1].h);
       particles[j - 1].h = h;
       // write buffer
+      // TODO: free this shit 5 GB in 5 iterations
       particles[j - 1].buffer = malloc(long_side*short_side);
       // copy the map so we don't destory the map pointer we just
       // assigned to this particle

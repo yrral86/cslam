@@ -304,11 +304,12 @@ map_node* map_from_mask_and_hypothesis(map_node *m, hypothesis *h) {
     // for each mask element
     mask_p = m->heap[mask_i];
 
-    dx = (BUFFER_FACTOR*(mask_p.x + sq2) - h->x);
-    dy = (BUFFER_FACTOR*(mask_p.y + sq2) - h->y);
+    dx = BUFFER_FACTOR*(mask_p.x + sq2) - h->x;
+    dy = BUFFER_FACTOR*(mask_p.y + sq2) - h->y;
 
+    // WHY DO YOU ONLY SHOW HALF?
     // find the closest theta in degrees
-    theta = 180*atan2(dy,dx)/M_PI;
+    theta = 180*atan2(dy, dx)/M_PI;
     // adjust for hypothesis
     theta -= h->theta;
     if (theta >= 0 && theta <= SENSOR_RANGE_USB) {
