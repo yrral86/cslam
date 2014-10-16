@@ -127,7 +127,10 @@ __declspec(dllexport) int swarm_get_best_theta() {
 
 #ifdef LINUX
 void swarm_set_initial_hypothesis(hypothesis *h, uint8_t *buffer) {
-  best_particle.h = h;
+  double half_side;
+  half_side = (MAP_SIZE + 1)/2;
+  best_particle.h = hypothesis_new(h, half_side, half_side, 0);
+  best_particle.h->map = h->map;
   best_particle.buffer = buffer;
 }
 #endif
@@ -286,7 +289,7 @@ void swarm_move(int dx, int dy, int dtheta) {
 	  abs(p.h->y - p.y) > 0 ||
 	  abs(p.h->theta - p.theta) > 0) {
 	// generate new hypothesis
-	particles[i].h = hypothesis_new(p.h, p.x, p.y, p.theta);
+	particles[i].h = hypothesis_new(p.h->parent, p.x, p.y, p.theta);
 	// copy map from parent
 	particles[i].h->map = p.h->map;
 	particles[i].buffer = p.buffer;
@@ -385,7 +388,7 @@ void swarm_update(observations *obs) {
 	  y = l*s + short_side - particles[i].y;
 
 	  // make sure it is in bounds
-	  if (in_arena(x, y)) {
+4	  if (in_arena(x, y)) {
 	    //	    k = buffer_index_from_x_y(x, y);
 	    //	    p = landmark_unseen_probability(particles[i].map, k);
 	    //	    p = landmark_unseen_probability(map, k);
@@ -537,16 +540,18 @@ void swarm_update(observations *obs) {
       // generate map from hypothesis
       temp_map = h->map;
       h->map = map_from_mask_and_hypothesis(h->map, h);
-      // free mask
-      map_deallocate(temp_map);
 
-      if (h->parent != NULL && h->parent->map != NULL) {
+      if (h->parent != NULL)
+	if(h->parent->map != NULL) {
 	// get intersection of mask and parent map
-	parent_map = map_intersection(h->parent->map, h->map);
+	parent_map = map_intersection(h->parent->map, temp_map);
 	// merge map and parent map
 	h->map = map_merge(h->map, parent_map);
 	// merge frees prior h->map and parent_map
       }
+      // free mask
+      map_deallocate(temp_map);
+
 
       // store this hypothesis in parent's h for resampling
       // swarm_move will make sure deviations spawn their own
@@ -564,6 +569,7 @@ void swarm_update(observations *obs) {
       // mark as resampled
       previous_particles[j - 1].resampled = 1;
     } else {
+      // we've already resampled, just increase the reference count
       hypothesis_reference(particles[j - 1].h);
     }
     particles[i] = previous_particles[j - 1];

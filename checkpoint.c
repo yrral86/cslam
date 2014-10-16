@@ -61,23 +61,17 @@ map_node* checkpoint_path_write_map(checkpoint *cp) {
     /*    printf("merging hypothesis (%d,%d,%d) with observations (%d,%d,%d...)\n", cp->h->x,
 	  cp->h->y, cp->h->theta, cp->h->obs->list[0].r, cp->h->obs->list[1].r, cp->h->obs->list[2].r);*/
     mask_map = map_get_shifted_mask(cp->h->x, cp->h->y);
-    printf("mask map size: %d\n", mask_map->current_size);
     cp_map = map_from_mask_and_hypothesis(mask_map, cp->h);
-    printf("cp_map size: %d\n", cp_map->current_size);
     map_deallocate(mask_map);
     map = map_merge(map, cp_map);
-    printf("map size: %d\n", map->current_size);
     // merge frees original map and cp_map
     //    printf("after merge, size: %i, variance: %g\n", map->current_size, map_variance(map));
     cp = cp->next;
   }
   mask_map = map_get_shifted_mask(cp->h->x, cp->h->y);
-  printf("mask map size: %d\n", mask_map->current_size);
   cp_map = map_from_mask_and_hypothesis(mask_map, cp->h);
-  printf("cp_map size: %d\n", cp_map->current_size);
   map_deallocate(mask_map);
   map = map_merge(map, cp_map);
-  printf("map size: %d\n", map->current_size);
   return map;
 }
 /*
