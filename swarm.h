@@ -41,7 +41,7 @@ void swarm_map_current(int*);
 void swarm_map_reset_current();
 #endif
 #ifdef LINUX
-void swarm_set_initial_hypothesis(hypothesis*, uint8_t*);
+void swarm_set_initial_hypothesis(hypothesis*);
 void swarm_init(int, int, int, int, int, int);
 void swarm_move(int, int, int);
 void swarm_update(observations*);

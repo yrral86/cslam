@@ -6,12 +6,13 @@
 
 typedef struct hypothesis {
   struct hypothesis* parent;
-  struct hypothesis* children[PARTICLE_COUNT];
+  struct hypothesis* children[PARTICLE_COUNT+10];
   double x;
   double y;
   double theta;
   observations *obs;
   struct map_node *map;
+  uint8_t *buffer;
   int references;
   int child_count;
 } hypothesis;

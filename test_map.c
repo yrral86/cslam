@@ -64,9 +64,11 @@ int main(int argc, char **argv) {
 
   // copy first reading into initial buffer
   memcpy(buffer_init, buffer_all, width*height);
+  // set as root_h buffer
+  root_h->buffer = buffer_init;
 
   // init swarm
-  swarm_set_initial_hypothesis(root_h, buffer_init);
+  swarm_set_initial_hypothesis(root_h);
   swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, width, height, width/2, 0);
   //  swarm_set_map(buffer_all);
 

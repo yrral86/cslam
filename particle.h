@@ -13,7 +13,6 @@ typedef struct particle {
   double y_var;
   double theta_var;
   int resampled;
-  uint8_t *buffer;
   struct hypothesis* h;
 } particle;
 

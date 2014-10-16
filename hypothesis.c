@@ -6,8 +6,11 @@ void hypothesis_reference(hypothesis *h) {
 
 void hypothesis_dereference(hypothesis *h) {
   h->references--;
-  if (h->references == 0)
+  if (h->references == 0) {
+    map_deallocate(h->map);
+    free(h->buffer);
     free(h);
+  }
 }
 
 hypothesis* hypothesis_new(hypothesis *parent, double x, double y, double theta) {
@@ -19,7 +22,8 @@ hypothesis* hypothesis_new(hypothesis *parent, double x, double y, double theta)
   if (parent != NULL) {
     parent->children[parent->child_count++] = h;
     // make sure we don't overrun children
-    assert(parent->child_count < PARTICLE_COUNT);
+    printf("children: %d\n", parent->child_count);
+    assert(parent->child_count < PARTICLE_COUNT + 10);
     hypothesis_reference(parent);
     hypothesis_reference(h);
   }
