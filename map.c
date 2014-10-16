@@ -1,7 +1,8 @@
 #include "map.h"
 
 static int width, height;
-static int initial_max = (int)(M_PI*SENSOR_MAX_USB*SENSOR_MAX_USB)/(BUFFER_FACTOR*BUFFER_FACTOR);
+// sensor maximum area + 50%
+static int initial_max = (int)((1.5*M_PI*SENSOR_MAX_USB*SENSOR_MAX_USB)/(BUFFER_FACTOR*BUFFER_FACTOR));
 /*
 map_node* map_expand(map_node *map) {
   int w, h;
@@ -120,20 +121,24 @@ map_node* map_new_from_hypothesis(hypothesis h) {
 #ifdef __MAP_TYPE_HEAP__
 static map_node* mask;
 void map_generate_mask(int r) {
-  int i, x, y;
+  int i, x, y, r2;
   map_pixel p;
   mask = map_new(width - 1, height - 1);
   i = 0;
-  for (y = -r/BUFFER_FACTOR; y <= r/BUFFER_FACTOR; y += BUFFER_FACTOR)
-    for (x = -r/BUFFER_FACTOR; x <= r/BUFFER_FACTOR; x += BUFFER_FACTOR) {
-      p.x = x/BUFFER_FACTOR;
-      p.y = y/BUFFER_FACTOR;
-      p.l.seen = 0;
-      p.l.unseen = 0;
-      mask->heap[i++] = p;
+  r /= BUFFER_FACTOR;
+  r2 = r*r;
+  for (y = -r; y <= r; y++)
+    for (x = -r; x <= r; x++) {
+      if (x*x + y*y <= r2) {
+	p.x = x;
+	p.y = y;
+	p.l.seen = 0;
+	p.l.unseen = 0;
+	mask->heap[i++] = p;
+      }
     }
 
-  mask->heap_sorted = 0;
+  mask->heap_sorted = 1;
   mask->index = 0;
   mask->current_size = i;
 }
@@ -152,7 +157,6 @@ map_node* map_get_shifted_mask(int x, int y) {
 
   return shifted_mask;
 }
-
 
 void map_add_pixel(map_node *map, map_pixel p) {
   if (map->current_size + 1 <= map->max_size) {
@@ -291,6 +295,7 @@ map_node* map_from_mask_and_hypothesis(map_node *m, hypothesis *h) {
   map_pixel map_p, mask_p;
   double theta, dx, dy, sq2;
   map_node *map = map_new(width - 1, height - 1);
+  observation *list = h->obs->list;
 
   sq2 = sqrt(2)/2.0;
 
@@ -298,41 +303,39 @@ map_node* map_from_mask_and_hypothesis(map_node *m, hypothesis *h) {
   for (mask_i = 0; mask_i < m->current_size; mask_i++) {
     // for each mask element
     mask_p = m->heap[mask_i];
-    // find the closest theta
-    theta = atan2(mask_p.y, mask_p.x);
-    // convert to degrees
-    theta *= 180/M_PI;
-    // adjust for hypothesis
-    theta -= h->theta;
-    // adjust for 0 being center of sensor
-    theta += (SENSOR_RANGE_USB/2);
-    theta_i = theta/SENSOR_SPACING_USB;
-    // compare distance using center of grid square for x, y
+
     dx = (BUFFER_FACTOR*(mask_p.x + sq2) - h->x);
     dy = (BUFFER_FACTOR*(mask_p.y + sq2) - h->y);
-    mask_d = (int)sqrt(dx*dx + dy*dy);
-    measured_d = h->obs->list[theta_i].r;
-    // if within measured distance
-    if (mask_d - measured_d < BUFFER_FACTOR*sq2) {
-      map_p = mask_p;
-      map_p.h = h;
-      map_p.obs_index = theta_i;
-      // if at measured distance
-      if (abs(mask_d - measured_d) < BUFFER_FACTOR*sq2) {
-	// mark seen
-	map_p.l.seen = 1;
-	map_p.l.unseen = 0;
-      } else {
-	// if closer than measured distance
-	// mark unseen
-	map_p.l.seen = 0;
-	map_p.l.unseen = 1;
-      }
-      // mark
-      map->heap[map_i]= map_p;
 
-      // marked, increase map_i
-      map_i++;
+    // find the closest theta in degrees
+    theta = 180*atan2(dy,dx)/M_PI;
+    // adjust for hypothesis
+    theta -= h->theta;
+    if (theta >= 0 && theta <= SENSOR_RANGE_USB) {
+      theta_i = theta/SENSOR_SPACING_USB;
+
+      measured_d = list[theta_i].r;
+      // compare distance using center of grid square for x, y
+      mask_d = (int)sqrt(dx*dx + dy*dy);
+      // if within measured distance
+      if (mask_d <= measured_d) {
+	map_p = mask_p;
+	map_p.h = h;
+	map_p.obs_index = theta_i;
+	// if at measured distance
+	if (abs(mask_d - measured_d) < BUFFER_FACTOR*sq2) {
+	  // mark seen
+	  map_p.l.seen = 1;
+	  map_p.l.unseen = 0;
+	} else {
+	  // if closer than measured distance
+	  // mark unseen
+	  map_p.l.seen = 0;
+	  map_p.l.unseen = 1;
+	}
+	// mark
+	map->heap[map_i++] = map_p;
+      }
     }
   }
 
@@ -1147,8 +1150,9 @@ void map_debug(map_node *map) {
   map_pixel p;
   for (i = 0; i < map->current_size; i++) {
     p = map->heap[i];
-    printf("(%d,%d,%d,%d,%d,%d)\n", p.x, p.y, p.l.seen, p.l.unseen,
-	     p.h->obs->list[p.obs_index].r, p.h->obs->list[p.obs_index].theta);
+//    printf("(%d,%d,%d,%d,%d,%d)\n", p.x, p.y, p.l.seen, p.l.unseen,
+//	     p.h->obs->list[p.obs_index].r, p.h->obs->list[p.obs_index].theta);
+    printf("(%d,%d)\n", p.x, p.y);
   }
 #endif
 #ifdef __MAP_TYPE_TREE__

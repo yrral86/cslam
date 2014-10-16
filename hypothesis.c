@@ -21,6 +21,7 @@ hypothesis* hypothesis_new(hypothesis *parent, double x, double y, double theta)
     // make sure we don't overrun children
     assert(parent->child_count < PARTICLE_COUNT);
     hypothesis_reference(parent);
+    hypothesis_reference(h);
   }
   h->x = x;
   h->y = y;

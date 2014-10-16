@@ -12,7 +12,6 @@ typedef struct particle {
   double y_var;
   double theta_var;
   //  landmark_map *map;
-  struct map_node *map;
   int resampled;
   struct hypothesis* h;
 } particle;

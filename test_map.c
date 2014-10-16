@@ -22,7 +22,6 @@ int main(int argc, char **argv) {
   double last_x, last_y, last_theta;
   map_node *map_all;
   map_node *h_map, *mask_map;
-  map_node *map_current;
   hypothesis *latest_h;
   checkpoint *path_end = checkpoint_path_new();
 
@@ -31,12 +30,8 @@ int main(int argc, char **argv) {
   glutInit(&argc, argv);
   initGL(buffer_all, buffer_all, width, height, 1200, 1200);
 
-  printf("before swarm init\n");
-
-  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, width, height, width/2, 0);
-  swarm_set_map(buffer_all);
-
-  printf("after swarm init\n");
+  // generate presorted mask for O(a) copies
+  map_generate_mask(SENSOR_MAX_USB);
 
   last_x = x = width/2;
   last_y = y = height/2;
@@ -44,9 +39,18 @@ int main(int argc, char **argv) {
 
   i = 0;
   obs = next_observation();
-  // set up checkpoint
+  // set up initial hypothesis
   latest_h = hypothesis_new(NULL, x, y, theta);
   latest_h->obs = obs;
+  mask_map = map_get_shifted_mask(latest_h->x, latest_h->y);
+  h_map = map_from_mask_and_hypothesis(mask_map, latest_h);
+  map_deallocate(mask_map);
+  latest_h->map = map_dup(h_map);
+  map_deallocate(h_map);
+
+  swarm_set_initial_hypothesis(latest_h);
+  swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, width, height, width/2, 0);
+  swarm_set_map(buffer_all);
 
   // copy cp into new checkpoint after path
   path_end = checkpoint_path_append(path_end, latest_h);
@@ -61,8 +65,10 @@ int main(int argc, char **argv) {
   map_write_buffer(map_all, buffer_all);
   size = buffer_hypothesis_distance(buffer_all, latest_h, 0, 10);
 
+  printf("calling display\n");
   display();
-  /*
+  printf("looping\n");
+
   glutMainLoopEvent();
 
   while (more_observations()) {
@@ -123,6 +129,7 @@ int main(int argc, char **argv) {
     //  map_all = checkpoint_path_write_map(path_end);
     //  map_write_buffer(map_all, buffer_all);
     //    swarm_set_map(buffer_all);
+      /*
 
     last_x = x;
     last_y = y;
@@ -145,7 +152,6 @@ int main(int argc, char **argv) {
 	cp->information = map_get_info(map_all);
 	cp->size = map_get_size(map_all);
       }
-
       map_deallocate(map_all_with_path);
       map_all_with_path = checkpoint_path_write_map_with_path(path_end);
 
@@ -154,6 +160,7 @@ int main(int argc, char **argv) {
 
     } else
       map_deallocate(cp->observation);
+*/
 
     display();
     glutMainLoopEvent();
@@ -173,7 +180,7 @@ int main(int argc, char **argv) {
   display();
 
   glutMainLoopEvent();
-*/
+
   checkpoint_path_deallocate(path_end);
 
   glutMainLoop();

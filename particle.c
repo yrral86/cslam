@@ -27,6 +27,7 @@ particle particle_sample_normal(particle parent, int iterations) {
     p.y_var = parent.y_var;
     p.theta_var = parent.theta_var;
     p.h = parent.h;
+    p.resampled = 0;
   // }
   //  p.map = landmark_map_copy(parent.map);
 

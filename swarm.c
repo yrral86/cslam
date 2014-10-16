@@ -125,6 +125,12 @@ __declspec(dllexport) int swarm_get_best_theta() {
 
 #endif
 
+#ifdef LINUX
+void swarm_set_initial_hypothesis(hypothesis *h) {
+  best_particle.h = h;
+}
+#endif
+
 #ifndef LINUX
 void swarm_init_internal(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in, int radius) {
 #endif
@@ -137,7 +143,6 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   char *str, *tok;
   FILE *map_file;
   double t;
-  hypothesis *h;
   m = m_in;
   sensor_degrees = degrees_in;
   long_side = long_side_in;
@@ -205,9 +210,6 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   y = short_side/2;
   theta = 0;
   //  t = theta*M_PI/180;
-
-  h = hypothesis_new(NULL, x, y, theta);
-
   for (i = 0; i < PARTICLE_COUNT; i++) {
     //y = short_side/4;
 
@@ -216,19 +218,16 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
     //    theta = rand_limit(360) - 180;
     //    particles[i] = particle_init(x + sensor_radius*cos(t), y + sensor_radius*sin(t), theta);
     particles[i] = particle_init(x, y, theta);
-    particles[i].h = h;
-    hypothesis_reference(h);
+    particles[i].h = best_particle.h;
+    hypothesis_reference(best_particle.h);
 
     //    particles[i].map = initial_map.map;
     //    landmark_map_reference(particles[i].map);
   }
 
-  hypothesis_dereference(h);
+  hypothesis_dereference(best_particle.h);
 
   best_particle = particles[0];
-
-  // generate presorted mask for O(a) copies
-  map_generate_mask(SENSOR_MAX_USB);
 
   //  landmark_map_dereference(initial_map.map);
 
@@ -285,7 +284,9 @@ void swarm_move(int dx, int dy, int dtheta) {
 	  abs(p.h->y - p.y) > 0 ||
 	  abs(p.h->theta - p.theta) > 0) {
 	// generate new hypothesis
-	particles[i].h = hypothesis_new(p.h->parent, p.x, p.y, p.theta);
+	particles[i].h = hypothesis_new(p.h, p.x, p.y, p.theta);
+	// copy map from parent
+	particles[i].h->map = p.h->map;
 	// dereference shared hypothesis
 	hypothesis_dereference(p.h);
       }
@@ -355,7 +356,7 @@ void swarm_update(observations *obs) {
     //    printf("particle map size: %i\n", particle_map->current_size);
 
 	particles[i].h->obs = obs;
-	particles[i].p *= 1.0/buffer_hypothesis_distance(map, particles[i].h, offset, 20);
+	particles[i].p *= 1.0/buffer_hypothesis_distance(particles[i].h->map, particles[i].h, offset, 20);
 
     //    printf("escaped map_merge_variance\n");
     //    buffer_deallocate(particle_map);
@@ -530,16 +531,19 @@ void swarm_update(observations *obs) {
       // generate map
       // get mask for this position
       h->map = map_get_shifted_mask(temp.x, temp.y);
-      // get intersection of mask and parent map
-      parent_map = map_intersection(h->map, temp.h->map);
       // generate map from hypothesis
       temp_map = h->map;
       h->map = map_from_mask_and_hypothesis(h->map, h);
       // free mask
       map_deallocate(temp_map);
-      // merge map and parent map
-      h->map = map_merge(h->map, parent_map);
-      // merge frees h->map and parent->map
+
+      if (h->parent != NULL && h->parent->map != NULL) {
+	// get intersection of mask and parent map
+	parent_map = map_intersection(h->parent->map, h->map);
+	// merge map and parent map
+	h->map = map_merge(h->map, parent_map);
+	// merge frees h->map and parent_map
+      }
 
       // store this hypothesis in parent's h for resampling
       // swarm_move will make sure deviations spawn their own

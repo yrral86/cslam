@@ -56,21 +56,28 @@ map_node* checkpoint_path_write_map(checkpoint *cp) {
   map_node *map = map_new(MAP_SIZE, MAP_SIZE);
   map_node *cp_map, *mask_map;
   cp = cp->head;
+  printf("map size: %d\n", map->current_size);
   while (cp->next != NULL) {
     /*    printf("merging hypothesis (%d,%d,%d) with observations (%d,%d,%d...)\n", cp->h->x,
 	  cp->h->y, cp->h->theta, cp->h->obs->list[0].r, cp->h->obs->list[1].r, cp->h->obs->list[2].r);*/
     mask_map = map_get_shifted_mask(cp->h->x, cp->h->y);
+    printf("mask map size: %d\n", mask_map->current_size);
     cp_map = map_from_mask_and_hypothesis(mask_map, cp->h);
+    printf("cp_map size: %d\n", cp_map->current_size);
     map_deallocate(mask_map);
     map = map_merge(map, cp_map);
+    printf("map size: %d\n", map->current_size);
     // merge frees original map and cp_map
     //    printf("after merge, size: %i, variance: %g\n", map->current_size, map_variance(map));
     cp = cp->next;
   }
   mask_map = map_get_shifted_mask(cp->h->x, cp->h->y);
+  printf("mask map size: %d\n", mask_map->current_size);
   cp_map = map_from_mask_and_hypothesis(mask_map, cp->h);
+  printf("cp_map size: %d\n", cp_map->current_size);
   map_deallocate(mask_map);
   map = map_merge(map, cp_map);
+  printf("map size: %d\n", map->current_size);
   return map;
 }
 /*
@@ -117,26 +124,28 @@ void checkpoint_path_deallocate(checkpoint *cp) {
 checkpoint* checkpoint_path_dup_with_deltas(checkpoint *cp, int *deltas) {
   int i;
   checkpoint *dup = checkpoint_path_new();
-  checkpoint *temp = checkpoint_path_new();
+  hypothesis *temp;
   cp = cp->head;
   i = 0;
   while (cp->next != NULL) {
-    temp->h->x = cp->h->x + deltas[3*i];
-    temp->h->y = cp->h->y + deltas[3*i+1];
-    temp->h->theta = cp->h->theta + deltas[3*i+2];
-    temp->h->obs = cp->h->obs;
+    temp = hypothesis_new(cp->h,
+			  cp->h->x + deltas[3*i],
+			  cp->h->y + deltas[3*i+1],
+			  cp->h->theta + deltas[3*i+2]);
+    temp->obs = cp->h->obs;
     dup = checkpoint_path_append(dup, temp);
+    hypothesis_dereference(temp);
     cp = cp->next;
     i++;
   }
 
-  temp->h->x = cp->h->x + deltas[3*i];
-  temp->h->y = cp->h->y + deltas[3*i+1];
-  temp->h->theta = cp->h->theta + deltas[3*i+2];
-  temp->h->obs = cp->h->obs;
+  temp = hypothesis_new(cp->h,
+			cp->h->x + deltas[3*i],
+			cp->h->y + deltas[3*i+1],
+			cp->h->theta + deltas[3*i+2]);
+  temp->obs = cp->h->obs;
   dup = checkpoint_path_append(dup, temp);
-
-  checkpoint_path_deallocate(temp);
+  hypothesis_dereference(temp);
 
   return dup;
 }
