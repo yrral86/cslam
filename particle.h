@@ -2,6 +2,7 @@
 #define __PARTICLE_H__
 
 #include "landmark_types.h"
+#include <stdint.h>
 
 typedef struct particle {
   double p;
@@ -11,8 +12,8 @@ typedef struct particle {
   double x_var;
   double y_var;
   double theta_var;
-  //  landmark_map *map;
   int resampled;
+  uint8_t *buffer;
   struct hypothesis* h;
 } particle;
 

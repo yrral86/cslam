@@ -126,8 +126,9 @@ __declspec(dllexport) int swarm_get_best_theta() {
 #endif
 
 #ifdef LINUX
-void swarm_set_initial_hypothesis(hypothesis *h) {
+void swarm_set_initial_hypothesis(hypothesis *h, uint8_t *buffer) {
   best_particle.h = h;
+  best_particle.buffer = buffer;
 }
 #endif
 
@@ -220,6 +221,7 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
     particles[i] = particle_init(x, y, theta);
     particles[i].h = best_particle.h;
     hypothesis_reference(best_particle.h);
+    particles[i].buffer = best_particle.buffer;
 
     //    particles[i].map = initial_map.map;
     //    landmark_map_reference(particles[i].map);
@@ -287,6 +289,7 @@ void swarm_move(int dx, int dy, int dtheta) {
 	particles[i].h = hypothesis_new(p.h, p.x, p.y, p.theta);
 	// copy map from parent
 	particles[i].h->map = p.h->map;
+	particles[i].buffer = p.buffer;
 	// dereference shared hypothesis
 	hypothesis_dereference(p.h);
       }
@@ -356,7 +359,7 @@ void swarm_update(observations *obs) {
     //    printf("particle map size: %i\n", particle_map->current_size);
 
 	particles[i].h->obs = obs;
-	particles[i].p *= 1.0/buffer_hypothesis_distance(particles[i].h->map, particles[i].h, offset, 20);
+	particles[i].p *= 1.0/buffer_hypothesis_distance(particles[i].buffer, particles[i].h, offset, 20);
 
     //    printf("escaped map_merge_variance\n");
     //    buffer_deallocate(particle_map);
@@ -550,6 +553,13 @@ void swarm_update(observations *obs) {
       // hypothesis, parent's h won't be reused after resampling
       hypothesis_dereference(particles[j - 1].h);
       particles[j - 1].h = h;
+      // write buffer
+      particles[j - 1].buffer = malloc(long_side*short_side);
+      // copy the map so we don't destory the map pointer we just
+      // assigned to this particle
+      temp_map = map_dup(h->map);
+      map_write_buffer(temp_map, particles[j - 1].buffer);
+
       // mark as resampled
       previous_particles[j - 1].resampled = 1;
     } else {
