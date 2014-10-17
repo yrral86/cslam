@@ -37,7 +37,7 @@ typedef struct map_node {
   unsigned int height;
   unsigned int center_x;
   unsigned int center_y;
-  uint8_t *cache;
+  uint8_t *buffer;
   struct map_pixel *heap;
 #endif
 } map_node;
