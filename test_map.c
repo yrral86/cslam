@@ -25,11 +25,11 @@ int main(int argc, char **argv) {
   hypothesis *latest_h, *root_h;
   checkpoint *path_end = checkpoint_path_new();
 
-  uint8_t *buffer_init = malloc(width*height);
-  uint8_t *buffer_all = malloc(width*height);
+  uint8_t *buffer_init = malloc(width*height/(BUFFER_FACTOR*BUFFER_FACTOR));
+  uint8_t *buffer_all = malloc(width*height/(BUFFER_FACTOR*BUFFER_FACTOR));
 
   glutInit(&argc, argv);
-  initGL(buffer_all, buffer_all, width, height, 1200, 1200);
+  initGL(buffer_all, buffer_all, width/BUFFER_FACTOR, height/BUFFER_FACTOR, 1200, 1200);
 
   // needed to set up width and height for maps
   map_all = map_new(width - 1, height - 1);
@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
   printf("Checkpoint #%d\n", length);
 
   // copy first reading into initial buffer
-  memcpy(buffer_init, buffer_all, width*height);
+  memcpy(buffer_init, buffer_all, width*height/(BUFFER_FACTOR*BUFFER_FACTOR));
   // set as root_h buffer
   root_h->buffer = buffer_init;
 

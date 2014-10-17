@@ -1052,15 +1052,16 @@ void map_write_buffer(map_node *map, uint8_t *buffer) {
   // clear buffer
 //  bzero(buffer, width*height);
   // set buffer to 127
-  memset(buffer, 127, width*height);
+  memset(buffer, 127, width*height/(BUFFER_FACTOR*BUFFER_FACTOR));
 #ifdef __MAP_TYPE_TREE__
   // write nodes
   map_node_write_buffer(map, buffer);
 #endif
 #ifdef __MAP_TYPE_HEAP__
   map_pixel p;
-  int i, j, sum, value;
+  int i, j, sum, value, factor;
   map = map_dup(map);
+  factor = width/BUFFER_FACTOR;
   while(map->current_size > 0) {
     p = map_pop_pixel(map);
 
@@ -1068,10 +1069,8 @@ void map_write_buffer(map_node *map, uint8_t *buffer) {
     if (sum >= 1) {
       value = (int)(255 * p.l.seen/(double)sum);
 
-      // write pixels with value
-      for (i = p.y*BUFFER_FACTOR; i < BUFFER_FACTOR*(p.y + 1); i++)
-	for (j = p.x*BUFFER_FACTOR; j < BUFFER_FACTOR*(p.x + 1); j++)
-	  buffer[width*i + j] = value;
+      // write pixel with value
+      buffer[factor*p.y + p.x] = value;
     }
   }
   map_deallocate(map);

@@ -32,6 +32,12 @@ typedef struct map_node {
   unsigned int current_size;
   unsigned int heap_sorted;
   unsigned int index;
+  unsigned int references;
+  unsigned int width;
+  unsigned int height;
+  unsigned int center_x;
+  unsigned int center_y;
+  uint8_t *cache;
   struct map_pixel *heap;
 #endif
 } map_node;

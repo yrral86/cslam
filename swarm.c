@@ -289,10 +289,18 @@ void swarm_move(int dx, int dy, int dtheta) {
 	  abs(p.h->theta - p.theta) > 0) {
 	// generate new hypothesis
 	particles[i].h = hypothesis_new(p.h->parent, p.x, p.y, p.theta);
+	//	printf("swarm_move generated child %p\n", particles[i].h);
 	// copy map from parent
 	particles[i].h->map = p.h->map;
+	// copy buffer from parent
 	particles[i].h->buffer = p.h->buffer;
 	// dereference shared hypothesis
+	// NULL pointers since we copied them and we don't
+	// want them freed
+
+	// TODO: we should track buffers (and maybe maps) independently
+	p.h->map = NULL;
+	p.h->buffer = NULL;
 	hypothesis_dereference(p.h);
       }
     }
@@ -361,6 +369,7 @@ void swarm_update(observations *obs) {
     //    printf("particle map size: %i\n", particle_map->current_size);
 
 	particles[i].h->obs = obs;
+	printf("evaluating particle %d\n", i);
 	particles[i].p *= 1.0/buffer_hypothesis_distance(particles[i].h->buffer, particles[i].h, offset, 20);
 
     //    printf("escaped map_merge_variance\n");
@@ -387,7 +396,7 @@ void swarm_update(observations *obs) {
 	  y = l*s + short_side - particles[i].y;
 
 	  // make sure it is in bounds
-4	  if (in_arena(x, y)) {
+	  if (in_arena(x, y)) {
 	    //	    k = buffer_index_from_x_y(x, y);
 	    //	    p = landmark_unseen_probability(particles[i].map, k);
 	    //	    p = landmark_unseen_probability(map, k);
@@ -526,24 +535,27 @@ void swarm_update(observations *obs) {
     j = 0;
     while (j++ && total < p)
       total += previous_particles[j - 1].p;
-    temp = previous_particles[j - 1];
+    j--;
+    temp = previous_particles[j];
     if (temp.resampled == 0) {
       // first resample
       // set up hypothesis
       // parent, x, y, theta
+      printf("creating hypothesis from parent %p\n", temp.h);
       h = hypothesis_new(temp.h, temp.x, temp.y, temp.theta);
       h->obs = obs;
       // generate map
       // get mask for this position
       h->map = map_get_shifted_mask(temp.x, temp.y);
-      // generate map from hypothesis
+      // store a pointer to the mask
       temp_map = h->map;
+      // generate map from hypothesis
       h->map = map_from_mask_and_hypothesis(h->map, h);
 
-      if (h->parent != NULL)
-	if(h->parent->map != NULL) {
+      if (temp.h != NULL)
+	if(temp.h->map != NULL) {
 	// get intersection of mask and parent map
-	parent_map = map_intersection(h->parent->map, temp_map);
+	parent_map = map_intersection(temp.h->map, temp_map);
 	// merge map and parent map
 	h->map = map_merge(h->map, parent_map);
 	// merge frees prior h->map and parent_map
@@ -551,41 +563,39 @@ void swarm_update(observations *obs) {
       // free mask
       map_deallocate(temp_map);
 
-
       // store this hypothesis in parent's h for resampling
       // swarm_move will make sure deviations spawn their own
       // hypothesis, parent's h won't be reused after resampling
-      hypothesis_dereference(particles[j - 1].h);
-      particles[j - 1].h = h;
+      // except via ancestry tree, which already referenced it
+      particles[j].h = h;
       // write buffer
-      // TODO: free this shit 5 GB in 5 iterations
-      particles[j - 1].h->buffer = malloc(long_side*short_side);
+      particles[j].h->buffer = malloc(long_side*short_side/(BUFFER_FACTOR*BUFFER_FACTOR));
       // copy the map so we don't destory the map pointer we just
       // assigned to this particle
       temp_map = map_dup(h->map);
       map_write_buffer(temp_map, h->buffer);
+      map_deallocate(temp_map);
 
       // mark as resampled
-      previous_particles[j - 1].resampled = 1;
+      previous_particles[j].resampled = 1;
     } else {
       // we've already resampled, just increase the reference count
-      hypothesis_reference(particles[j - 1].h);
+      hypothesis_reference(particles[j].h);
     }
-    particles[i] = previous_particles[j - 1];
+    particles[i] = previous_particles[j];
+    // restore previous particle for dereferencing below
+    previous_particles[j] = temp;
 
     // add hypothesis to observations
     obs->hypotheses[i] = *(particles[i].h);
-    // TODO: need to generate and save map here, but only once per particle
 
-    //    printf("resample: (%d, %d, %d), i = %d, j = %d\n", particles[i].x,
-    //	   particles[i].y,
-    //	   particles[i].theta, i , j);
-    //    particles[i].map = landmark_map_copy(particles[i].map);
+    //    printf("resample: (%g, %g, %g), i = %d, j = %d\n", particles[i].x,
+    //    	   particles[i].y, particles[i].theta, i , j);
   }
 
-  // dereference previous particle maps
-  //  for (i = 0; i < p_count; i++)
-    //    landmark_map_dereference(previous_particles[i].map);
+  // dereference previous hypotheses
+  for (i = 0; i < p_count; i++)
+    hypothesis_dereference(previous_particles[i].h);
 
   // restore log probabilities
   //  for (i = 0; i < p_count; i++)
