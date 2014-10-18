@@ -72,17 +72,29 @@ int x_y_protected(int x, int y) {
 }
 */
 
-int buffer_hypothesis_distance(uint8_t *b, hypothesis *h, int offset, int divisor) {
-  int i, j, index, distance;
+int buffer_hypothesis_distance(hypothesis *h, int offset, int divisor) {
+  int i, j, index, distance, factor, adj, x_min, x_max, y_min, y_max;
   double c, s, d, x, y, theta;
   double h_theta, h_x, h_y;
+  uint8_t *b;
   observation *list = h->obs->list;
   h_theta = h->theta;
   h_x = h->x;
   h_y = h->y;
+  b = h->map->buffer;
+  x_min = h->map->center_x - h->map->width/2;
+  x_max = h->map->center_x + h->map->width/2;
+  y_min = h->map->center_y - h->map->height/2;
+  y_max = h->map->center_y + h->map->height/2;
+
+  // width of row
+  factor = h->map->width/BUFFER_FACTOR;
+  // adjust for center of map
+  adj = factor*h->map->center_y/BUFFER_FACTOR + h->map->center_x/BUFFER_FACTOR;
+  // adjust for min x and min y of map
+  adj -= factor*y_min + x_min;
 
   distance = 0;
-  j = 0;
   for (i = offset; i < RAW_SENSOR_DISTANCES_USB; i += divisor) {
       // observation theta + pose theta
       theta = (list[i].theta + h_theta)*M_PI/180;
@@ -96,9 +108,12 @@ int buffer_hypothesis_distance(uint8_t *b, hypothesis *h, int offset, int diviso
       x = h_x + d*c;
       y = h_y + d*s;
 
-      if (x > 0 && x < MAP_SIZE + 1 &&
-	  y > 0 && y < MAP_SIZE + 1) {
-	index = (MAP_SIZE+1)*y + x;
+      if (x >= x_min && x <= x_max &&
+	  y >= y_min && y <= y_max) {
+	index = factor*y + x - adj;
+
+	//	printf("x: %d y: %d width: %d height: %d\n", x, y, h->map->width, h->map->height);
+	//	assert(index < factor*h->map->height/BUFFER_FACTOR);
 
 	// if we are fairly certain about this location being hit
 	if (b[index] > 200) {
@@ -106,12 +121,13 @@ int buffer_hypothesis_distance(uint8_t *b, hypothesis *h, int offset, int diviso
 	  // next theta
 	  break;
 	}
-      } else {
+      }// outside of parent map, don't punish
+      /* else {
 	// out of bounds
 	distance += 10;
 	// next theta
 	break;
-      }
+	}*/
     }
   }
 

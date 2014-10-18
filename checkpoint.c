@@ -53,7 +53,7 @@ int checkpoint_path_length(checkpoint *cp) {
 }
 
 map_node* checkpoint_path_write_map(checkpoint *cp) {
-  map_node *map = map_new(MAP_SIZE, MAP_SIZE);
+  map_node *map = map_new(MAP_SIZE, MAP_SIZE, MAP_SIZE/2, MAP_SIZE/2);
   map_node *cp_map, *mask_map;
   cp = cp->head;
   printf("map size: %d\n", map->current_size);
@@ -62,7 +62,7 @@ map_node* checkpoint_path_write_map(checkpoint *cp) {
 	  cp->h->y, cp->h->theta, cp->h->obs->list[0].r, cp->h->obs->list[1].r, cp->h->obs->list[2].r);*/
     mask_map = map_get_shifted_mask(cp->h->x, cp->h->y);
     cp_map = map_from_mask_and_hypothesis(mask_map, cp->h);
-    map_deallocate(mask_map);
+    map_dereference(mask_map);
     map = map_merge(map, cp_map);
     // merge frees original map and cp_map
     //    printf("after merge, size: %i, variance: %g\n", map->current_size, map_variance(map));
@@ -70,7 +70,7 @@ map_node* checkpoint_path_write_map(checkpoint *cp) {
   }
   mask_map = map_get_shifted_mask(cp->h->x, cp->h->y);
   cp_map = map_from_mask_and_hypothesis(mask_map, cp->h);
-  map_deallocate(mask_map);
+  map_dereference(mask_map);
   map = map_merge(map, cp_map);
   return map;
 }
@@ -182,7 +182,7 @@ checkpoint* checkpoint_path_refine(checkpoint *cp) {
       scores[p] = 1.0/map_variance(map);
       // maximize info/size
       //      scores[p] = map_get_info(map)/map_get_size(map);
-      map_deallocate(map);
+      map_dereference(map);
       if (scores[p] > best_score) {
 	printf("best score %g\n", scores[p]);
 	checkpoint_path_deallocate(best_path);

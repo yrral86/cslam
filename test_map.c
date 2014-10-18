@@ -14,44 +14,45 @@ observations* next_observation();
 int more_observations();
 
 int main(int argc, char **argv) {
-  int i, length, size, old_size;
+  int i, length;//, size, old_size;
   int width = MAP_SIZE + 1;
   int height = MAP_SIZE + 1;
   observations *obs;
   double x, y, theta;
-  double last_x, last_y, last_theta;
-  map_node *map_all;
+  //  double last_x, last_y, last_theta;
+  //  map_node *map_all;
   map_node *h_map, *mask_map;
   hypothesis *latest_h, *root_h;
   checkpoint *path_end = checkpoint_path_new();
 
-  uint8_t *buffer_init = malloc(width*height/(BUFFER_FACTOR*BUFFER_FACTOR));
+  uint8_t *buffer_tmp;
   uint8_t *buffer_all = malloc(width*height/(BUFFER_FACTOR*BUFFER_FACTOR));
 
   glutInit(&argc, argv);
   initGL(buffer_all, buffer_all, width/BUFFER_FACTOR, height/BUFFER_FACTOR, 1200, 1200);
 
-  // needed to set up width and height for maps
-  map_all = map_new(width - 1, height - 1);
-  map_deallocate(map_all);
+  x = width/2;
+  y = height/2;
+  theta = 0;
+
+  //  needed to set up width and height for maps
+  //  map_all = map_new(width, height, width/2, height/2);
+  //  map_dereference(map_all);
 
   // generate presorted mask for O(a) copies
   map_generate_mask(SENSOR_MAX_USB);
-
-  last_x = x = width/2;
-  last_y = y = height/2;
-  last_theta = theta = 0;
 
   i = 0;
   obs = next_observation();
   // set up initial hypothesis
   root_h = hypothesis_new(NULL, x, y, theta);
   root_h->obs = obs;
+  // get mask
   mask_map = map_get_shifted_mask(root_h->x, root_h->y);
-  h_map = map_from_mask_and_hypothesis(mask_map, root_h);
-  map_deallocate(mask_map);
-  root_h->map = map_dup(h_map);
-  map_write_buffer(h_map, buffer_all);
+
+  // generate map
+  root_h->map = map_from_mask_and_hypothesis(mask_map, root_h);
+  map_write_buffer(root_h->map);
 
   // copy cp into new checkpoint after path
   path_end = checkpoint_path_append(path_end, root_h);
@@ -62,23 +63,18 @@ int main(int argc, char **argv) {
   length = checkpoint_path_length(path_end);
   printf("Checkpoint #%d\n", length);
 
-  // copy first reading into initial buffer
-  memcpy(buffer_init, buffer_all, width*height/(BUFFER_FACTOR*BUFFER_FACTOR));
-  // set as root_h buffer
-  root_h->buffer = buffer_init;
-
   // init swarm
   swarm_set_initial_hypothesis(root_h);
   swarm_init(RAW_SENSOR_DISTANCES_USB, SENSOR_RANGE_USB, width, height, width/2, 0);
   //  swarm_set_map(buffer_all);
 
   printf("calling display\n");
-  display();
+  display(root_h->map);
   printf("looping\n");
 
   glutMainLoopEvent();
 
-  while (more_observations() && i < 5) {
+  while (more_observations() && i < 100) {
     printf("iteration: %i\n", i);
     obs = next_observation();
     //    swarm_reset_convergence();
@@ -107,9 +103,6 @@ int main(int argc, char **argv) {
     //	(latest_h.y-last_y)*(latest_h.y-last_y) > 10000 ||
     //	abs(latest_h.theta-last_theta) > 3) {
     //    if (size == 0) {
-      last_x = latest_h->x;
-      last_y = latest_h->y;
-      last_theta = latest_h->theta;
 
       path_end = checkpoint_path_append(path_end, latest_h);
 
@@ -125,9 +118,8 @@ int main(int argc, char **argv) {
       // map merge frees previous map_all and h_map
       printf("merged, writing buffer\n");
       */
-      printf("writing buffer based on best hypothesis local map\n");
-      map_write_buffer(latest_h->map, buffer_all);
-      printf("buffer written, uploading and looping\n");
+      printf("showing buffer from best hypothesis local map\n");
+      display(latest_h->map);
       //    }
 
     //    swarm_set_map(buffer_all);
@@ -171,7 +163,6 @@ int main(int argc, char **argv) {
       map_deallocate(cp->observation);
 */
 
-    display();
     glutMainLoopEvent();
 
     i++;
@@ -191,6 +182,7 @@ int main(int argc, char **argv) {
   glutMainLoopEvent();
   */
   checkpoint_path_deallocate(path_end);
+  map_dereference_mask();
 
   //  glutMainLoop();
 

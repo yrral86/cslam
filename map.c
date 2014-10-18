@@ -1,8 +1,7 @@
 #include "map.h"
 
-static int width, height;
-// sensor maximum area + 50%
-static int initial_max = (int)((1.5*M_PI*SENSOR_MAX_USB*SENSOR_MAX_USB)/(BUFFER_FACTOR*BUFFER_FACTOR));
+// sensor maximum area + 10%
+static int initial_max = (int)((1.1*M_PI*SENSOR_MAX_USB*SENSOR_MAX_USB)/(BUFFER_FACTOR*BUFFER_FACTOR));
 /*
 map_node* map_expand(map_node *map) {
   int w, h;
@@ -14,10 +13,10 @@ map_node* map_expand(map_node *map) {
 }
 */
 
-map_node* map_new(int w, int h) {
-  map_node *map;
-  width = w + 1;
-  height = h + 1;
+map_node* map_new(int w, int h, int c_x, int c_y) {
+  map_node *map = malloc(sizeof(map_node));
+  map->width = w;
+  map->height = h;
 #ifdef __MAP_TYPE_TREE__
   map = map_node_new(0, width, 0, height);
 #endif
@@ -28,15 +27,18 @@ map_node* map_new(int w, int h) {
   map->current_size = 0;
   map->heap_sorted = 0;
   map->references = 1;
-  map->width = width;
-  map->height = height;
-  map->center_x = width/2;
-  map->center_y = height/2;
+  map->width = w;
+  map->height = h;
+  map->center_x = c_x;
+  map->center_y = c_y;
+  map->buffer = NULL;
   map->heap = malloc(sizeof(map_pixel)*map->max_size);
   bzero(map->heap, sizeof(map_pixel)*map->max_size);
 #endif
   return map;
 }
+
+/*
 
 #ifdef __MAP_TYPE_TREE__
 map_node* map_new_from_observation(int *distances) {
@@ -61,9 +63,9 @@ map_node* map_new_from_hypothesis(hypothesis h) {
 
   max *= 2;
 
-  /*
-    map = map_new(max, max);
-  */
+
+  //map = map_new(max, max);
+
 
   map = map_node_new(0, max, 0, max);
   // record observations
@@ -86,8 +88,7 @@ map_node* map_new_from_hypothesis(hypothesis h) {
 #ifdef __MAP_TYPE_HEAP__
   printf("deprecated map_new_from_hypothesis, use from_mask_and_hypothesis\n");
 
-  map = map_new(width - 1, height - 1);
-/*
+  map = map_new(width - 1, height - 1, width/2, height/2);
   for (i = 0; i < RAW_SENSOR_DISTANCES_USB; i++) {
     // observation theta + pose theta
     theta = (h.obs->list[i].theta + h.theta)*M_PI/180;
@@ -117,18 +118,24 @@ map_node* map_new_from_hypothesis(hypothesis h) {
   }
 
   map = map_sort(map);
-*/
+
 #endif
 
   return map;
 }
+*/
 
 #ifdef __MAP_TYPE_HEAP__
 static map_node* mask;
+
+void map_dereference_mask() {
+  map_dereference(mask);
+}
+
 void map_generate_mask(int r) {
   int i, x, y, r2;
   map_pixel p;
-  mask = map_new(width - 1, height - 1);
+  mask = map_new(2*r+1, 2*r+1, 0, 0);
   i = 0;
   r /= BUFFER_FACTOR;
   r2 = r*r;
@@ -149,30 +156,22 @@ void map_generate_mask(int r) {
 }
 
 map_node* map_get_shifted_mask(int x, int y) {
-  int i;
+  int i, m_x, m_y;
   map_pixel p;
   map_node *shifted_mask = map_dup(mask);
+  shifted_mask->center_x += x;
+  shifted_mask->center_y += y;
+  m_x = x/BUFFER_FACTOR;
+  m_y = y/BUFFER_FACTOR;
 
   for (i = 0; i < mask->current_size; i++) {
     p = mask->heap[i];
-    p.x += x/BUFFER_FACTOR;
-    p.y += y/BUFFER_FACTOR;
+    p.x += m_x;
+    p.y += m_y;
     shifted_mask->heap[i] = p;
   }
 
   return shifted_mask;
-}
-
-void map_add_pixel(map_node *map, map_pixel p) {
-  if (map->current_size + 1 <= map->max_size) {
-    map->heap[map->current_size] = p;
-    map->current_size++;
-    map_reheapify_up(map);
-    map->heap_sorted = 0;
-  } else {
-    map_double_max_size(map);
-    map_add_pixel(map, p);
-  }
 }
 
 void map_double_max_size(map_node *map) {
@@ -186,6 +185,19 @@ void map_double_max_size(map_node *map) {
   bzero(map->heap, sizeof(map_pixel)*new_size);
   memcpy(map->heap, heap, sizeof(map_pixel)*map->max_size);
   map->max_size = new_size;
+}
+
+/*
+void map_add_pixel(map_node *map, map_pixel p) {
+  if (map->current_size + 1 <= map->max_size) {
+    map->heap[map->current_size] = p;
+    map->current_size++;
+    map_reheapify_up(map);
+    map->heap_sorted = 0;
+  } else {
+    map_double_max_size(map);
+    map_add_pixel(map, p);
+  }
 }
 
 void map_reheapify_up(map_node *map) {
@@ -257,12 +269,29 @@ void map_reheapify_down_root(map_node *map, int parent) {
     child_right = map_right_index(parent);
   }
 }
-
+*/
 // intersects mask m with map
 map_node* map_intersection(map_node *m, map_node *map) {
-  int mask_i, map_i, int_i;
+  int mask_i, map_i, int_i, min_w, min_h, c_x, c_y;
   map_pixel mask_p, map_p;
-  map_node *intersection = map_new(width - 1, height - 1);
+
+  // use minimum width and height for intersection
+  min_w = m->width;
+  min_h = m->height;
+
+  if (map->width < min_w) {
+    min_w = map->width;
+    c_x = map->center_x;
+  } else
+    c_x = m->center_x;
+
+  if (map->height < min_h) {
+    min_h = map->height;
+    c_y = map->center_y;
+  } else
+    c_y = m->center_y;
+
+  map_node *intersection = map_new(min_w, min_h, c_x, c_y);
 
   map_i = 0;
   int_i = 0;
@@ -299,7 +328,7 @@ map_node* map_from_mask_and_hypothesis(map_node *m, hypothesis *h) {
   int mask_i, map_i, theta_i, measured_d, mask_d;
   map_pixel map_p, mask_p;
   double theta, dx, dy, sq2;
-  map_node *map = map_new(width - 1, height - 1);
+  map_node *map = map_new(m->width, m->height, m->center_x, m->center_y);
   observation *list = h->obs->list;
 
   sq2 = sqrt(2)/2.0;
@@ -309,20 +338,38 @@ map_node* map_from_mask_and_hypothesis(map_node *m, hypothesis *h) {
     // for each mask element
     mask_p = m->heap[mask_i];
 
-    dx = BUFFER_FACTOR*(mask_p.x + sq2) - h->x;
-    dy = BUFFER_FACTOR*(mask_p.y + sq2) - h->y;
+    dx = mask_p.x + sq2 - (int)(h->x/BUFFER_FACTOR);// - (int)(m->center_x/BUFFER_FACTOR);
+    dy = mask_p.y + sq2 - (int)(h->y/BUFFER_FACTOR);// - (int)(m->center_y/BUFFER_FACTOR);;
+    /*
+    if (dx > 0 && dy > 0)
+      printf("quadrant 1\n");
+    if (dx < 0 && dy > 0)
+    printf("quadrant 2\n");*/
 
     // WHY DO YOU ONLY SHOW HALF?
     // find the closest theta in degrees
     theta = 180*atan2(dy, dx)/M_PI;
+
+    /*    if (dx < 0 && dy < 0)
+      printf("quadrant 3, theta = %g\n", theta);
+    if (dx > 0 && dy < 0)
+    printf("quadrant 4, theta = %g\n", theta);*/
+
+    //    printf("1 dx: %g dy: %g theta: %g\n", dx, dy, theta);
     // adjust for hypothesis
     theta -= h->theta;
+
+    // adjust for center being 0
+    theta += SENSOR_RANGE_USB/2;
+
+    //    printf("2 dx: %g dy: %g theta: %g\n", dx, dy, theta);
+
     if (theta >= 0 && theta <= SENSOR_RANGE_USB) {
       theta_i = theta/SENSOR_SPACING_USB;
 
       measured_d = list[theta_i].r;
       // compare distance using center of grid square for x, y
-      mask_d = (int)sqrt(dx*dx + dy*dy);
+      mask_d = (int)BUFFER_FACTOR*sqrt(dx*dx + dy*dy);
       // if within measured distance
       if (mask_d <= measured_d) {
 	map_p = mask_p;
@@ -349,13 +396,33 @@ map_node* map_from_mask_and_hypothesis(map_node *m, hypothesis *h) {
   map->index = 0;
   map->current_size = map_i;
 
+  // dereference mask
+  map_dereference(m);
+
   return map;
 }
 
 map_node* map_merge(map_node *one, map_node *two) {
-  int merged_i, one_i, two_i;
+  int merged_i, one_i, two_i, x_min, x_max, y_min, y_max;
   map_pixel next;
-  map_node *merged = map_new(width - 1, height - 1);
+
+  x_min = one->center_x - one->width/2;
+  y_min = one->center_y - one->height/2;
+  x_max = one->center_x + one->width/2;
+  y_max = one->center_y + one->height/2;
+
+  if (two->center_x - two->width/2 < x_min)
+    x_min = two->center_x - two->width/2;
+  if (two->center_y - two->height/2 < y_min)
+    y_min = two->center_y - two->height/2;
+  if (two->center_x + two->width/2 > x_max)
+    x_max = two->center_x + two->width/2;
+  if (two->center_y + two->height/2 > y_max)
+    y_max = two->center_y + two->height/2;
+
+  //  printf("x_min: %d y_min: %d x_max: %d y_max: %d\n", x_min, y_min, x_max, y_max);
+
+  map_node *merged = map_new(x_max - x_min + 1, y_max - y_min + 1, (x_max+x_min)/2, (y_max+y_min)/2);
 
   one_i = 0;
   two_i = 0;
@@ -407,9 +474,9 @@ map_node* map_merge(map_node *one, map_node *two) {
   merged->index = 0;
   merged->current_size = merged_i;
 
-  // free old maps
-  map_deallocate(one);
-  map_deallocate(two);
+  // dereference old maps
+  map_dereference(one);
+  map_dereference(two);
 
   return merged;
 }
@@ -445,9 +512,10 @@ map_pixel map_pop_pixel(map_node *map) {
   if (map->heap_sorted == 1)
     p = map->heap[map->index++];
   else {
-    p = map->heap[0];
-    map->heap[0] = map->heap[map->current_size];
-    map_reheapify_down(map);
+    assert(0);
+    //    p = map->heap[0];
+    //    map->heap[0] = map->heap[map->current_size];
+    //    map_reheapify_down(map);
   }
   return p;
 }
@@ -564,9 +632,9 @@ double map_merge_variance(map_node *m1, map_node *m2) {
 
   return variance;
 }
-*/
+
 map_node* map_sort(map_node *map) {
-  map_node *new = map_new(width -1, height - 1);
+  map_node *new = map_new(map->width, map->height, map->center_x, map->center_y);
   while (map->current_size > 0)
     map_add_pixel(new, map_pop_pixel(map));
 
@@ -577,7 +645,8 @@ map_node* map_sort(map_node *map) {
 
   return new;
 }
-
+*/
+/*
 map_node* map_merge_hypothesis(map_node *m1, hypothesis h) {
   map_node *new;
   map_node *m2 = map_new_from_hypothesis(h);
@@ -648,7 +717,7 @@ map_node* map_merge_hypothesis(map_node *m1, hypothesis h) {
 
   return new;
 }
-
+*/
 double map_variance(map_node *map) {
   int i;
   double variance = 0.0;
@@ -710,7 +779,7 @@ map_node* map_dup(map_node *map) {
   }
 #endif
 #ifdef __MAP_TYPE_HEAP__
-  new = map_new(width - 1, height - 1);
+  new = map_new(map->width, map->height, map->center_x, map->center_y);
   // make it big enough
   while (new->max_size < map->max_size)
     map_double_max_size(new);
@@ -882,7 +951,11 @@ void map_node_split(map_node *map, int index) {
 */
 #endif
 
-void map_deallocate(map_node *map) {
+void map_reference(map_node *map) {
+  map->references++;
+}
+
+void map_dereference(map_node *map) {
 #ifdef __MAP_TYPE_TREE__
   int i;
 
@@ -890,11 +963,22 @@ void map_deallocate(map_node *map) {
   for (i = 0; i < 4; i++)
     if (map->children[i] != NULL)
       map_deallocate(map->children[i]);
+
+  free(map);
 #endif
 #ifdef __MAP_TYPE_HEAP__
-  free(map->heap);
+  map->references--;
+
+  if (map->references == 0) {
+    free(map->heap);
+    map->heap = NULL;
+    if (map->buffer != NULL) {
+      free(map->buffer);
+      map->buffer = NULL;
+    }
+    free(map);
+  }
 #endif
-  free(map);
 }
 
 #ifdef __MAP_TYPE_TREE__
@@ -1053,37 +1137,73 @@ void map_landmark_check_split(map_node *node, int index) {
 */
 #endif
 
-void map_write_buffer(map_node *map, uint8_t *buffer) {
+void map_write_buffer(map_node *map) {
   // clear buffer
 //  bzero(buffer, width*height);
   // set buffer to 127
-  memset(buffer, 127, map->width*map->height/(BUFFER_FACTOR*BUFFER_FACTOR));
+  if (map->buffer == NULL)
+    map->buffer = malloc(map->width*map->height/(BUFFER_FACTOR*BUFFER_FACTOR));
+  memset(map->buffer, 127, map->width*map->height/(BUFFER_FACTOR*BUFFER_FACTOR));
 #ifdef __MAP_TYPE_TREE__
   // write nodes
   map_node_write_buffer(map, buffer);
 #endif
 #ifdef __MAP_TYPE_HEAP__
   map_pixel p;
-  int i, j, sum, value, factor, adj;
-  map = map_dup(map);
+  int i, sum, value, factor, x_max, x_min, y_max, y_min, x, y;
+  //  map = map_dup(map);
   // width of row
+
+  x_max = map->center_x + map->width/2;
+  x_min = map->center_x - map->width/2;
+  y_max = map->center_y + map->height/2;
+  y_min = map->center_y - map->height/2;
+
+  x_min /= BUFFER_FACTOR;
+  x_max /= BUFFER_FACTOR;
+  y_min /= BUFFER_FACTOR;
+  y_max /= BUFFER_FACTOR;
+
+  //  printf("width: %d, height: %d\n", map->width, map->height);
+  //  printf("center_x: %d, center_y: %d\n", map->center_x, map->center_y);
+
+  //  printf("x_min %d x_max %d y_min %d y_max %d\n", x_min, x_max, y_min, y_max);
+
   factor = map->width/BUFFER_FACTOR;
+
+  //  printf("factor: %d\n", factor);
   // adjust for center of map
-  adj = factor*map->center_y + map->center_x;
-  // adjust for min x and min y of map
-  adj -= factor*(map->center_y - map->height/2) + (map->center_x - map->width/2);
-  while(map->current_size > 0) {
-    p = map_pop_pixel(map);
+  //  adj = factor*map->center_y/BUFFER_FACTOR + map->center_x/BUFFER_FACTOR;
+  //  printf("adj = %d\n", adj);
+  // adjust for difference between min x and min y of map and center
+  //  adj = factor*map->height/(2*BUFFER_FACTOR) + map->width/(2*BUFFER_FACTOR);
+  //  printf("adj = %d\n", adj);
+ 
+  i = 0;
+  while(i < map->current_size) {
+    p = map->heap[i];
 
-    sum = p.l.seen + p.l.unseen;
-    if (sum >= 1) {
-      value = (int)(255 * p.l.seen/(double)sum);
+    // if we are within the buffer
+    if (p.x >= x_min && p.x <= x_max &&
+	p.y >= y_min && p.y <= y_max) {
+      sum = p.l.seen + p.l.unseen;
+      if (sum >= 1) {
+	value = (int)(255 * p.l.seen/(double)sum);
 
-      // write pixel with value
-      buffer[factor*p.y + p.x - adj] = value;
-    }
+	x = p.x - map->center_x/BUFFER_FACTOR + factor/2;
+	y = p.y - map->center_y/BUFFER_FACTOR + map->height/(2*BUFFER_FACTOR);
+	// write pixel with value
+	//	if (factor*p.y + p.x - adj < 0 || factor*p.y + p.x - adj >= factor*map->height/BUFFER_FACTOR)
+	//	  printf("xy: (%d,%d) index: %d max_index: %d\n", x, y, factor*y+x, factor*map->height/BUFFER_FACTOR);
+	if (factor*y + x >= 0 && factor*y + x < factor*map->height/BUFFER_FACTOR)
+	  map->buffer[factor*y + x] = value;
+      }
+    }// else
+    //      printf("out of bounds: xy: (%d,%d) index: %d max_index: %d\n", p.x, p.y, factor*p.y+p.x-adj, factor*map->height/BUFFER_FACTOR);
+
+    i++;
   }
-  map_deallocate(map);
+  //  map_deallocate(map);
 #endif
 }
 
@@ -1157,12 +1277,22 @@ double map_get_info(map_node *node) {
 void map_debug(map_node *map) {
   int i;
 #ifdef __MAP_TYPE_HEAP__
+  int y = map->center_y - map->height/2;
+  y /= BUFFER_FACTOR;
+  int x_count = 0;
   map_pixel p;
+printf("map debug: width = %d height = %d c_x = %d c_y = %d\n", map->width, map->height, map->center_x, map->center_y);
   for (i = 0; i < map->current_size; i++) {
     p = map->heap[i];
+    if  (p.y > y) {
+      printf("%d: %d\n", y, x_count);
+      y = p.y;
+      x_count = 0;
+    } else
+      x_count++;
 //    printf("(%d,%d,%d,%d,%d,%d)\n", p.x, p.y, p.l.seen, p.l.unseen,
 //	     p.h->obs->list[p.obs_index].r, p.h->obs->list[p.obs_index].theta);
-    printf("(%d,%d)\n", p.x, p.y);
+//    printf("(%d,%d,%d,%d)\n", p.x, p.y, p.l.seen, p.l.unseen);
   }
 #endif
 #ifdef __MAP_TYPE_TREE__

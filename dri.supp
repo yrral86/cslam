@@ -19,3 +19,10 @@
    obj:/usr/lib/mesa/libGL.so.1.2.0
    ...
 }
+{
+   libX11-catchall
+   Memcheck:Leak
+   ...
+   obj:/usr/lib/libX11.so.6.3.0
+   ...
+}

@@ -12,7 +12,6 @@ typedef struct hypothesis {
   double theta;
   observations *obs;
   struct map_node *map;
-  uint8_t *buffer;
   int references;
   int child_count;
 } hypothesis;

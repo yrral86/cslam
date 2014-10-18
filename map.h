@@ -44,21 +44,22 @@ typedef struct map_node {
 
 #ifdef __MAP_TYPE_HEAP__
 typedef struct map_pixel {
-  unsigned int x;
-  unsigned int y;
+  int x;
+  int y;
   landmark l;
   hypothesis *h;
   unsigned int obs_index;
 } map_pixel;
 
-map_node* map_new_from_hypothesis(hypothesis);
+  //map_node* map_new_from_hypothesis(hypothesis);
+void map_dereference_mask();
 void map_generate_mask(int);
 map_node* map_get_shifted_mask(int, int);
-void map_add_pixel(map_node*, map_pixel);
+  //void map_add_pixel(map_node*, map_pixel);
 void map_double_max_size(map_node*);
-void map_reheapify_up(map_node*);
-void map_reheapify_down(map_node*);
-void map_reheapify_down_root(map_node*, int);
+  //void map_reheapify_up(map_node*);
+  //void map_reheapify_down(map_node*);
+  //void map_reheapify_down_root(map_node*, int);
 map_node* map_intersection(map_node*, map_node*);
 map_node* map_from_mask_and_hypothesis(map_node*, hypothesis*);
 map_node* map_merge(map_node*, map_node*);
@@ -68,7 +69,7 @@ inline int map_left_index(int);
 inline int map_right_index(int);
 map_pixel map_pop_pixel(map_node*);
 double map_merge_variance(map_node*, map_node*);
-map_node* map_sort(map_node*);
+  //map_node* map_sort(map_node*);
   //map_node* map_merge_hypothesis(map_node*, hypothesis);
 double map_variance(map_node*);
 
@@ -99,10 +100,11 @@ double map_get_info(map_node*);
 int map_get_size(map_node*);
 #endif
 
-map_node* map_new(int, int);
+map_node* map_new(int, int, int, int);
 map_node* map_dup(map_node*);
-void map_deallocate(map_node*);
-void map_write_buffer(map_node*, uint8_t*);
+void map_reference(map_node*);
+void map_dereference(map_node*);
+void map_write_buffer(map_node*);
 void map_debug(map_node*);
 
 #endif

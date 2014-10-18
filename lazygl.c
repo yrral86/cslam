@@ -18,16 +18,26 @@ void initGL(uint8_t *b1, uint8_t *b2, int b_w, int b_h, int w_w, int w_h) {
   //glutInitWindowSize(window_width, window_height*2);
   glutInitWindowSize(window_width, window_height);
   glutCreateWindow("sensor");
+  glutReshapeFunc(window_resize);
 }
 
-void display() {
+void display(map_node *m) {
+  int w, h;
+  assert(m->buffer != NULL);
+  w = m->width/BUFFER_FACTOR;
+  h = m->height/BUFFER_FACTOR;
   glClear(GL_COLOR_BUFFER_BIT);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glPixelZoom((double)window_width/buffer_width, (double)window_height/buffer_height);
+  glPixelZoom((double)window_width/w, (double)window_height/h);
   glWindowPos2i(0, 0);
-  glDrawPixels(buffer_width, buffer_height, GL_LUMINANCE, GL_UNSIGNED_BYTE, buffer1);
+  glDrawPixels(w, h, GL_LUMINANCE, GL_UNSIGNED_BYTE, m->buffer);
   //  glWindowPos2i(0, window_height);
   //  glDrawPixels(buffer_width, buffer_height, GL_LUMINANCE, GL_UNSIGNED_BYTE, buffer2);
   glutSwapBuffers();
   glutReshapeWindow(window_width, window_height);
+}
+
+void window_resize(int w, int h) {
+  window_width = w;
+  window_height = h;
 }

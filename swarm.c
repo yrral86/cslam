@@ -129,9 +129,8 @@ __declspec(dllexport) int swarm_get_best_theta() {
 void swarm_set_initial_hypothesis(hypothesis *h) {
   double half_side;
   half_side = (MAP_SIZE + 1)/2;
-  best_particle.h = hypothesis_new(h, half_side, half_side, 0);
+  best_particle.h = h;
   best_particle.h->map = h->map;
-  best_particle.h->buffer = h->buffer;
 }
 #endif
 
@@ -141,12 +140,12 @@ void swarm_init_internal(int m_in, int degrees_in, int long_side_in, int short_s
 #ifdef LINUX
 void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in, int radius) {
 #endif
-  int i, j, k, s;
+  int i;//, j, k, s;
   int x, y, theta;
-  particle initial_map;
-  char *str, *tok;
-  FILE *map_file;
-  double t;
+  //  particle initial_map;
+  //  char *str, *tok;
+  //  FILE *map_file;
+  //  double t;
   m = m_in;
   sensor_degrees = degrees_in;
   long_side = long_side_in;
@@ -250,8 +249,9 @@ void swarm_move_internal(int dx, int dy, int dtheta) {
 void swarm_move(int dx, int dy, int dtheta) {
 #endif
   int i, tries, p_count;
-  double t_old, t_new;
+  //  double t_old, t_new;
   particle p;
+  hypothesis *h;
   /*  t_old = best_particle.theta*M_PI/180;
   t_new = (best_particle.theta + dtheta)*M_PI/180;
 
@@ -288,20 +288,15 @@ void swarm_move(int dx, int dy, int dtheta) {
 	  abs(p.h->y - p.y) > 0 ||
 	  abs(p.h->theta - p.theta) > 0) {
 	// generate new hypothesis
-	particles[i].h = hypothesis_new(p.h->parent, p.x, p.y, p.theta);
-	//	printf("swarm_move generated child %p\n", particles[i].h);
-	// copy map from parent
-	particles[i].h->map = p.h->map;
-	// copy buffer from parent
-	particles[i].h->buffer = p.h->buffer;
-	// dereference shared hypothesis
-	// NULL pointers since we copied them and we don't
-	// want them freed
-
-	// TODO: we should track buffers (and maybe maps) independently
-	p.h->map = NULL;
-	p.h->buffer = NULL;
-	hypothesis_dereference(p.h);
+	h = p.h;
+	p.h = hypothesis_new(h, p.x, p.y, p.theta);
+	// dereference, but p.h has a new refrence to it
+	hypothesis_dereference(h);
+	// copy map pointer from parent
+	p.h->map = h->map;
+	map_reference(p.h->map);
+	// put back in particles
+	particles[i].h = p.h;
       }
     }
 
@@ -326,18 +321,18 @@ void swarm_update_internal(int *distances) {
 #endif
 #ifdef LINUX
 void swarm_update(observations *obs) {
-  hypothesis temp_h;
-  hypothesis *h;
+  hypothesis *temp_h;
   map_node *temp_map, *parent_map;
   int offset;
 #endif
-  int i, j, k, l, best_index, p_count, new_observations;
-  int swap, x, y, count;
+  int i, last_j, j, best_index, p_count, count;
+  //  int swap, x, y, count;
   double mean[3], stddev[3];
-  double posterior, distance, theta, degrees, s, c, total, max, p, step;
+  //  double posterior, distance, theta, degrees, s, c, total, max, p, step;
+  double total, max, p, step;
   //  double xyt[3];
   particle temp;
-  double weight;
+  //  double weight;
 
 #ifndef LINUX
   ReleaseSemaphore(return_sem, 1, NULL);
@@ -369,8 +364,8 @@ void swarm_update(observations *obs) {
     //    printf("particle map size: %i\n", particle_map->current_size);
 
 	particles[i].h->obs = obs;
-	printf("evaluating particle %d\n", i);
-	particles[i].p *= 1.0/buffer_hypothesis_distance(particles[i].h->buffer, particles[i].h, offset, 20);
+	//	printf("evaluating particle %d\n", i);
+	particles[i].p *= 1.0/buffer_hypothesis_distance(particles[i].h, offset, 20);
 
     //    printf("escaped map_merge_variance\n");
     //    buffer_deallocate(particle_map);
@@ -528,6 +523,7 @@ void swarm_update(observations *obs) {
   // resample with replacement
   p = rand()/(double)RAND_MAX;
   step = 1.0/p_count;
+  last_j = -1;
   for (i = 0; i < p_count; i++) {
     p += step;
     if (p > 1.0) p -= 1.0;
@@ -537,54 +533,42 @@ void swarm_update(observations *obs) {
       total += previous_particles[j - 1].p;
     j--;
     temp = previous_particles[j];
+    if (last_j < j) {
+      if (last_j != -1)
+	// restore hypothesis for dereferencing below
+	previous_particles[last_j].h = temp_h;
+      // save next hypothesis
+      temp_h = temp.h;
+      last_j = j;
+    }
     if (temp.resampled == 0) {
       // first resample
-      // set up hypothesis
-      // parent, x, y, theta
-      printf("creating hypothesis from parent %p\n", temp.h);
-      h = hypothesis_new(temp.h, temp.x, temp.y, temp.theta);
-      h->obs = obs;
-      // generate map
-      // get mask for this position
-      h->map = map_get_shifted_mask(temp.x, temp.y);
-      // store a pointer to the mask
-      temp_map = h->map;
-      // generate map from hypothesis
-      h->map = map_from_mask_and_hypothesis(h->map, h);
+      // get map from mask and hypothesis
+      temp_map = map_get_shifted_mask(temp.x, temp.y);
+      // no dereferences
+      parent_map = map_intersection(temp_map, temp.h->map);
+      // dereferences mask
+      temp_map = map_from_mask_and_hypothesis(temp_map, temp.h);
 
-      if (temp.h != NULL)
-	if(temp.h->map != NULL) {
-	// get intersection of mask and parent map
-	parent_map = map_intersection(temp.h->map, temp_map);
-	// merge map and parent map
-	h->map = map_merge(h->map, parent_map);
-	// merge frees prior h->map and parent_map
-      }
-      // free mask
-      map_deallocate(temp_map);
+      // merge map with map copied from parent
+      // this will dereference parent map and temp_map
+      printf("before merge parent: width = %d, height = %d\n", parent_map->width, parent_map->height);
+      printf("before merge temp: width = %d, height = %d\n", temp_map->width, temp_map->height);
 
-      // store this hypothesis in parent's h for resampling
-      // swarm_move will make sure deviations spawn their own
-      // hypothesis, parent's h won't be reused after resampling
-      // except via ancestry tree, which already referenced it
-      particles[j].h = h;
+      map_dereference(temp.h->map);
+      temp.h->map = map_merge(parent_map, temp_map);
+
       // write buffer
-      particles[j].h->buffer = malloc(long_side*short_side/(BUFFER_FACTOR*BUFFER_FACTOR));
-      // copy the map so we don't destory the map pointer we just
-      // assigned to this particle
-      temp_map = map_dup(h->map);
-      map_write_buffer(temp_map, h->buffer);
-      map_deallocate(temp_map);
+      map_write_buffer(temp.h->map);
 
-      // mark as resampled
+      previous_particles[j].h->map = temp.h->map;
       previous_particles[j].resampled = 1;
+      hypothesis_reference(previous_particles[j].h);
     } else {
       // we've already resampled, just increase the reference count
       hypothesis_reference(particles[j].h);
     }
     particles[i] = previous_particles[j];
-    // restore previous particle for dereferencing below
-    previous_particles[j] = temp;
 
     // add hypothesis to observations
     obs->hypotheses[i] = *(particles[i].h);
@@ -592,6 +576,8 @@ void swarm_update(observations *obs) {
     //    printf("resample: (%g, %g, %g), i = %d, j = %d\n", particles[i].x,
     //    	   particles[i].y, particles[i].theta, i , j);
   }
+
+  previous_particles[last_j].h = temp_h;
 
   // dereference previous hypotheses
   for (i = 0; i < p_count; i++)
