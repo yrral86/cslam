@@ -52,13 +52,17 @@ int main(int argc, char **argv) {
   // get mask
   mask_map = map_get_shifted_mask(root_h->x, root_h->y);
 
-  map_debug_mask();
-
   // generate map
   root_h->map = map_from_mask_and_hypothesis(mask_map, root_h);
+
+  map_debug(root_h->map);
+
   map_write_buffer(root_h->map);
 
-  map_debug_mask();
+  while(1) {
+  display(root_h->map);
+  glutMainLoopEvent();
+  }
 
   // copy cp into new checkpoint after path
   path_end = checkpoint_path_append(path_end, root_h);
