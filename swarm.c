@@ -263,7 +263,7 @@ void swarm_move(int dx, int dy, int dtheta) {
   // add motion
   for (i = 0; i < p_count; i++) {
     p = particles[i];
-    printf("swarm move: before h = %p, h->parent = %p\n", p.h, p.h->parent);
+    //    printf("swarm move: before h = %p, h->parent = %p\n", p.h, p.h->parent);
     tries = 0;
     do {
       // ignore kinematics 20% of the time
@@ -300,7 +300,7 @@ void swarm_move(int dx, int dy, int dtheta) {
       }
     }
 
-    printf("swarm move: after h = %p, h->parent = %p\n", particles[i].h, particles[i].h->parent);
+    //    printf("swarm move: after h = %p, h->parent = %p\n", particles[i].h, particles[i].h->parent);
 
     /*
     printf("move: (%d, %d, %d)\n", particles[i].x,
@@ -354,92 +354,14 @@ void swarm_update(observations *obs) {
   best_index = 0;
   // use the same observations for all particles
   //  offset = rand_limit(20);
-  for (offset = 0; offset < 20; offset++) {
+  // stop if we've culled more than 90% of particles
+  for (offset = 0; offset < 20 && culled_count < 0.9*p_count; offset++) {
     // evaulate each direction for each particle
     for (i = 0; i < p_count; i++) {
       if (culled[i] == 0) {
-      //    printf("update: (%d, %d, %d)\n", particles[i].x,
-      //	   particles[i].y,
-      //	   particles[i].theta);
-    //    particle_map = map_new_from_hypothesis(h);
-
-    //    printf("map size: %i\n", map->current_size);
-
-    //    printf("particle map size: %i\n", particle_map->current_size);
-
 	particles[i].h->obs = obs;
-	//	printf("evaluating particle %d\n", i);
-	particles[i].p = 1.0/buffer_hypothesis_distance(particles[i].h, offset, 20);
+	particles[i].p *= 1.0/buffer_hypothesis_distance(particles[i].h, offset, 20);
 
-    //    printf("escaped map_merge_variance\n");
-    //    buffer_deallocate(particle_map);
-
-    /*
-    posterior = 0.0;
-    //    new_observations = 1;
-
-    // evaluate the particle's relative probability
-    for (j = 0; j < m; j++) {
-      distance = distances[j];
-      // skip any distances that are more than 8 meters in case we shoot over the walls
-      if (distance < 8000) {
-	// forward is now 0 degrees, left -, right +
-	degrees = -sensor_degrees/2.0 + j*spacing;
-	theta = (degrees - particles[i].theta)*M_PI/180;
-	s = sin(theta);
-	c = cos(theta);
-
-	// check and record unseen every BUFFER_FACTOR mm, within 10*BUFFER_FACTOR of seen
-	for (l = distance - BUFFER_FACTOR; l > distance - 10 * BUFFER_FACTOR; l -= BUFFER_FACTOR) {
-	  x = l*c + particles[i].x;
-	  y = l*s + short_side - particles[i].y;
-
-	  // make sure it is in bounds
-	  if (in_arena(x, y)) {
-	    //	    k = buffer_index_from_x_y(x, y);
-	    //	    p = landmark_unseen_probability(particles[i].map, k);
-	    //	    p = landmark_unseen_probability(map, k);
-	    //	    weight = landmark_information(map, k);
-	    //	    if (weight > 0 && weight < (unsigned int)2000000000)
-	    // printf("unseen weight: %u\n", weight);
-	    //	    if (weight < 10000000)
-	    //	      new_observations++;
-	    //else
-	    //  printf("stable observation, unseen weight: %g\n", weight);
-	    p = map_unseen_probability(map, x, y);
-	    posterior += -log(p);
-	  } else posterior += -log(0.0005);
-	}
-
-	// check and record seen
-	x = distance*c + particles[i].x;
-	y = distance*s + short_side - particles[i].y;
-
-	// make sure it is in bounds
-	if (in_arena(x, y)) {
-	  //	  k = buffer_index_from_x_y(x, y);
-	  //	  p = landmark_seen_probability(particles[i].map, k);
-	  //	  p = landmark_seen_probability(map, k);
-	  //	  weight = landmark_information(map, k);
-	  //if (weight > 0 && weight < (unsigned int)2000000000)
-	  //  printf("seen weight: %u\n", weight);
-	  //	  if (weight < 10000000)
-	  //	    new_observations++;
-	  // else
-	  //  printf("stable observation, seen weight: %g\n", weight);
-	  p = map_seen_probability(map, x, y);
-	  posterior += -log(p);
-	} else posterior += -log(0.0005);
-      }
-    }
-
-    */
-
-    // new = prior * posterior / (# of new observations)
-    //    particles[i].p += posterior;// - log(new_observations);
-    //    particles[i].p = 1/(map_get_info(temp_map)*map_get_size(temp_map));
-    //    map_deallocate(temp_map);
-    //    if (particles[i].p < min) {
 	if (particles[i].p > max) {
 	  max = particles[i].p;
 	  best_index = i;
@@ -451,11 +373,12 @@ void swarm_update(observations *obs) {
     swarm_normalize();
     for (i = 0; i < p_count; i++)
       if (culled[i] == 0)
-	if (particles[i].p < 0.5/p_count) {
+	if (particles[i].p < 1.0/p_count) {
 	  culled[i] = 1;
 	  particles[i].p = 0;
 	  culled_count++;
-	}
+	} else
+	  printf("score: %g\n", particles[i].p);
   }
 
   // clear old best, save new best, copy the map we are about to dereference
@@ -469,6 +392,8 @@ void swarm_update(observations *obs) {
 
   // normalize particles
   swarm_normalize();
+
+  printf("culled %d of %d particles\n", culled_count, p_count);
 
   swarm_sort(0, p_count - 1);
 
