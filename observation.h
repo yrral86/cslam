@@ -10,7 +10,7 @@ typedef struct observation {
 
 typedef struct observations {
   observation list[RAW_SENSOR_DISTANCES_USB];
-  struct hypothesis *hypotheses;
+  struct hypothesis **hypotheses;
 } observations;
 
 #endif

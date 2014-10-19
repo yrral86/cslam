@@ -1,14 +1,14 @@
 #include "hypothesis.h"
 
 void hypothesis_reference(hypothesis *h) {
-  printf("hypothesis reference %p\n", h);
+  //  printf("hypothesis reference %p\n", h);
   h->references++;
   if (h->map != NULL)
     map_reference(h->map);
 }
 
 void hypothesis_dereference(hypothesis *h) {
-  printf("hypothesis dereference %p\n", h);
+  //  printf("hypothesis dereference %p\n", h);
   h->references--;
 
   if (h->map != NULL)
@@ -23,20 +23,31 @@ void hypothesis_dereference(hypothesis *h) {
 
 void hypothesis_remove_child(hypothesis *p, hypothesis *c) {
   int i, j;
-  printf("removing hypothesis %p from parent %p\n", c, p);
+  //  printf("removing hypothesis %p from parent %p\n", c, p);
 
   for (i = 0; i < p->child_count; i++)
     if (p->children[i] == c) {
-      printf("found, removing %p\n", c);
+      //        printf("found, removing %p\n", c);
+      c->parent = NULL;
       // if we find it, reduce child count
       p->child_count--;
       // then shift remaining children forward
-      for (j = i; j < p->child_count; j++)
-	p->children[i] = p->children[i+1];
+      for (j = i; j < p->child_count; j++) {
+	//	printf("replacing %p with %p\n", p->children[j], p->children[j+1]);
+	p->children[j] = p->children[j+1];
+      }
       hypothesis_dereference(p);
-      // redo this i
-      i--;
+      return;
     }
+}
+
+void hypothesis_add_child(hypothesis *p, hypothesis *c) {
+  p->children[p->child_count++] = c;
+  // make sure we don't overrun children
+  //    printf("children: %d\n", parent->child_count);
+  assert(p->child_count < 5*PARTICLE_COUNT);
+  // child references parent, parent does not reference child
+  hypothesis_reference(p);
 }
 
 hypothesis* hypothesis_new(hypothesis *parent, double x, double y, double theta) {
@@ -47,12 +58,7 @@ hypothesis* hypothesis_new(hypothesis *parent, double x, double y, double theta)
   h->map = NULL;
   // add to parent's children if parent is not null
   if (parent != NULL) {
-    parent->children[parent->child_count++] = h;
-    // make sure we don't overrun children
-    //    printf("children: %d\n", parent->child_count);
-    assert(parent->child_count < 5*PARTICLE_COUNT);
-    // child references parent, parent does not reference child
-    hypothesis_reference(parent);
+    hypothesis_add_child(parent, h);
     if (parent->map != NULL) {
       // copy map pointer from parent
       h->map = parent->map;

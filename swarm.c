@@ -263,6 +263,7 @@ void swarm_move(int dx, int dy, int dtheta) {
   // add motion
   for (i = 0; i < p_count; i++) {
     p = particles[i];
+    printf("swarm move: before h = %p, h->parent = %p\n", p.h, p.h->parent);
     tries = 0;
     do {
       // ignore kinematics 20% of the time
@@ -292,12 +293,14 @@ void swarm_move(int dx, int dy, int dtheta) {
 	p.h = hypothesis_new(h, p.x, p.y, p.theta);
 	// dereference, but p.h has a new refrence to it
 	//	printf("dereferencing parent hypothesis, we should have just referenced it as the parent\n");
-	//	hypothesis_dereference(h);
+	hypothesis_dereference(h);
 
 	// put back in particles
 	particles[i].h = p.h;
       }
     }
+
+    printf("swarm move: after h = %p, h->parent = %p\n", particles[i].h, particles[i].h->parent);
 
     /*
     printf("move: (%d, %d, %d)\n", particles[i].x,
@@ -343,7 +346,8 @@ void swarm_update(observations *obs) {
   for (i = 0; i < p_count; i++)
     culled[i] = 0;
 
-  obs->hypotheses = malloc(sizeof(hypothesis)*p_count);
+  if (obs->hypotheses == NULL)
+    obs->hypotheses = malloc(sizeof(hypothesis*)*p_count);
 
   //  min = 10000.0;
   max = 0.0;
@@ -580,7 +584,7 @@ void swarm_update(observations *obs) {
     particles[i] = previous_particles[j];
 
     // add hypothesis to observations
-    obs->hypotheses[i] = *(particles[i].h);
+    obs->hypotheses[i] = particles[i].h;
 
     //    printf("resample: (%g, %g, %g), i = %d, j = %d\n", particles[i].x,
     //    	   particles[i].y, particles[i].theta, i , j);

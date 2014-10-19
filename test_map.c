@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 
   glutMainLoopEvent();
 
-  while (more_observations() && i < 10) {
+  while (more_observations() && i < 100) {
     printf("iteration: %i\n", i);
 
     obs = next_observation();
@@ -95,7 +95,13 @@ int main(int argc, char **argv) {
       //    } while(swarm_converged() == 0);
 
     // set up checkpoint
-    latest_h = obs->hypotheses;
+    latest_h = obs->hypotheses[0];
+
+    printf("latest_h:\n");
+    hypothesis_tree_size(latest_h);
+    printf("latest_h->parent:\n");
+    hypothesis_tree_size(latest_h->parent);
+
     printf("(%g, %g, %g)\n", latest_h->x, latest_h->y, latest_h->theta);
     /*    old_size = size;
     size = buffer_hypothesis_distance(buffer_all, latest_h, 0, 10);
@@ -226,6 +232,8 @@ observations* next_observation() {
   }
 
   read_status = getline(&line, &length, data);
+
+  obs->hypotheses = NULL;
 
   return obs;
 }
