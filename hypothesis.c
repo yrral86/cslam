@@ -75,9 +75,9 @@ int hypothesis_tree_size(hypothesis *root) {
   // count ourselves
   int i, size = 1;
   assert(root != NULL);
-  printf("root = %p\n", root);
+  /*  printf("root = %p\n", root);
   printf("child_count = %d\n", root->child_count);
-  printf("references = %d\n", root->references);
+  printf("references = %d\n", root->references);*/
   // add children and their ancestors
   for (i = 0; i < root->child_count; i++)
     size += hypothesis_tree_size(root->children[i]);

@@ -96,12 +96,12 @@ int main(int argc, char **argv) {
 
     // set up checkpoint
     latest_h = obs->hypotheses[0];
-
+    /*
     printf("latest_h:\n");
     hypothesis_tree_size(latest_h);
     printf("latest_h->parent:\n");
     hypothesis_tree_size(latest_h->parent);
-
+    */
     printf("(%g, %g, %g)\n", latest_h->x, latest_h->y, latest_h->theta);
     /*    old_size = size;
     size = buffer_hypothesis_distance(buffer_all, latest_h, 0, 10);
