@@ -42,6 +42,8 @@ int main(int argc, char **argv) {
   // generate presorted mask for O(a) copies
   map_generate_mask(SENSOR_MAX_USB);
 
+  map_debug_mask();
+
   i = 0;
   obs = next_observation();
   // set up initial hypothesis
@@ -50,9 +52,13 @@ int main(int argc, char **argv) {
   // get mask
   mask_map = map_get_shifted_mask(root_h->x, root_h->y);
 
+  map_debug_mask();
+
   // generate map
   root_h->map = map_from_mask_and_hypothesis(mask_map, root_h);
   map_write_buffer(root_h->map);
+
+  map_debug_mask();
 
   // copy cp into new checkpoint after path
   path_end = checkpoint_path_append(path_end, root_h);
@@ -74,12 +80,16 @@ int main(int argc, char **argv) {
 
   glutMainLoopEvent();
 
-  while (more_observations() && i < 100) {
+  while (more_observations() && i < 2) {
     printf("iteration: %i\n", i);
+
     obs = next_observation();
     //    swarm_reset_convergence();
     //    do {
     swarm_move(0, 0, 0);
+
+    printf("hypothesis tree size: %d\n", hypothesis_tree_size(root_h));
+
     swarm_update(obs);
       //      printf("converged: %i\n", swarm_converged());
       //    } while(swarm_converged() == 0);

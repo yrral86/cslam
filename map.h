@@ -52,6 +52,7 @@ typedef struct map_pixel {
 } map_pixel;
 
   //map_node* map_new_from_hypothesis(hypothesis);
+void map_debug_mask();
 void map_dereference_mask();
 void map_generate_mask(int);
 map_node* map_get_shifted_mask(int, int);

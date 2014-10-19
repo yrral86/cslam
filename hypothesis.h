@@ -22,6 +22,6 @@ void hypothesis_reference(hypothesis*);
 void hypothesis_dereference(hypothesis*);
 void hypothesis_remove_child(hypothesis*, hypothesis*);
 hypothesis* hypothesis_new(hypothesis*, double, double, double);
-
+int hypothesis_tree_size(hypothesis*);
 
 #endif

@@ -15,13 +15,13 @@ map_node* map_expand(map_node *map) {
 
 map_node* map_new(int w, int h, int c_x, int c_y) {
   map_node *map = malloc(sizeof(map_node));
+  printf("map_new: malloc'd map %p\n", map);
   map->width = w;
   map->height = h;
 #ifdef __MAP_TYPE_TREE__
   map = map_node_new(0, width, 0, height);
 #endif
 #ifdef __MAP_TYPE_HEAP__
-  map = malloc(sizeof(map_node));
   // initial max size enough for one scan
   map->max_size = initial_max;
   map->current_size = 0;
@@ -128,7 +128,12 @@ map_node* map_new_from_hypothesis(hypothesis h) {
 #ifdef __MAP_TYPE_HEAP__
 static map_node* mask;
 
+void map_debug_mask() {
+  //  printf("debug mask = %p\n", mask);
+}
+
 void map_dereference_mask() {
+  //  printf("dereferencing mask = %p, references = %d\n", mask, mask->references);
   map_dereference(mask);
 }
 
@@ -136,6 +141,7 @@ void map_generate_mask(int r) {
   int i, x, y, r2;
   map_pixel p;
   mask = map_new(2*r+1, 2*r+1, 0, 0);
+  //  printf("generate mask = %p\n", mask);
   i = 0;
   r /= BUFFER_FACTOR;
   r2 = r*r;
@@ -952,6 +958,7 @@ void map_node_split(map_node *map, int index) {
 #endif
 
 void map_reference(map_node *map) {
+//  printf("refrencing map %p\n", map);
   map->references++;
 }
 
@@ -967,15 +974,19 @@ void map_dereference(map_node *map) {
   free(map);
 #endif
 #ifdef __MAP_TYPE_HEAP__
+//  printf("derefrencing map %p\n", map);
   map->references--;
 
   if (map->references == 0) {
+//    printf("freeing heap\n");
     free(map->heap);
     map->heap = NULL;
     if (map->buffer != NULL) {
+//      printf("freeing buffer\n");
       free(map->buffer);
       map->buffer = NULL;
     }
+//    printf("freeing map %p\n", map);
     free(map);
   }
 #endif
@@ -1150,7 +1161,7 @@ void map_write_buffer(map_node *map) {
 #endif
 #ifdef __MAP_TYPE_HEAP__
   map_pixel p;
-  int i, sum, value, factor, x_max, x_min, y_max, y_min, x, y;
+  int i, sum, value, factor, x_max, x_min, y_max, y_min, x, y, x_adj, y_adj;
   //  map = map_dup(map);
   // width of row
 
@@ -1170,6 +1181,8 @@ void map_write_buffer(map_node *map) {
   //  printf("x_min %d x_max %d y_min %d y_max %d\n", x_min, x_max, y_min, y_max);
 
   factor = map->width/BUFFER_FACTOR;
+  x_adj = -map->center_x/BUFFER_FACTOR + factor/2;
+  y_adj = -map->center_y/BUFFER_FACTOR + map->height/(2*BUFFER_FACTOR);
 
   //  printf("factor: %d\n", factor);
   // adjust for center of map
@@ -1190,8 +1203,8 @@ void map_write_buffer(map_node *map) {
       if (sum >= 1) {
 	value = (int)(255 * p.l.seen/(double)sum);
 
-	x = p.x - map->center_x/BUFFER_FACTOR + factor/2;
-	y = p.y - map->center_y/BUFFER_FACTOR + map->height/(2*BUFFER_FACTOR);
+	x = p.x + x_adj;
+	y = p.y + y_adj;
 	// write pixel with value
 	//	if (factor*p.y + p.x - adj < 0 || factor*p.y + p.x - adj >= factor*map->height/BUFFER_FACTOR)
 	//	  printf("xy: (%d,%d) index: %d max_index: %d\n", x, y, factor*y+x, factor*map->height/BUFFER_FACTOR);
