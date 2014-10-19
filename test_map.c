@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
 
   glutMainLoopEvent();
 
-  while (more_observations() && i < 2) {
+  while (more_observations() && i < 10{
     printf("iteration: %i\n", i);
 
     obs = next_observation();
