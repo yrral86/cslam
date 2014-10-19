@@ -219,14 +219,14 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
     //    particles[i] = particle_init(x + sensor_radius*cos(t), y + sensor_radius*sin(t), theta);
     particles[i] = particle_init(x, y, theta);
     particles[i].h = best_particle.h;
-    printf("referencing best_particle.h from init\n");
+    //    printf("referencing best_particle.h from init\n");
     hypothesis_reference(best_particle.h);
 
     //    particles[i].map = initial_map.map;
     //    landmark_map_reference(particles[i].map);
   }
 
-  printf("dereferencing best_particle.h from init\n");
+  //  printf("dereferencing best_particle.h from init\n");
   hypothesis_dereference(best_particle.h);
 
   best_particle = particles[0];
@@ -279,7 +279,8 @@ void swarm_move(int dx, int dy, int dtheta) {
       tries++;
     } while (!in_arena(particles[i].x, particles[i].y) && tries < 5);
     // if we failed repeatedly, reuse previous pose
-    if (tries >= 5)
+    // (plus stay put 20% of time)
+    if (tries >= 5  || rand_limit(100) < 20)
       particles[i] = p;
     else {
       // we succeeded in sampling, change hypothesis
@@ -354,13 +355,13 @@ void swarm_update(observations *obs) {
   best_index = 0;
   // use the same observations for all particles
   //  offset = rand_limit(20);
-  // stop if we've culled more than 90% of particles
-  for (offset = 0; offset < 20 && culled_count < 0.9*p_count; offset++) {
+  for (offset = 0; offset < 20; offset++) {
     // evaulate each direction for each particle
     for (i = 0; i < p_count; i++) {
       if (culled[i] == 0) {
+	temp_h = particles[i].h;
 	particles[i].h->obs = obs;
-	particles[i].p *= 1.0/buffer_hypothesis_distance(particles[i].h, offset, 20);
+	particles[i].p *= 1.0/(buffer_hypothesis_distance(temp_h, offset, 20)*temp_h->map->current_size*temp_h->map->current_size);
 
 	if (particles[i].p > max) {
 	  max = particles[i].p;
@@ -372,13 +373,14 @@ void swarm_update(observations *obs) {
     // cull terrible particles
     swarm_normalize();
     for (i = 0; i < p_count; i++)
-      if (culled[i] == 0)
+      // stop if we've culled more than 90% of particles
+      if (culled[i] == 0 && culled_count < 0.9*p_count)
 	if (particles[i].p < 1.0/p_count) {
 	  culled[i] = 1;
 	  particles[i].p = 0;
 	  culled_count++;
-	} else
-	  printf("score: %g\n", particles[i].p);
+	}// else
+    //	  printf("score: %g\n", particles[i].p);
   }
 
   // clear old best, save new best, copy the map we are about to dereference
@@ -395,7 +397,7 @@ void swarm_update(observations *obs) {
 
   printf("culled %d of %d particles\n", culled_count, p_count);
 
-  swarm_sort(0, p_count - 1);
+  swarm_sort(0, p_count - culled_count - 1);
 
   // calculate standard deviation of top 99%
   i = 0;
@@ -404,7 +406,7 @@ void swarm_update(observations *obs) {
   mean[1] = 0.0;
   mean[2] = 0.0;
   count = 0;
-  while (total < 0.99) {
+  while (total < 0.99 && i < p_count - culled_count) {
     mean[0] += particles[i].x;
     mean[1] += particles[i].y;
     mean[2] += particles[i].theta;
@@ -421,7 +423,7 @@ void swarm_update(observations *obs) {
   stddev[2] = 0.0;
   total = 0.0;
   i = 0;
-  while (total < 0.99) {
+  while (total < 0.99 && i < p_count - culled_count) {
     stddev[0] += pow(mean[0] - particles[i].x, 2);
     stddev[1] += pow(mean[1] - particles[i].y, 2);
     stddev[2] += pow(mean[2] - particles[i].theta, 2);

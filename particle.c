@@ -36,7 +36,7 @@ particle particle_sample_normal(particle parent, int iterations) {
 
 particle particle_init(int x, int y, int theta) {
   particle p;
-  p.p = 1.0/PARTICLE_COUNT;
+  p.p = 1;
   p.x = x;
   p.y = y;
   p.theta = theta;

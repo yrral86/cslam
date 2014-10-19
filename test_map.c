@@ -55,14 +55,7 @@ int main(int argc, char **argv) {
   // generate map
   root_h->map = map_from_mask_and_hypothesis(mask_map, root_h);
 
-  map_debug(root_h->map);
-
   map_write_buffer(root_h->map);
-
-  while(1) {
-  display(root_h->map);
-  glutMainLoopEvent();
-  }
 
   // copy cp into new checkpoint after path
   path_end = checkpoint_path_append(path_end, root_h);
@@ -84,7 +77,7 @@ int main(int argc, char **argv) {
 
   glutMainLoopEvent();
 
-  while (more_observations() && i < 100) {
+  while (more_observations() && i < 1000) {
     printf("iteration: %i\n", i);
 
     obs = next_observation();

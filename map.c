@@ -1181,16 +1181,8 @@ void map_write_buffer(map_node *map) {
   //  printf("x_min %d x_max %d y_min %d y_max %d\n", x_min, x_max, y_min, y_max);
 
   factor = map->width/BUFFER_FACTOR;
-  x_adj = -map->center_x/BUFFER_FACTOR + factor/2;
-  y_adj = -map->center_y/BUFFER_FACTOR + map->height/(2*BUFFER_FACTOR);
-
-  //  printf("factor: %d\n", factor);
-  // adjust for center of map
-  //  adj = factor*map->center_y/BUFFER_FACTOR + map->center_x/BUFFER_FACTOR;
-  //  printf("adj = %d\n", adj);
-  // adjust for difference between min x and min y of map and center
-  //  adj = factor*map->height/(2*BUFFER_FACTOR) + map->width/(2*BUFFER_FACTOR);
-  //  printf("adj = %d\n", adj);
+  x_adj = factor/2 - map->center_x/BUFFER_FACTOR;
+  y_adj = map->height/(2*BUFFER_FACTOR) - map->center_y/BUFFER_FACTOR;
  
   i = 0;
   while(i < map->current_size) {
@@ -1203,6 +1195,8 @@ void map_write_buffer(map_node *map) {
       if (sum >= 1) {
 	value = (int)(255 * p.l.seen/(double)sum);
 
+	//	x = p.x + x_adj;
+	//	y = p.y + y_adj;
 	x = p.x + x_adj;
 	y = p.y + y_adj;
 	// write pixel with value
