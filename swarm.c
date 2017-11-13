@@ -399,17 +399,7 @@ void swarm_update(int *distances) {
       for (i = 0; i < cull_index; i++) {
 	particles[i].p = BIG;
       }
-      //    printf("cull: %d, p_count: %d, cull_index: %d\n", cull, p_count, cull_index);
     }
-
-    /*
-    // cull particles more than 10x the best
-    double cutoff = 10*min;
-    for (i = 0; i < p_count; i++) {
-      if (particles[i].p > cutoff) {
-	particles[i].p = BIG;
-      }
-      }*/
   }
 
   // clear old best, save new best, copy the map we are about to dereference
