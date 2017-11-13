@@ -8,6 +8,8 @@ typedef struct particle {
   int x;
   int y;
   int theta;
+  double cos;
+  double sin;
   double x_var;
   double y_var;
   double theta_var;

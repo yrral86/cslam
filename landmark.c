@@ -84,7 +84,7 @@ void landmark_write_map_subtree(landmark_map *node, uint8_t *buffer) {
 double landmark_seen_probability(landmark_map *node, int index) {
   landmark l;
   double p, sum;
-  assert(node != NULL);
+  //  assert(node != NULL);
   l = node->map[index];
 
   sum = l.seen + l.unseen;
@@ -97,6 +97,7 @@ double landmark_seen_probability(landmark_map *node, int index) {
   if (p > 0.95)
     p = 0.95;
 
+  //  assert(p == 0.05 || p == 0.95);
   return p;
 }
 

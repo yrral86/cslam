@@ -276,10 +276,10 @@ void swarm_update(int *distances) {
   int i, j, k, l, best_index, p_count;
   int swap, x, y, count;
   double mean[3], stddev[3];
-  double posterior, distance, theta, degrees, s, c, total, min, p, step;
+  double distance, theta, degrees, s, c, total, min, p, step, p95, p5;
+  double cos_d, sin_d, factor, theta_d;
   //  double xyt[3];
   particle temp;
-  int weight;
 
 #ifndef LINUX
   ReleaseSemaphore(return_sem, 1, NULL);
@@ -290,26 +290,35 @@ void swarm_update(int *distances) {
   else
     p_count = PARTICLE_COUNT;
 
+  p95 = -log(0.95);
+  p5 = -log(0.05);
+  factor = M_PI/180;
   min = 10000.0;
   best_index = 0;
+  int particle_trig_initialized = 0;
   // evaulate each direction for each particle
-  for (i = 0; i < p_count; i++) {
-    posterior = 0.0;
+  for (j = 0; j < m; j++) {
+    distance = distances[j];
+    // skip any distances that are more than 8 meters in case we shoot over the walls
+    if (distance < 8000) {
+      degrees = -sensor_degrees/2.0 + j*spacing;
+      theta_d = degrees*factor;
+      sin_d = sin(theta_d);
+      cos_d = cos(theta_d);
 
-    // evaluate the particle's relative probability
-    for (j = 0; j < m; j++) {
-      if (abs((j - m/2)*spacing) < 5)
-	weight = 1;
-      else
-	weight = 1;
-      distance = distances[j];
-      // skip any distances that are more than 8 meters in case we shoot over the walls
-      if (distance < 8000) {
-	// forward is now 0 degrees, left -, right +
-	degrees = -sensor_degrees/2.0 + j*spacing;
-	theta = (degrees - particles[i].theta)*M_PI/180;
-	s = sin(theta);
-	c = cos(theta);
+      // evaluate the particle's relative probability
+      for (i = 0; i < p_count; i++) {
+	if (particle_trig_initialized == 0) {
+	  theta_d = particles[i].theta * factor;
+	  particles[i].sin = sin(theta_d);
+	  particles[i].cos = cos(theta_d);
+	}
+    	// forward is now 0 degrees, left -, right +
+	//theta = (degrees - particles[i].theta)*M_PI/180;
+	// sin(A - B) = sin(A)*cos(B) - sin(B)*cos(A)
+	s = sin_d * particles[i].cos - particles[i].sin * cos_d;
+	// cos(A -B) = cos(A)*cos(B) + sin(A)*sin(B)
+	c = cos_d * particles[i].cos + sin_d * particles[i].sin;
 
 	// check and record unseen every 200 mm, within 1 meter of obstacle
 	for (l = distance - 200; l > distance - 1000; l -= 200) {
@@ -320,8 +329,12 @@ void swarm_update(int *distances) {
 	  if (in_arena(x, y)) {
 	    k = buffer_index_from_x_y(x, y);
 	    p = landmark_unseen_probability(particles[i].map, k);
-	    posterior += -log(p)/weight;
-	  } else posterior += -log(0.05)/weight;
+	    if (p == 0.05) {
+	      particles[i].p += p5;
+	    } else {
+	      particles[i].p += p95;
+	    }
+	  } else particles[i].p += p5;
 	}
 
 	// check and record seen
@@ -332,15 +345,20 @@ void swarm_update(int *distances) {
 	if (in_arena(x, y)) {
 	  k = buffer_index_from_x_y(x, y);
 	  p = landmark_seen_probability(particles[i].map, k);
-	  posterior += -log(p)/weight;
-	} else posterior += -log(0.05)/weight;
-      }
-    }
+	  if (p == 0.05) {
+	    particles[i].p += p5;
+	  } else {
+	    particles[i].p += p95;
+	  }
+	} else particles[i].p += p5;
 
-    particles[i].p += posterior;
-    if (particles[i].p < min) {
-      min = particles[i].p;
-      best_index = i;
+	// only the last iteration
+	if (j == m - 1 && particles[i].p < min) {
+	  min = particles[i].p;
+	  best_index = i;
+	}
+      }
+      particle_trig_initialized = 1;
     }
   }
 
