@@ -300,7 +300,7 @@ void swarm_update(int *distances) {
   for (cull = 0; cull < CULLING_FACTOR; cull++) {
   // evaulate each direction for each particle
     for (cut = 0; cut < m/CULLING_FACTOR; cut++) {
-      j = CULLING_FACTOR*cull + cut;
+      j = cull + CULLING_FACTOR*cut;
       if (j >= m) {
 	continue;
       }
@@ -314,6 +314,7 @@ void swarm_update(int *distances) {
 
 	// evaluate the particle's relative probability
 	for (i = 0; i < p_count; i++) {
+	  // TODO skip culled particles
 	  if (particle_trig_initialized == 0) {
 	    theta_d = particles[i].theta * factor;
 	    particles[i].sin = sin(theta_d);
@@ -367,6 +368,7 @@ void swarm_update(int *distances) {
 	particle_trig_initialized = 1;
       }
     }
+    // TODO find particles to cull
   }
 
   // clear old best, save new best, copy the map we are about to dereference
