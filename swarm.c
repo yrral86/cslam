@@ -273,7 +273,7 @@ void swarm_update_internal(int *distances) {
 #ifdef LINUX
 void swarm_update(int *distances) {
 #endif
-  int i, j, k, l, cull, best_index, p_count;
+  int i, j, k, l, cull, cut, best_index, p_count;
   int particle_trig_initialized = 0;
   int swap, x, y, count;
   double mean[3], stddev[3];
@@ -299,7 +299,11 @@ void swarm_update(int *distances) {
   particle_trig_initialized = 0;
   for (cull = 0; cull < CULLING_FACTOR; cull++) {
   // evaulate each direction for each particle
-    for (j = 0; j < m; j++) {
+    for (cut = 0; cut < m/CULLING_FACTOR; cut++) {
+      j = CULLING_FACTOR*cull + cut;
+      if (j >= m) {
+	continue;
+      }
       distance = distances[j];
       // skip any distances that are more than 8 meters in case we shoot over the walls
       if (distance < 8000) {
