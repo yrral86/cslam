@@ -273,7 +273,8 @@ void swarm_update_internal(int *distances) {
 #ifdef LINUX
 void swarm_update(int *distances) {
 #endif
-  int i, j, k, l, best_index, p_count;
+  int i, j, k, l, cull, best_index, p_count;
+  int particle_trig_initialized = 0;
   int swap, x, y, count;
   double mean[3], stddev[3];
   double distance, theta, degrees, s, c, total, min, p, step, p95, p5;
@@ -295,70 +296,72 @@ void swarm_update(int *distances) {
   factor = M_PI/180;
   min = 10000.0;
   best_index = 0;
-  int particle_trig_initialized = 0;
+  particle_trig_initialized = 0;
+  for (cull = 0; cull < CULLING_FACTOR; cull++) {
   // evaulate each direction for each particle
-  for (j = 0; j < m; j++) {
-    distance = distances[j];
-    // skip any distances that are more than 8 meters in case we shoot over the walls
-    if (distance < 8000) {
-      degrees = -sensor_degrees/2.0 + j*spacing;
-      theta_d = degrees*factor;
-      sin_d = sin(theta_d);
-      cos_d = cos(theta_d);
+    for (j = 0; j < m; j++) {
+      distance = distances[j];
+      // skip any distances that are more than 8 meters in case we shoot over the walls
+      if (distance < 8000) {
+	degrees = -sensor_degrees/2.0 + j*spacing;
+	theta_d = degrees*factor;
+	sin_d = sin(theta_d);
+	cos_d = cos(theta_d);
 
-      // evaluate the particle's relative probability
-      for (i = 0; i < p_count; i++) {
-	if (particle_trig_initialized == 0) {
-	  theta_d = particles[i].theta * factor;
-	  particles[i].sin = sin(theta_d);
-	  particles[i].cos = cos(theta_d);
-	}
-    	// forward is now 0 degrees, left -, right +
-	//theta = (degrees - particles[i].theta)*M_PI/180;
-	// sin(A - B) = sin(A)*cos(B) - sin(B)*cos(A)
-	s = sin_d * particles[i].cos - particles[i].sin * cos_d;
-	// cos(A -B) = cos(A)*cos(B) + sin(A)*sin(B)
-	c = cos_d * particles[i].cos + sin_d * particles[i].sin;
+	// evaluate the particle's relative probability
+	for (i = 0; i < p_count; i++) {
+	  if (particle_trig_initialized == 0) {
+	    theta_d = particles[i].theta * factor;
+	    particles[i].sin = sin(theta_d);
+	    particles[i].cos = cos(theta_d);
+	  }
+	  // forward is now 0 degrees, left -, right +
+	  //theta = (degrees - particles[i].theta)*M_PI/180;
+	  // sin(A - B) = sin(A)*cos(B) - sin(B)*cos(A)
+	  s = sin_d * particles[i].cos - particles[i].sin * cos_d;
+	  // cos(A -B) = cos(A)*cos(B) + sin(A)*sin(B)
+	  c = cos_d * particles[i].cos + sin_d * particles[i].sin;
 
-	// check and record unseen every 200 mm, within 1 meter of obstacle
-	for (l = distance - 200; l > distance - 1000; l -= 200) {
-	  x = l*c + particles[i].x;
-	  y = l*s + short_side - particles[i].y;
+	  // check and record unseen every 200 mm, within 1 meter of obstacle
+	  for (l = distance - 200; l > distance - 1000; l -= 200) {
+	    x = l*c + particles[i].x;
+	    y = l*s + short_side - particles[i].y;
+
+	    // make sure it is in bounds
+	    if (in_arena(x, y)) {
+	      k = buffer_index_from_x_y(x, y);
+	      p = landmark_unseen_probability(particles[i].map, k);
+	      if (p == 0.05) {
+		particles[i].p += p5;
+	      } else {
+		particles[i].p += p95;
+	      }
+	    } else particles[i].p += p5;
+	  }
+
+	  // check and record seen
+	  x = distance*c + particles[i].x;
+	  y = distance*s + short_side - particles[i].y;
 
 	  // make sure it is in bounds
 	  if (in_arena(x, y)) {
 	    k = buffer_index_from_x_y(x, y);
-	    p = landmark_unseen_probability(particles[i].map, k);
+	    p = landmark_seen_probability(particles[i].map, k);
 	    if (p == 0.05) {
 	      particles[i].p += p5;
 	    } else {
 	      particles[i].p += p95;
 	    }
 	  } else particles[i].p += p5;
-	}
 
-	// check and record seen
-	x = distance*c + particles[i].x;
-	y = distance*s + short_side - particles[i].y;
-
-	// make sure it is in bounds
-	if (in_arena(x, y)) {
-	  k = buffer_index_from_x_y(x, y);
-	  p = landmark_seen_probability(particles[i].map, k);
-	  if (p == 0.05) {
-	    particles[i].p += p5;
-	  } else {
-	    particles[i].p += p95;
+	  // only the last iteration
+	  if (j == m - 1 && particles[i].p < min) {
+	    min = particles[i].p;
+	    best_index = i;
 	  }
-	} else particles[i].p += p5;
-
-	// only the last iteration
-	if (j == m - 1 && particles[i].p < min) {
-	  min = particles[i].p;
-	  best_index = i;
 	}
+	particle_trig_initialized = 1;
       }
-      particle_trig_initialized = 1;
     }
   }
 

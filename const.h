@@ -7,6 +7,11 @@
 #define INITIAL_POSITION_VARIANCE 150
 #define INITIAL_ANGLE_VARIANCE 5
 #define INITIAL_PARTICLE_FACTOR 2
+// CULLING_FACTOR: 1 -> no culling
+//                 2 -> evaluate 50% then cull
+//                 10 -> evaluate 10% then cull
+//                 100 -> evaluate 1% then cull
+#define CULLING_FACTOR 1
 
 #define BUFFER_FACTOR 20
 #define BORDER_WIDTH 150
