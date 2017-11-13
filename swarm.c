@@ -371,9 +371,9 @@ void swarm_update(int *distances) {
       }
     }
 
-
+    // skip for last iteration
     if (cull != CULLING_FACTOR - 1) {
-      // bubblesort particles by p
+      // bubblesort particles by p (mostly sorted after first iteration)
       swap = 1;
       i = 0;
       do {
@@ -381,19 +381,13 @@ void swarm_update(int *distances) {
 	for (j = 0; j < p_count - i - 1; j++)
 	  // if the left particle is smaller probability, bubble it right
 	  if (particles[j].p < particles[j + 1].p) {
-	    // maintain best_index
-	    if (best_index == j)
-	      best_index = j + 1;
-	    else if (best_index == j + 1)
-	      best_index = j;
-	    temp = particles[j];
-	    particles[j] = particles[j + 1];
-	    particles[j + 1] = temp;
+	    pswap(particles + j, particles + j + 1);
 	    swap = 1;
 	  }
 	i++;
       } while (swap);
-
+      
+      best_index = p_count - 1;
       // cull bottom
       cull_index = CULLING_PERCENT*p_count*(cull + 1.0)/CULLING_FACTOR;
       for (i = 0; i < cull_index; i++) {
@@ -514,6 +508,13 @@ void swarm_update(int *distances) {
 #ifndef LINUX
   ReleaseSemaphore(ready_sem, 1, NULL);
 #endif
+}
+
+void pswap(particle *p1, particle *p2) {
+  particle tmp;
+  tmp = *p1;
+  *p1 = *p2;
+  *p2 = tmp;
 }
 
 #ifndef LINUX
