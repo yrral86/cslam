@@ -273,7 +273,7 @@ void swarm_update_internal(int *distances) {
 #ifdef LINUX
 void swarm_update(int *distances) {
 #endif
-  int i, j, k, l, cull, cut, best_index, p_count;
+  int i, j, k, l, cull, cut, cuts, cull_index, best_index, p_count;
   int particle_trig_initialized = 0;
   int swap, x, y, count;
   double mean[3], stddev[3];
@@ -281,6 +281,7 @@ void swarm_update(int *distances) {
   double cos_d, sin_d, factor, theta_d;
   //  double xyt[3];
   particle temp;
+  const double BIG = 10000000;
 
 #ifndef LINUX
   ReleaseSemaphore(return_sem, 1, NULL);
@@ -294,12 +295,12 @@ void swarm_update(int *distances) {
   p95 = -log(0.95);
   p5 = -log(0.05);
   factor = M_PI/180;
-  min = 10000.0;
-  best_index = 0;
+  cuts = m/CULLING_FACTOR + 1;
+  cull_index = 0;
   particle_trig_initialized = 0;
   for (cull = 0; cull < CULLING_FACTOR; cull++) {
   // evaulate each direction for each particle
-    for (cut = 0; cut < m/CULLING_FACTOR; cut++) {
+    for (cut = 0; cut < cuts; cut++) {
       j = cull + CULLING_FACTOR*cut;
       if (j >= m) {
 	continue;
@@ -313,8 +314,10 @@ void swarm_update(int *distances) {
 	cos_d = cos(theta_d);
 
 	// evaluate the particle's relative probability
-	for (i = 0; i < p_count; i++) {
-	  // TODO skip culled particles
+	// skip culled particles
+	min = BIG;
+	best_index = 0;
+	for (i = cull_index; i < p_count; i++) {
 	  if (particle_trig_initialized == 0) {
 	    theta_d = particles[i].theta * factor;
 	    particles[i].sin = sin(theta_d);
@@ -359,8 +362,7 @@ void swarm_update(int *distances) {
 	    }
 	  } else particles[i].p += p5;
 
-	  // only the last iteration
-	  if (j == m - 1 && particles[i].p < min) {
+	  if (particles[i].p < min) {
 	    min = particles[i].p;
 	    best_index = i;
 	  }
@@ -368,7 +370,46 @@ void swarm_update(int *distances) {
 	particle_trig_initialized = 1;
       }
     }
-    // TODO find particles to cull
+
+
+    if (cull != CULLING_FACTOR - 1) {
+      // bubblesort particles by p
+      swap = 1;
+      i = 0;
+      do {
+	swap = 0;
+	for (j = 0; j < p_count - i - 1; j++)
+	  // if the left particle is smaller probability, bubble it right
+	  if (particles[j].p < particles[j + 1].p) {
+	    // maintain best_index
+	    if (best_index == j)
+	      best_index = j + 1;
+	    else if (best_index == j + 1)
+	      best_index = j;
+	    temp = particles[j];
+	    particles[j] = particles[j + 1];
+	    particles[j + 1] = temp;
+	    swap = 1;
+	  }
+	i++;
+      } while (swap);
+
+      // cull bottom
+      cull_index = CULLING_PERCENT*p_count*(cull + 1.0)/CULLING_FACTOR;
+      for (i = 0; i < cull_index; i++) {
+	particles[i].p = BIG;
+      }
+      //    printf("cull: %d, p_count: %d, cull_index: %d\n", cull, p_count, cull_index);
+    }
+
+    /*
+    // cull particles more than 10x the best
+    double cutoff = 10*min;
+    for (i = 0; i < p_count; i++) {
+      if (particles[i].p > cutoff) {
+	particles[i].p = BIG;
+      }
+      }*/
   }
 
   // clear old best, save new best, copy the map we are about to dereference
@@ -395,8 +436,8 @@ void swarm_update(int *distances) {
   do {
     swap = 0;
     for (j = 0; j < p_count - i - 1; j++)
-      // if the left particle is smaller probability, bubble it right
-      if (particles[j].p < particles[j + 1].p) {
+      // if the left particle is larger probability, bubble it right
+      if (particles[j].p > particles[j + 1].p) {
 	temp = particles[j];
 	particles[j] = particles[j + 1];
 	particles[j + 1] = temp;
@@ -406,7 +447,7 @@ void swarm_update(int *distances) {
   } while (swap);
 
   // calculate standard deviation of top 90%
-  i = 0;
+  i = p_count - 1;
   total = 0.0;
   mean[0] = 0.0;
   mean[1] = 0.0;
@@ -418,7 +459,7 @@ void swarm_update(int *distances) {
     mean[2] += particles[i].theta;
     count++;
     total += particles[i].p;
-    i++;
+    i--;
   }
 
   for (i = 0; i < 3; i++)
@@ -428,13 +469,13 @@ void swarm_update(int *distances) {
   stddev[1] = 0.0;
   stddev[2] = 0.0;
   total = 0.0;
-  i = 0;
+  i = p_count - 1;
   while (total < 0.99) {
     stddev[0] += pow(mean[0] - particles[i].x, 2);
     stddev[1] += pow(mean[1] - particles[i].y, 2);
     stddev[2] += pow(mean[2] - particles[i].theta, 2);
     total += particles[i].p;
-    i++;
+    i--;
   }
 
   for (i = 0; i < 3; i++) {
@@ -452,7 +493,7 @@ void swarm_update(int *distances) {
     converged = 0;
 
   if (!converged || count > 1)
-    printf("count: %d, max prob: %g, standard deviations: %g, %g, %g, converged: %d\n", count, particles[0].p, stddev[0], stddev[1], stddev[2], converged);
+    printf("count: %d, max prob: %g, standard deviations: %g, %g, %g, converged: %d\n", count, particles[p_count - 1].p, stddev[0], stddev[1], stddev[2], converged);
 
   // save old particles before we resample
   memcpy(previous_particles, particles, sizeof(particle)*p_count);
@@ -463,10 +504,10 @@ void swarm_update(int *distances) {
     p += step;
     if (p > 1.0) p -= 1.0;
     total = 0.0;
-    j = 0;
-    while (j++ && total < p)
-      total += previous_particles[j - 1].p;
-    particles[i] = previous_particles[j - 1];
+    j = p_count - 1;
+    while (j-- && total < p)
+      total += previous_particles[j + 1].p;
+    particles[i] = previous_particles[j + 1];
     particles[i].map = landmark_map_copy(particles[i].map);
   }
 
