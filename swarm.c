@@ -130,11 +130,11 @@ void swarm_init_internal(int m_in, int degrees_in, int long_side_in, int short_s
 #ifdef LINUX
 void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in, int radius) {
 #endif
-  int i, j, k, s;
+  int i, j, k;//, s;
   int x, y, theta;
   particle initial_map;
-  char *str, *tok;
-  FILE *map_file;
+  //  char *str, *tok;
+  //  FILE *map_file;
   double t;
   m = m_in;
   sensor_degrees = degrees_in;
@@ -197,8 +197,8 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
   x = start/2;
   for (i = 0; i < INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT; i++) {
     y = short_side/4;
-    if (rand_limit(2))
-      y *= 3;
+    //    if (rand_limit(2))
+    y *= 3;
     theta = rand_limit(360) - 180;
     //theta = 180;
     t = theta*M_PI/180;
@@ -305,35 +305,35 @@ void swarm_update(int *distances) {
       distance = distances[j];
       // skip any distances that are more than 8 meters in case we shoot over the walls
       if (distance < 8000) {
-		// forward is now 0 degrees, left -, right +
-		degrees = -sensor_degrees/2.0 + j*spacing;
-		theta = (degrees - particles[i].theta)*M_PI/180;
-		s = sin(theta);
-		c = cos(theta);
+	// forward is now 0 degrees, left -, right +
+	degrees = -sensor_degrees/2.0 + j*spacing;
+	theta = (degrees - particles[i].theta)*M_PI/180;
+	s = sin(theta);
+	c = cos(theta);
 
-		// check and record unseen every 200 mm, within 1 meter of obstacle
-		for (l = distance - 200; l > distance - 1000; l -= 200) {
-			x = l*c + particles[i].x;
-			y = l*s + short_side - particles[i].y;
+	// check and record unseen every 200 mm, within 1 meter of obstacle
+	for (l = distance - 200; l > distance - 1000; l -= 200) {
+	  x = l*c + particles[i].x;
+	  y = l*s + short_side - particles[i].y;
 
-			// make sure it is in bounds
-			if (in_arena(x, y)) {
-				k = buffer_index_from_x_y(x, y);
-				p = landmark_unseen_probability(particles[i].map, k);
-				posterior += -log(p)/weight;
-			} else posterior += -log(0.05)/weight;
-		}
+	  // make sure it is in bounds
+	  if (in_arena(x, y)) {
+	    k = buffer_index_from_x_y(x, y);
+	    p = landmark_unseen_probability(particles[i].map, k);
+	    posterior += -log(p)/weight;
+	  } else posterior += -log(0.05)/weight;
+	}
 
-		// check and record seen
-		x = distance*c + particles[i].x;
-		y = distance*s + short_side - particles[i].y;
+	// check and record seen
+	x = distance*c + particles[i].x;
+	y = distance*s + short_side - particles[i].y;
 
-		// make sure it is in bounds
-		if (in_arena(x, y)) {
-			k = buffer_index_from_x_y(x, y);
-			p = landmark_seen_probability(particles[i].map, k);
-			posterior += -log(p)/weight;
-		} else posterior += -log(0.05)/weight;
+	// make sure it is in bounds
+	if (in_arena(x, y)) {
+	  k = buffer_index_from_x_y(x, y);
+	  p = landmark_seen_probability(particles[i].map, k);
+	  posterior += -log(p)/weight;
+	} else posterior += -log(0.05)/weight;
       }
     }
 

@@ -1,5 +1,8 @@
 #include "lazygl.h"
 
+uint8_t *buffer1, *buffer2;
+int buffer_width, buffer_height, window_width, window_height;
+
 void initGL(uint8_t *b1, uint8_t *b2, int b_w, int b_h, int w_w, int w_h) {
   buffer1 = b1;
   buffer2 = b2;

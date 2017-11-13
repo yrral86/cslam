@@ -9,22 +9,30 @@
 static uint8_t* map[BUFFER_HISTORY];
 static int current_command;
 static particle current_particle;
+FILE *output_file;
 
 int main (int argc, char **argv) {
   // sensor_scans + function indicator + return
-  int i, init, iterations, scan_count, parsed_line[723];
+  int i, iterations, scan_count, parsed_line[723];
   FILE *data_file;
   ssize_t read;
   char *int_string;
   char *line = NULL;
   size_t length  = 0;
 
+  if (argc != 2) {
+    printf("must specify output filename\n");
+    exit(1);
+  }
+
   data_file = fopen("slamd_record.csv", "r");
   assert(data_file != NULL);
 
+  output_file = fopen(argv[1], "w");
+  assert(output_file != NULL);
+
   iterations = 0;
   scan_count = 0;
-  init = 1;
 
   while((read = getline(&line, &length, data_file)) != -1) {
     int_string = strtok(line, ",");
@@ -49,10 +57,10 @@ int main (int argc, char **argv) {
       for (i = 0; i < BUFFER_HISTORY; i++)
 	map[i] = buffer_allocate();
 
-      glutInit(&argc, argv);
+      // noui      glutInit(&argc, argv);
       // pass size of buffer, then window size
-      //      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 0.75*buffer_get_width(), 0.75*buffer_get_height());
-      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 4*buffer_get_width(), 4*buffer_get_height());
+      // noui            initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 0.75*buffer_get_width(), 0.75*buffer_get_height());
+      //      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 2*buffer_get_width(), 2*buffer_get_height());
       break;
     case SLAMD_MOVE:
       swarm_move(parsed_line[1], parsed_line[2], parsed_line[3]);
@@ -60,7 +68,7 @@ int main (int argc, char **argv) {
       break;
     case SLAMD_UPDATE:
       i = 0;
-      while (!swarm_converged() && i < 5) {
+      while (!swarm_converged() && i < 1) {
      	i++;
 	swarm_update(parsed_line + 1);
 	if (!swarm_converged() && i < 5)
@@ -73,7 +81,7 @@ int main (int argc, char **argv) {
       if(swarm_converged())
 	swarm_map(parsed_line + 1);
 	//scan_count = 0;
-	//}
+	//
       update_display();
       break;
     case SLAMD_X:
@@ -86,10 +94,11 @@ int main (int argc, char **argv) {
   }
 
   fclose(data_file);
+  fclose(output_file);
 
   free(line);
 
-  save_map();
+  //  save_map();
 
   //  glutMainLoop();
 
@@ -149,23 +158,27 @@ void update_display() {
   double s, c, t;
   particle *p;
   
-  swarm_get_all_particles(&p);
+  // noui  swarm_get_all_particles(&p);
 
   // copy best map to buffer
-  swarm_get_best_buffer(map[0]);
+  // noui  swarm_get_best_buffer(map[0]);
   // copy map to buffer
-  swarm_get_map_buffer(map[2]);
-  if (current_command == SLAMD_UPDATE)
+  // noui  swarm_get_map_buffer(map[2]);
+  if (current_command == SLAMD_UPDATE) {
     printf("x, y, theta = (%d, %d, %d)\n", swarm_get_best_x(),
 	   swarm_get_best_y(),
 	   swarm_get_best_theta());
+    fprintf(output_file, "%d,%d,%d\n", swarm_get_best_x(),
+	   swarm_get_best_y(),
+	   swarm_get_best_theta());
+  }
 
+  /* noui
   //  for (k = 0; k < PARTICLE_COUNT; k++) {
   for (k = 0; k < 1; k++) {
     // update localization
     current_particle = p[k];
-
-    // draw position
+    // draw position if better than average probability
     t = swarm_get_theta(k)*M_PI/180;
     s = sin(t);
     c = cos(t);
@@ -201,14 +214,15 @@ void update_display() {
 	if (!x_y_protected(swarm_get_x(k) + i*c - j*s, swarm_get_y(k) + i*s + j*c))
 	  record_map_position(0, swarm_get_x(k) + i*c - j*s,
 			      swarm_get_y(k) + i*s + j*c, 0);
-	if (k == 0 /*&& current_command == SLAMD_UPDATE*/ && !x_y_protected(swarm_get_best_x() + i*c - j*s, swarm_get_best_y() + i*s + j*c))
+	if (k == 0 /&& current_command == SLAMD_UPDATE/ && !x_y_protected(swarm_get_best_x() + i*c - j*s, swarm_get_best_y() + i*s + j*c))
 	  record_map_position(2, swarm_get_best_x() + i*c - j*s,
 			      swarm_get_best_y() + i*s + j*c, 0);
       }
     }
   }
+*/
 
-  glutMainLoopEvent();
+  //  glutMainLoopEvent();
 }
 
 void record_map_position(int index, int x, int y, uint8_t value) {

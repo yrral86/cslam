@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "random.h"
+#include "urg_driver/urg_utils.h"
 #include "urg_driver/urg_sensor.h"
 #include "scip/scipUtil.h"
 
