@@ -3,7 +3,7 @@
 
 //#include "arena.h"
 
-#define PARTICLE_COUNT 20000
+#define PARTICLE_COUNT 40000
 #define INITIAL_POSITION_VARIANCE 150
 #define INITIAL_ANGLE_VARIANCE 5
 #define INITIAL_PARTICLE_FACTOR 1
@@ -11,7 +11,7 @@
 //                 2 -> evaluate 50% then cull
 //                 10 -> evaluate 10% then cull
 //                 100 -> evaluate 1% then cull
-#define CULLING_FACTOR 50
+#define CULLING_FACTOR 100
 #define CULLING_PERCENT 0.9
 
 #define BUFFER_FACTOR 20

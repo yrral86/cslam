@@ -8,7 +8,7 @@ sub MAIN(Str $folder) {
     my @samples = gather for @files -> $file {
 	next if $file.path ~~ /summary/;
 	my @positions = $file.slurp.chomp.split("\n").map: *.split(",");
-	@times.push(@positions.pop);
+	@times.push(@positions.pop[0]);
 	take @positions if -10 < @positions[0][2] < 10;
     }
 
@@ -17,7 +17,7 @@ sub MAIN(Str $folder) {
     my @summaries = map &mean_and_std, ([Z] @samples);
 
     my @output = @summaries.map: -> @list { @list.flat.join(",") };
-    @output.push("iterations,{@samples.elems}\n");
+    @output.push("iterations,{@samples.elems}");
     @output.push("time,{$t_mean},{$t_dev}\n");
     spurt "{$foldername}summary.csv", @output.join("\n");
 }
@@ -32,7 +32,7 @@ sub dev(@l, $mean) {
 
 sub mean_and_std(@position) {
     my @zipped = [Z] @position;
-    my @means = map &mean, @zipped.map;
+    my @means = map &mean, @zipped;
     my @stddevs = @zipped.kv.map: -> $i, @l {
 	my $mean = @means[$i];
 	dev(@l, $mean)
