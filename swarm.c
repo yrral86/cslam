@@ -373,19 +373,7 @@ void swarm_update(int *distances) {
 
     // skip for last iteration
     if (cull != CULLING_FACTOR - 1) {
-      // bubblesort particles by p (mostly sorted after first iteration)
-      swap = 1;
-      i = 0;
-      do {
-	swap = 0;
-	for (j = 0; j < p_count - i - 1; j++)
-	  // if the left particle is smaller probability, bubble it right
-	  if (particles[j].p < particles[j + 1].p) {
-	    pswap(particles + j, particles + j + 1);
-	    swap = 1;
-	  }
-	i++;
-      } while (swap);
+      quick_sort(particles, cull_index, p_count - 1);
       
       best_index = p_count - 1;
       // cull bottom
@@ -414,22 +402,9 @@ void swarm_update(int *distances) {
     particles[i].p /= total;
   }
 
-  // bubblesort particles by p
-  swap = 1;
-  i = 0;
-  do {
-    swap = 0;
-    for (j = 0; j < p_count - i - 1; j++)
-      // if the left particle is larger probability, bubble it right
-      if (particles[j].p > particles[j + 1].p) {
-	temp = particles[j];
-	particles[j] = particles[j + 1];
-	particles[j + 1] = temp;
-	swap = 1;
-      }
-    i++;
-  } while (swap);
-
+  // quicksort particles
+  quick_sort_reverse(particles, 0, p_count - 1);
+  
   // calculate standard deviation of top 90%
   i = p_count - 1;
   total = 0.0;
@@ -509,13 +484,59 @@ void swarm_update(int *distances) {
   ReleaseSemaphore(ready_sem, 1, NULL);
 #endif
 }
-
-void pswap(particle *p1, particle *p2) {
-  particle tmp;
-  tmp = *p1;
-  *p1 = *p2;
-  *p2 = tmp;
+ 
+ void pswap(particle particles[], int one, int two) {
+   if (one != two) {
+     particle tmp;
+     tmp = particles[one];
+     particles[one] = particles[two];
+     particles[two] = tmp;
+   }
 }
+
+ void quick_sort(particle particles[], int start, int end) {
+   if (start < end) {
+     // partition
+     double pivot = particles[(start + end)/2].p;
+
+     int left = start;
+     int right = end;
+
+     while(left <= right) {
+       while(particles[left].p > pivot) left++;
+       while(particles[right].p < pivot) right--;
+       if (left <= right) {
+	 pswap(particles, left, right);
+	 left++; right--;
+       }
+     }
+
+     quick_sort(particles, start, right);
+     quick_sort(particles, left, end);
+   }
+ }
+
+  void quick_sort_reverse(particle particles[], int start, int end) {
+   if (start < end) {
+     // partition
+     double pivot = particles[(start + end)/2].p;
+
+     int left = start;
+     int right = end;
+
+     while(left <= right) {
+       while(particles[left].p < pivot) left++;
+       while(particles[right].p > pivot) right--;
+       if (left <= right) {
+	 pswap(particles, left, right);
+	 left++; right--;
+       }
+     }
+
+     quick_sort_reverse(particles, start, right);
+     quick_sort_reverse(particles, left, end);
+   }
+ }
 
 #ifndef LINUX
 void swarm_map_internal(int *distances) {

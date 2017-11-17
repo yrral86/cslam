@@ -51,6 +51,7 @@ int main (int argc, char **argv) {
 
     switch(current_command) {
     case SLAMD_INIT:
+      printf("init\n");
       swarm_init(parsed_line[1], parsed_line[2], parsed_line[3], parsed_line[4], parsed_line[5], parsed_line[6]);
 
       // allocate buffers
@@ -63,10 +64,12 @@ int main (int argc, char **argv) {
       //      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 2*buffer_get_width(), 2*buffer_get_height());
       break;
     case SLAMD_MOVE:
+      printf("move %d %d %d\n", parsed_line[1], parsed_line[2], parsed_line[3]);
       swarm_move(parsed_line[1], parsed_line[2], parsed_line[3]);
       //swarm_move(1, 0, 0);
       break;
     case SLAMD_UPDATE:
+      printf("update %d %d %d %d %d %d\n", parsed_line[1], parsed_line[2], parsed_line[3], parsed_line[4], parsed_line[5], parsed_line[6]);
       i = 0;
       while (!swarm_converged() && i < 1) {
      	i++;
