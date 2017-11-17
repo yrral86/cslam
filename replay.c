@@ -4,6 +4,19 @@
 
 #include "lazygl.h"
 
+#include <time.h>
+
+long getMillis() {
+  long            ms; // Milliseconds
+  time_t          s;  // Seconds
+  struct timespec spec;
+
+  clock_gettime(CLOCK_MONOTONIC, &spec);
+
+  s  = spec.tv_sec;
+  return 1000*s + lround(spec.tv_nsec / 1.0e6);
+}
+
 // 3, one for current, one for history, one for display
 #define BUFFER_HISTORY 3
 static uint8_t* map[BUFFER_HISTORY];
@@ -19,6 +32,7 @@ int main (int argc, char **argv) {
   char *int_string;
   char *line = NULL;
   size_t length  = 0;
+  long start_time;
 
   if (argc != 2) {
     printf("must specify output filename\n");
@@ -51,25 +65,26 @@ int main (int argc, char **argv) {
 
     switch(current_command) {
     case SLAMD_INIT:
-      printf("init\n");
+      //printf("init\n");
       swarm_init(parsed_line[1], parsed_line[2], parsed_line[3], parsed_line[4], parsed_line[5], parsed_line[6]);
 
       // allocate buffers
       for (i = 0; i < BUFFER_HISTORY; i++)
 	map[i] = buffer_allocate();
 
+      start_time = getMillis();
       // noui      glutInit(&argc, argv);
       // pass size of buffer, then window size
       // noui            initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 0.75*buffer_get_width(), 0.75*buffer_get_height());
       //      initGL(map[0], map[2], buffer_get_width(), buffer_get_height(), 2*buffer_get_width(), 2*buffer_get_height());
       break;
     case SLAMD_MOVE:
-      printf("move %d %d %d\n", parsed_line[1], parsed_line[2], parsed_line[3]);
+      //printf("move %d %d %d\n", parsed_line[1], parsed_line[2], parsed_line[3]);
       swarm_move(parsed_line[1], parsed_line[2], parsed_line[3]);
       //swarm_move(1, 0, 0);
       break;
     case SLAMD_UPDATE:
-      printf("update %d %d %d %d %d %d\n", parsed_line[1], parsed_line[2], parsed_line[3], parsed_line[4], parsed_line[5], parsed_line[6]);
+      //      printf("update %d %d %d %d %d %d\n", parsed_line[1], parsed_line[2], parsed_line[3], parsed_line[4], parsed_line[5], parsed_line[6]);
       i = 0;
       while (!swarm_converged() && i < 1) {
      	i++;
@@ -77,7 +92,7 @@ int main (int argc, char **argv) {
 	if (!swarm_converged() && i < 5)
 	  swarm_move(0, 0, 0);
       }
-      printf("%d\n", i);
+      //      printf("%d\n", i);
       scan_count++;
       //if ((scan_count == 5 && init == 1) || scan_count == 6) {
       //if (init == 1) init = 0;
@@ -95,6 +110,9 @@ int main (int argc, char **argv) {
 
     iterations++;
   }
+
+  long difference = getMillis() - start_time;
+  fprintf(output_file, "%ld", difference);
 
   fclose(data_file);
   fclose(output_file);
@@ -168,9 +186,9 @@ void update_display() {
   // copy map to buffer
   // noui  swarm_get_map_buffer(map[2]);
   if (current_command == SLAMD_UPDATE) {
-    printf("x, y, theta = (%d, %d, %d)\n", swarm_get_best_x(),
-	   swarm_get_best_y(),
-	   swarm_get_best_theta());
+    // printf("x, y, theta = (%d, %d, %d)\n", swarm_get_best_x(),
+    //	   swarm_get_best_y(),
+    //	   swarm_get_best_theta());
     fprintf(output_file, "%d,%d,%d\n", swarm_get_best_x(),
 	   swarm_get_best_y(),
 	   swarm_get_best_theta());

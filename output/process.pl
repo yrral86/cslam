@@ -4,26 +4,38 @@ sub MAIN(Str $folder) {
     my $foldername = $folder;
     $foldername = "{$folder}/" unless $folder ~~ /\/$/;
     my @files = $foldername.IO.dir;
+    my @times = ();
     my @samples = gather for @files -> $file {
 	next if $file.path ~~ /summary/;
 	my @positions = $file.slurp.chomp.split("\n").map: *.split(",");
+	@times.push(@positions.pop);
 	take @positions if -10 < @positions[0][2] < 10;
     }
 
+    my $t_mean = mean(@times);
+    my $t_dev = dev(@times, $t_mean);
     my @summaries = map &mean_and_std, ([Z] @samples);
 
     my @output = @summaries.map: -> @list { @list.flat.join(",") };
     @output.push("iterations,{@samples.elems}\n");
-    
+    @output.push("time,{$t_mean},{$t_dev}\n");
     spurt "{$foldername}summary.csv", @output.join("\n");
+}
+
+sub mean(@l) {
+    @l R/ [+] @l;
+}
+
+sub dev(@l, $mean) {
+    sqrt (@l - 1) R/ [+] map (* - $mean)**2, @l;
 }
 
 sub mean_and_std(@position) {
     my @zipped = [Z] @position;
-    my @means = @zipped.map: -> @l { @l R/ [+] @l };
+    my @means = map &mean, @zipped.map;
     my @stddevs = @zipped.kv.map: -> $i, @l {
 	my $mean = @means[$i];
-	sqrt (@l - 1) R/ [+] map (* - $mean)**2, @l;
+	dev(@l, $mean)
     };
     (@means, @stddevs);
 }
