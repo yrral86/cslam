@@ -2,7 +2,7 @@
 
 my $original_template = 'const.h.template'.IO.slurp;
 
-my @particle_counts = (1000, 2000, 3000, 4000);
+my @particle_counts = (1000, 2000, 3000, 4000, 5000);
 my @culling_factors = (1);
 my $iterations = 100;
 

@@ -14,8 +14,8 @@
 #define CULLING_FACTOR culling_factor
 #define CULLING_PERCENT 0.9
 
-#define BUFFER_FACTOR 20
-#define BORDER_WIDTH 150
+#define BUFFER_FACTOR 10
+#define BORDER_WIDTH 20
 /*
 #define ARENA_WIDTH 7380
 #define ARENA_HEIGHT 3880
