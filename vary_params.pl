@@ -2,10 +2,8 @@
 
 my $original_template = 'const.h.template'.IO.slurp;
 
-my @particle_counts = (5000, 10000, 20000, 40000);
-my @culling_factors = (1, 25, 50, 100);
-#my @particle_counts = (20000);
-#my @culling_factors = (50);
+my @particle_counts = (1000, 2000, 3000, 4000);
+my @culling_factors = (1);
 my $iterations = 100;
 
 for @particle_counts -> $particle_count {
