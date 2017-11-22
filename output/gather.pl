@@ -25,4 +25,13 @@ for (dir) -> $dir {
     }
 }
 
-@output.join("\n").say
+(@output.sort: -> $one, $two {
+    my @one = $one.split(",");
+    my @two = $two.split(",");
+    if @one[0].Int == @two[0].Int {
+	@one[1].Int < @two[1].Int
+    } else {
+	@one[0].Int < @two[0].Int;
+	#    $one.split(",")[0].Int < $two.split(",")[0].Int
+}
+}).join("\n").say
