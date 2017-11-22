@@ -2,13 +2,15 @@
 
 my $original_template = 'const.h.template'.IO.slurp;
 
-my @particle_counts = (1000, 2000, 3000, 4000, 5000);
-my @culling_factors = (1);
-my $iterations = 100;
+my @particle_counts = (4000);
+#my @particle_counts = (500, 1000, 2000, 4000, 8000, 16000, 32000, 64000);
+my @culling_factors = (5,10);
+my $iterations = 50;
+my $iteration_offset = 0;
 
 for @particle_counts -> $particle_count {
     for @culling_factors -> $culling_factor {
-	my $initial_particle_factor = (40000/$particle_count).ceiling;
+	my $initial_particle_factor = 1;#(40000/$particle_count).ceiling;
 
 	my $template = $original_template;
 	$template .= subst(/particle_count/, $particle_count.Str);
@@ -21,7 +23,7 @@ for @particle_counts -> $particle_count {
 	my $dir = "output/{$particle_count}-{$culling_factor}";
 	mkdir $dir;
 
-	for 1..$iterations -> $iteration {
+	for (1+$iteration_offset)..($iterations+$iteration_offset) -> $iteration {
 	    ($particle_count, $culling_factor, $iteration).join("-").say;
 	    shell "./replay $dir/run-{$iteration}.csv"
 	}

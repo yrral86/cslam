@@ -161,9 +161,9 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
 
   for (k = 0; k < short_side; k += BUFFER_FACTOR)
     for (j = 0; j < BORDER_WIDTH; j += BUFFER_FACTOR) {
-            landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(j, k), 10000);
-            landmark_set_seen_value(initial_map.map,
-      			      buffer_index_from_x_y(long_side - 1 - j, k), 10000);
+      landmark_set_seen_value(initial_map.map, buffer_index_from_x_y(j, k), 10000);
+      landmark_set_seen_value(initial_map.map,
+			      buffer_index_from_x_y(long_side - 1 - j, k), 10000);
     }
   /*
   // load map
