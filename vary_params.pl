@@ -3,8 +3,8 @@
 my $original_template = 'const.h.template'.IO.slurp;
 
 #my @particle_counts = (4000);
-my @particle_counts = (1000, 2000, 4000, 8000, 16000, 32000, 64000);
-my @culling_factors = (1,5,10,20);
+my @particle_counts = (1000, 8000, 64000);
+my @culling_factors = (6,7,8,9,11,12,13,14,16,17,18,19);
 my $iterations = 200;
 my $iteration_offset = 0;
 
