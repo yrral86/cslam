@@ -4,6 +4,7 @@ my @output = ();
 
 for (dir) -> $dir {
     if $dir ~~ /\-/ {
+	try {
 	my ($count, $factor) = $dir.path.split('-');
 	my @summary = "$dir/summary.csv".IO.slurp.chomp.split("\n").map: *.split(',');
 	my $time = @summary.pop[1];
@@ -22,6 +23,7 @@ for (dir) -> $dir {
 	}
 	
 	@output.push("$count,$factor,@means[0],@means[1],$time");
+	}
     }
 }
 
@@ -29,9 +31,9 @@ for (dir) -> $dir {
     my @one = $one.split(",");
     my @two = $two.split(",");
     if @one[0].Int == @two[0].Int {
-	@one[1].Int < @two[1].Int
+	@one[1].Int > @two[1].Int
     } else {
-	@one[0].Int < @two[0].Int;
+	@one[0].Int > @two[0].Int;
 	#    $one.split(",")[0].Int < $two.split(",")[0].Int
 }
 }).join("\n").say
