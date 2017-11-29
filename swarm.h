@@ -47,5 +47,7 @@ void swarm_get_map_buffer(uint8_t*);
 landmark_map swarm_get_map();
 void swarm_get_all_particles(particle**);
 int in_arena(int, int);
-
+void pswap(particle[], int, int);
+void quick_sort(particle[], int, int);
+void quick_sort_reverse(particle[], int, int);
 #endif

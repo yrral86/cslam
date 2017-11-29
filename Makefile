@@ -31,7 +31,6 @@ all:
 	for i in $(OBJS); do \
 		(gcc -c -o $$i.o $$i.c $(CFLAGS)); \
 	done
-	gcc -o slam slam.c $(OBJ_FILES) urg_driver/*.o $(CFLAGS)
 	gcc -o replay replay.c $(OBJ_FILES) urg_driver/*.o $(CFLAGS)
 
 clean:

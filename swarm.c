@@ -130,11 +130,9 @@ void swarm_init_internal(int m_in, int degrees_in, int long_side_in, int short_s
 #ifdef LINUX
 void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, int start_in, int radius) {
 #endif
-  int i, j, k;//, s;
+  int i, j, k;
   int x, y, theta;
   particle initial_map;
-  //  char *str, *tok;
-  //  FILE *map_file;
   double t;
   m = m_in;
   sensor_degrees = degrees_in;
@@ -165,42 +163,14 @@ void swarm_init(int m_in, int degrees_in, int long_side_in, int short_side_in, i
       landmark_set_seen_value(initial_map.map,
 			      buffer_index_from_x_y(long_side - 1 - j, k), 10000);
     }
-  /*
-  // load map
-  map_file = fopen("slamd_map.csv", "r");
-  assert(map_file != NULL);
 
-  s = buffer_get_size();
-  // 22 = 10 characters for 32 unsigned bits * 2 + 2 commas
-  str = malloc(sizeof(char)*s*22);
-
-  fgets(str, sizeof(char)*s*22, map_file);
-
-  fclose(map_file);
-
-  i = 0;
-  tok = strtok(str, ",");
-  do {
-    if (i % 2 == 0) {
-      sscanf(tok, "%u", &(map->map[i/2].seen));
-      //      initial_map.map->map[i/2].seen = map->map[i/2].seen;
-    } else {
-      sscanf(tok, "%u", &(map->map[i/2].unseen));
-      //      initial_map.map->map[i/2].unseen = map->map[i/2].unseen;
-    }
-    i++;
-  } while ((tok = strtok(NULL, ",")) != NULL);
-
-  free(str);
-  */
   // initialize first round of particles
   x = start/2;
   for (i = 0; i < INITIAL_PARTICLE_FACTOR*PARTICLE_COUNT; i++) {
     y = short_side/4;
-    //    if (rand_limit(2))
-    y *= 3;
+    if (rand_limit(2))
+      y *= 3;
     theta = rand_limit(360) - 180;
-    //theta = 180;
     t = theta*M_PI/180;
     particles[i] = particle_init(x + sensor_radius*cos(t), y + sensor_radius*sin(t), theta);
     particles[i].map = initial_map.map;
@@ -275,12 +245,10 @@ void swarm_update(int *distances) {
 #endif
   int i, j, k, l, cull, cut, cuts, cull_index, best_index, p_count;
   int particle_trig_initialized = 0;
-  int swap, x, y, count;
+  int x, y, count;
   double mean[3], stddev[3];
-  double distance, theta, degrees, s, c, total, min, p, step, p95, p5;
+  double distance, degrees, s, c, total, min, p, step, p95, p5;
   double cos_d, sin_d, factor, theta_d;
-  //  double xyt[3];
-  particle temp;
   const double BIG = 10000000;
 
 #ifndef LINUX

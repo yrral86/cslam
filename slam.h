@@ -4,7 +4,6 @@
 #include <math.h>
 #include <pthread.h>
 
-#include "arena.h"
 #include "buffer.h"
 #include "landmark.h"
 #include "particle.h"
