@@ -13,7 +13,7 @@ sub MAIN(Str $folder) {
 	next if $file.path ~~ /summary/;
 	my @positions = $file.slurp.chomp.split("\n").map: *.split(",");
 	@times.push(@positions.pop[0]);
-	take @positions;# if -10 < @positions[0][2] < 10;
+	take @positions;
     }
 
     my $t_mean = mean(@times);

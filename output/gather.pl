@@ -23,7 +23,7 @@ for (dir) -> $dir {
 	}
 	
 	@output.push("$count,$factor,@means[0],@means[1],$time");
-	}
+	
     }
 }
 
@@ -33,7 +33,6 @@ for (dir) -> $dir {
     if @one[0].Int == @two[0].Int {
 	@one[1].Int > @two[1].Int
     } else {
-	@one[0].Int > @two[0].Int;
-	#    $one.split(",")[0].Int < $two.split(",")[0].Int
-}
-}).join("\n").say
+	@one[0].Int > @two[0].Int
+    }
+ }).join("\n").say
